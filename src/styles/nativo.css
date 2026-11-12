@@ -135,7 +135,13 @@ html.is-app[data-tema="oscuro"] .main { box-shadow: inset 0 0 0 0.7px rgb(255 25
 
 /* ---- Ajustes (ventana propia en la app, página en el navegador). Forma de los ajustes de Rex y macOS ---- */
 .ajustesapp { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100dvh; }
-.ajustesapp.en-ventana { min-height: 100dvh; margin: 0; }
+.ajustesapp.en-ventana { height: 100dvh; min-height: 0; margin: 0; overflow: hidden; grid-template-columns: 220px minmax(0, 1fr); }
+/* Ventana de Ajustes como Ajustes del Sistema: la ventana no se desplaza; la barra lateral y el contenido, cada uno el suyo. */
+html:has(.ajustesapp.en-ventana), html:has(.ajustesapp.en-ventana) body { height: 100%; overflow: hidden; }
+.ajustesapp.en-ventana .ajside { overflow-y: auto; min-height: 0; }
+.ajustesapp.en-ventana .ajmain { min-height: 0; overflow-y: auto; }
+/* Los contenedores con scroll que no son fixed van posicionados: así lo absoluto de dentro (textos .sr) no alarga la página. */
+.ajmain, .main, .library, .libnav { position: relative; }
 .ajside { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s4) 10px; border-right: 1px solid var(--line); background: rgb(0 0 0 / 0.025); }
 .ajustesapp.en-ventana .ajside { padding-top: 52px; }
 .ajbuscar { min-width: 0; width: 100%; height: 30px; }
@@ -229,7 +235,7 @@ html.is-app .ajustesapp.en-ventana .ajmain { margin: 8px 8px 8px 0; border-radiu
 html.is-app[data-estilo="cristal"] .ajustesapp.en-ventana .ajmain { background: color-mix(in srgb, var(--content-bg) 62%, transparent); }
 html.is-app .ajhead { -webkit-app-region: drag; }
 html.is-app .ajhead button { -webkit-app-region: no-drag; }
-@media (max-width: 860px) { .ajustesapp { grid-template-columns: 1fr; } .ajside { border-right: 0; } .ajfila { grid-template-columns: 1fr; } .ajcontrol { justify-content: flex-start; } }
+@media (max-width: 860px) { .ajustesapp:not(.en-ventana) { grid-template-columns: 1fr; } .ajside { border-right: 0; } .ajfila { grid-template-columns: 1fr; } .ajcontrol { justify-content: flex-start; } }
 
 /* Ventana de Ajustes: franja de arrastre fija en todo el ancho de arriba (los semáforos y el título quedan dentro).
    Dentro de una zona con scroll la región de arrastre de Chromium falla, por eso va fija y fuera de .ajmain. */

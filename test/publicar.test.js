@@ -12,9 +12,9 @@ let dir;
 let r;
 
 beforeAll(async () => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "moss-git-"));
-  fs.cpSync(FIXTURE, dir, { recursive: true, filter: (s) => !s.includes(`${path.sep}.moss`) });
-  fs.writeFileSync(path.join(dir, ".gitignore"), ".moss/\n");
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "glim-git-"));
+  fs.cpSync(FIXTURE, dir, { recursive: true, filter: (s) => !s.includes(`${path.sep}.glim`) });
+  fs.writeFileSync(path.join(dir, ".gitignore"), ".glim/\n");
   const git = (...a) => execFileSync("git", a, { cwd: dir, stdio: "pipe" });
   git("init", "-q", "-b", "main");
   git("config", "user.email", CORREO);
@@ -31,7 +31,7 @@ beforeAll(async () => {
   fs.writeFileSync(path.join(dir, ".env.local"), "X=1\n");
   fs.writeFileSync(path.join(dir, "roto.json"), "{ no es json");
   fs.writeFileSync(path.join(dir, "AGENTS.md"), "# Reglas de prueba\n\nNunca mencionar Globex.\n");
-  process.env.MOSS_BRAIN = dir;
+  process.env.GLIM_BRAIN = dir;
   const pub = await import("../server/publicar.js");
   r = await pub.comprobarAntes();
 });

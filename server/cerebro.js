@@ -1,10 +1,10 @@
-// El cerebro: el repo de contenido que Moss abre (en el caso de su autor, marca-personal). Moss no sabe nada de
-// él salvo lo que diga su `moss.config.json`: rutas, reglas, zona horaria, comprobaciones al publicar y qué
+// El cerebro: el repo de contenido que Glim abre (en el caso de su autor, marca-personal). Glim no sabe nada de
+// él salvo lo que diga su `glim.config.json`: rutas, reglas, zona horaria, comprobaciones al publicar y qué
 // módulos enseñar. Así la app no lleva datos personales y cualquiera puede apuntarla a su propio repo.
 //
-// Dónde se busca el cerebro, por orden: MOSS_BRAIN, la ruta guardada por la app (config.json en la carpeta de
-// datos de Moss) y la carpeta actual si tiene moss.config.json. El estado local (encargos, ajustes, cachés)
-// vive en `<cerebro>/.moss/`, que el cerebro ignora en git.
+// Dónde se busca el cerebro, por orden: GLIM_BRAIN, la ruta guardada por la app (config.json en la carpeta de
+// datos de Glim) y la carpeta actual si tiene glim.config.json. El estado local (encargos, ajustes, cachés)
+// vive en `<cerebro>/.glim/`, que el cerebro ignora en git.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -12,21 +12,21 @@ import { fileURLToPath } from "node:url";
 import { Esquema } from "./esquema.js";
 
 export const APP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export const CONFIG = "moss.config.json";
+export const CONFIG = "glim.config.json";
 
-// Carpeta de datos de la app (la misma que usa Electron con productName «Moss»).
+// Carpeta de datos de la app (la misma que usa Electron con productName «Glim»).
 export function carpetaApp() {
   const home = os.homedir();
-  if (process.platform === "darwin") return path.join(home, "Library", "Application Support", "Moss");
-  if (process.platform === "win32") return path.join(process.env.APPDATA || path.join(home, "AppData", "Roaming"), "Moss");
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, ".config"), "Moss");
+  if (process.platform === "darwin") return path.join(home, "Library", "Application Support", "Glim");
+  if (process.platform === "win32") return path.join(process.env.APPDATA || path.join(home, "AppData", "Roaming"), "Glim");
+  return path.join(process.env.XDG_CONFIG_HOME || path.join(home, ".config"), "Glim");
 }
 
 export const esCerebro = (p) => !!p && fs.existsSync(path.join(p, CONFIG));
 
 export function buscarCerebro() {
   const guardada = (() => { try { return JSON.parse(fs.readFileSync(path.join(carpetaApp(), "config.json"), "utf8")).cerebro; } catch { return null; } })();
-  const candidatas = [process.env.MOSS_BRAIN, guardada, process.cwd()].filter(Boolean).map((p) => path.resolve(p.replace(/^~(?=\/|$)/, os.homedir())));
+  const candidatas = [process.env.GLIM_BRAIN, guardada, process.cwd()].filter(Boolean).map((p) => path.resolve(p.replace(/^~(?=\/|$)/, os.homedir())));
   return candidatas.find(esCerebro) || null;
 }
 
@@ -35,7 +35,7 @@ export { Esquema };
 function cargar() {
   const root = buscarCerebro();
   if (!root) {
-    const e = new Error(`No hay cerebro. Indica la carpeta con MOSS_BRAIN=/ruta/al/repo (debe tener ${CONFIG}) o elígela al abrir la app.`);
+    const e = new Error(`No hay cerebro. Indica la carpeta con GLIM_BRAIN=/ruta/al/repo (debe tener ${CONFIG}) o elígela al abrir la app.`);
     e.code = "SIN_CEREBRO";
     throw e;
   }
@@ -50,10 +50,10 @@ function cargar() {
 const c = cargar();
 export const ROOT = c.root;
 export const cfg = c.cfg;
-// Estado local de Moss para este cerebro (ignorado por git).
-export const ESTADO = path.join(ROOT, ".moss");
+// Estado local de Glim para este cerebro (ignorado por git).
+export const ESTADO = path.join(ROOT, ".glim");
 fs.mkdirSync(ESTADO, { recursive: true });
-// .moss/ se ignora a sí misma: el cerebro no necesita tocar su .gitignore.
+// .glim/ se ignora a sí misma: el cerebro no necesita tocar su .gitignore.
 if (!fs.existsSync(path.join(ESTADO, ".gitignore"))) fs.writeFileSync(path.join(ESTADO, ".gitignore"), "*\n");
 
 export const rutas = cfg.rutas;

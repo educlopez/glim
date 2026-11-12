@@ -3,7 +3,7 @@
 //   - Dock: app.dock.setIcon, a 512 px (AppKit guarda ~32 MB por cada representación de 1024 px).
 //   - Barra de menús: imagen plantilla negra de 18 pt; macOS la tiñe en claro y oscuro.
 //   - Bundle (Finder, Launchpad y el Dock con la app cerrada): NSWorkspace setIcon:forFile: por osascript, como Pond.
-// Una sola versión, la misma en claro y en oscuro, como los iconos de macOS. Caché en <cerebro>/.moss/iconos/.
+// Una sola versión, la misma en claro y en oscuro, como los iconos de macOS. Caché en <cerebro>/.glim/iconos/.
 import fs from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";

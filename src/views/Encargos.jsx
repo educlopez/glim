@@ -285,7 +285,7 @@ export default function Encargos() {
               {notas.slice(0, 12).map((n) => (
                 <div key={n} className="noteitem">
                   <span className="mono small">{n.replace(/\.md$/, "").replace(/T(\d\d)-(\d\d).*/, " $1:$2")}</span>
-                  <a className="btn small" href={hrefOf("biblioteca", { doc: `.moss/feedback/${n}` })}>{t("encargos.leer")}</a>
+                  <a className="btn small" href={hrefOf("biblioteca", { doc: `.glim/feedback/${n}` })}>{t("encargos.leer")}</a>
                   <button type="button" className="btn small primary" onClick={() => r.set({ pedir: "general", nota: n })}><Sparkles size={14} aria-hidden="true" /><span>{t("encargos.convertir")}</span></button>
                 </div>
               ))}

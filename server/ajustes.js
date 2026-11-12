@@ -1,4 +1,4 @@
-// Ajustes del panel (locales, en <cerebro>/.moss/ajustes.json) y claves de servicios en el Llavero de macOS.
+// Ajustes del panel (locales, en <cerebro>/.glim/ajustes.json) y claves de servicios en el Llavero de macOS.
 // Las claves nunca se escriben en el repo, nunca vuelven al navegador y nunca se registran en ningún log.
 // ESQUEMA define cada ajuste con su valor por defecto y lo que admite: lo que no encaja vuelve al valor por defecto.
 import fs from "node:fs";
@@ -19,7 +19,7 @@ const ESQUEMA = {
   densidad: { ...uno("comoda", "compacta") },
   textoLateral: { ...uno(13, 12, 14, 15) },
   animacion: { ...uno("agil", "natural", "no") },
-  idioma: { ...uno("auto", "es", "en") }, // idioma de la interfaz; auto: el del cerebro (moss.config.json → idioma) o el del navegador
+  idioma: { ...uno("auto", "es", "en") }, // idioma de la interfaz; auto: el del cerebro (glim.config.json → idioma) o el del navegador
   // Icono de la app (server/icono.js): tinta del fondo y glifo.
   icono: {
     tinta: { ...uno("musgo", "naranja", "mandarina", "fresa", "frambuesa", "uva", "ciruela", "arandano", "aqua", "teal", "helecho", "moca", "grafito") },

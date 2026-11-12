@@ -41,7 +41,7 @@ jobs:
       - name: Esquema al día
         run: |
           npm run esquema
-          git diff --exit-code schema/ && test -z "$(git status --porcelain schema/)" || { echo "::error::schema/moss.config.schema.json no está al día: ejecuta npm run esquema y súbelo"; exit 1; }
+          git diff --exit-code schema/ && test -z "$(git status --porcelain schema/)" || { echo "::error::schema/glim.config.schema.json no está al día: ejecuta npm run esquema y súbelo"; exit 1; }
       - name: Python
         run: python3 -m py_compile server/*.py
       - name: Secretos

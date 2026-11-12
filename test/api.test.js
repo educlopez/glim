@@ -9,7 +9,7 @@ afterAll(async () => { await s.cerrar(); });
 
 const panel = { "content-type": "application/json", "x-panel": "1" };
 
-describe("acceso a la API (sin MOSS_TOKEN)", () => {
+describe("acceso a la API (sin GLIM_TOKEN)", () => {
   it("deja pasar lo que no es /api ni /repo", async () => {
     const r = await pedir(s.port, { ruta: "/index.html" });
     expect(r.status).toBe(418);
@@ -65,7 +65,7 @@ describe("/api/file y /repo/", () => {
     expect((await pedir(s.port, { ruta: "/repo/..%2f..%2fetc%2fpasswd" })).status).toBe(403);
     // URL normaliza %2e%2e: la ruta deja de ser /repo/ y no se sirve nada del disco.
     expect((await pedir(s.port, { ruta: "/repo/%2e%2e/%2e%2e/etc/passwd" })).status).toBe(418);
-    expect((await pedir(s.port, { ruta: "/repo/.moss/ajustes.json" })).status).toBe(403);
+    expect((await pedir(s.port, { ruta: "/repo/.glim/ajustes.json" })).status).toBe(403);
   });
 
   it("404 si el archivo no existe", async () => {

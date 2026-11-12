@@ -1,5 +1,5 @@
 // Encargos: la persona pide un cambio desde el panel y se lanza un agente (Claude Code, Codex, Cursor, OpenCode… ver agentes.js) en local, en segundo plano, con todo el
-// contexto del objeto (post, plantilla, carrusel…). Cada encargo vive en <cerebro>/.moss/encargos/<id>.json y su
+// contexto del objeto (post, plantilla, carrusel…). Cada encargo vive en <cerebro>/.glim/encargos/<id>.json y su
 // registro de pasos en <id>.jsonl (carpeta ignorada por git). Solo corre uno a la vez para no pisar archivos.
 import fs from "node:fs";
 import path from "node:path";
@@ -19,7 +19,7 @@ const ACTIVOS = ["cola", "en-curso"];
 
 // Lo que el agente puede hacer sin preguntar. En modo -p, todo lo que no está aquí se deniega solo.
 // --setting-sources project,local deja fuera los hooks personales (rtk reescribe los comandos y rompe la lista).
-// Comandos base; el cerebro añade los suyos en agentes.comandos (moss.config.json).
+// Comandos base; el cerebro añade los suyos en agentes.comandos (glim.config.json).
 const BASH = [...new Set(["python3", "node", "npm run", "npm install", "ffmpeg", "ffprobe", "ls", "mkdir", "cp", "rg", "fd", "cd", ...cfg.agentes.comandos])];
 const PERMITIDAS = ["Read", "Edit", "Write", "Glob", "Grep", "Skill", "Task", "TodoWrite", "WebSearch", "WebFetch", "ToolSearch", ...BASH.map((c) => `Bash(${c} *)`)];
 const PROHIBIDAS = [
@@ -29,7 +29,7 @@ const PROHIBIDAS = [
 
 const P = cfg.persona;
 const SISTEMA = [
-  `Trabajas para ${P} desde Moss, su panel local del repo ${cfg.nombre} (este repo). ${P} te ha dejado un encargo.`,
+  `Trabajas para ${P} desde Glim, su panel local del repo ${cfg.nombre} (este repo). ${P} te ha dejado un encargo.`,
   "Reglas que no se negocian:",
   `- Lee ${cfg.reglas} antes de nada y respeta sus reglas duras.`,
   "- Nunca publiques ni programes nada. No hagas commit, push ni PR.",
@@ -158,7 +158,7 @@ export function prompt(e, cat = catalogo()) {
   const t = e.plantilla ? cat.plantillas.find((x) => x.id === e.plantilla) : null;
   const refs = referencias().filter((r) => (e.referencias || []).includes(r.id));
   const partes = [
-    `# Encargo desde Moss (repo ${cfg.nombre})`,
+    `# Encargo desde Glim (repo ${cfg.nombre})`,
     `${P} ha escrito esto (texto literal):`,
     e.texto.split("\n").map((l) => `> ${l}`).join("\n"),
     "## Sobre qué",
@@ -341,7 +341,7 @@ function ejecutar(e) {
   const procesar = (ev) => {
     if (ev.tipo === "sesion") { const cur = leer(e.id); cur.sesion = ev.id; guardar(cur); return; }
     if (ev.tipo === "resultado") { resultado = ev; return; }
-    // En una copia aislada las rutas llegan como .moss/copias/<id>/…: se dejan relativas al repo.
+    // En una copia aislada las rutas llegan como .glim/copias/<id>/…: se dejan relativas al repo.
     const pre = path.relative(ROOT, cwd) + "/";
     if (ev.archivo && cwd !== ROOT && ev.archivo.startsWith(pre)) ev.archivo = ev.archivo.slice(pre.length);
     if (ev.tipo === "herramienta" && ev.archivo) tocados.add(ev.archivo);
@@ -385,7 +385,7 @@ function ejecutar(e) {
     const despues = porcelana(cwd);
     for (const [p, mt] of Object.entries(despues)) if (!(p in antes) || antes[p] !== mt) tocados.add(p);
     for (const g of media()) if (!g.frames) for (const it of g.items) if (it.mtime >= t0) tocados.add(it.path);
-    cur.archivos = [...tocados].filter((p) => p && !p.startsWith(".moss/")).sort();
+    cur.archivos = [...tocados].filter((p) => p && !p.startsWith(".glim/")).sort();
     // Guarda común a todos los agentes: no pueden hacer commits (solo Claude los tiene prohibidos por lista).
     const head1 = cabeza(cwd);
     if (head0 && head1 && head0 !== head1) { r.commits = true; evento(e.id, { ronda: n, tipo: "fallo", texto: `${nombre} ha hecho commits (HEAD ${head0.slice(0, 7)} → ${head1.slice(0, 7)}). Revísalos antes de publicar.` }); }

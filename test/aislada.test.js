@@ -4,7 +4,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { beforeAll, describe, expect, it } from "vitest";
 
-const RAIZ = process.env.MOSS_BRAIN;
+const RAIZ = process.env.GLIM_BRAIN;
 const git = (...a) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...a], { cwd: RAIZ, encoding: "utf8" });
 let aislada;
 

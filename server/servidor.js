@@ -1,4 +1,4 @@
-// Servidor propio de Moss (app empaquetada): sirve la interfaz compilada (dist/) y la API en 127.0.0.1, en un puerto
+// Servidor propio de Glim (app empaquetada): sirve la interfaz compilada (dist/) y la API en 127.0.0.1, en un puerto
 // libre que elige el sistema. En desarrollo no se usa: la API va montada en Vite (vite.config.js).
 import http from "node:http";
 import fs from "node:fs";
@@ -45,7 +45,7 @@ export async function iniciar({ puerto = 0 } = {}) {
   const parar = arrancar();
   const server = http.createServer((req, res) => {
     manejar(req, res, () => estatico(req, res)).catch((e) => {
-      console.error("[moss] petición:", e);
+      console.error("[glim] petición:", e);
       if (!res.headersSent) { res.statusCode = 500; res.end("error"); }
     });
   });

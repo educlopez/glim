@@ -1,12 +1,12 @@
-// Esquema de moss.config.json (el archivo que convierte un repo en un cerebro de Moss). Sin efectos al importarlo:
-// lo usan el servidor (server/cerebro.js), los tests y el script que genera schema/moss.config.schema.json.
+// Esquema de glim.config.json (el archivo que convierte un repo en un cerebro de Glim). Sin efectos al importarlo:
+// lo usan el servidor (server/cerebro.js), los tests y el script que genera schema/glim.config.schema.json.
 import path from "node:path";
 import { z } from "zod";
 
 const ruta = z.string().min(1).refine((s) => !path.isAbsolute(s) && !s.split("/").includes(".."), "ruta relativa dentro del cerebro");
 const opcional = ruta.optional();
 
-// Esquema del moss.config.json. Todo lo que no se indica tiene un valor por defecto neutro.
+// Esquema del glim.config.json. Todo lo que no se indica tiene un valor por defecto neutro.
 export const Esquema = z.object({
   $schema: z.string().optional(),
   nombre: z.string().min(1).max(60),
@@ -23,8 +23,8 @@ export const Esquema = z.object({
     borradores: ruta.default("borradores"),
     aprendizajes: opcional,
     calendario: opcional,
-    referencias: ruta.default(".moss/referencias.json"),
-    lienzos: ruta.default(".moss/lienzos.json"),
+    referencias: ruta.default(".glim/referencias.json"),
+    lienzos: ruta.default(".glim/lienzos.json"),
     mediaReferencias: ruta.default("media/referencias"),
     media: ruta.default("media"),
     referentes: opcional,
@@ -53,7 +53,7 @@ export const Esquema = z.object({
   agentes: z.object({
     // Líneas extra para el mensaje de sistema de los encargos.
     reglas: z.array(z.string().max(400)).default([]),
-    // Comandos de shell extra que el agente puede lanzar sin preguntar (además de los básicos de Moss).
+    // Comandos de shell extra que el agente puede lanzar sin preguntar (además de los básicos de Glim).
     comandos: z.array(z.string().regex(/^[\w .@/:-]+$/)).default([]),
     // Carpetas que git ignora y que las copias aisladas de los encargos comparten con el repo (medios, node_modules).
     compartidas: z.array(ruta).default([]),
@@ -63,7 +63,7 @@ export const Esquema = z.object({
     // Prefijo de commit por carpeta: { "borradores/": "borradores" }. Sin coincidencia: `prefijoPorDefecto`.
     prefijos: z.record(z.string(), z.string()).default({}),
     prefijoPorDefecto: z.string().default("repo"),
-    // Rutas que nunca entran en una PR (además de `privadas` y .moss/).
+    // Rutas que nunca entran en una PR (además de `privadas` y .glim/).
     prohibidas: z.array(ruta).default([]),
     // Palabras que no deben aparecer en contenido nuevo (nombres de clientes, empleadores…). Solo avisan.
     terminosVetados: z.array(z.string().min(2)).default([]),
@@ -72,8 +72,8 @@ export const Esquema = z.object({
   }).default({}),
   integraciones: z.object({
     buffer: z.object({ importarDesde: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).default("2026-01-01") }).optional(),
-    dub: z.object({ comentario: z.string().default("moss") }).optional(),
+    dub: z.object({ comentario: z.string().default("glim") }).optional(),
   }).default({}),
   // Prefijo de las claves del Llavero (servicio `<prefijo>-buffer`, `<prefijo>-dub`).
-  llavero: z.string().regex(/^[\w.-]+$/).default("moss"),
+  llavero: z.string().regex(/^[\w.-]+$/).default("glim"),
 }).strict();

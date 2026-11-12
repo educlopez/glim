@@ -74,7 +74,7 @@ describe("resolverIdioma", () => {
 // Heurística: texto visible en castellano que no pasa por t(). Mira nodos de texto JSX y atributos de texto
 // (title, placeholder, aria-label, label, alt…) con tildes, ñ, ¿, ¡ o palabras muy comunes del castellano.
 // Los comentarios no cuentan. Si salta por un identificador de datos, hay que añadirlo a PERMITIDOS.
-const PERMITIDOS = new Set(["Moss", "Buffer", "Drive", "Repo", "Checklist", "Preset", "Badge", "UTM", "HTML", "GIF", "Render", "JSON", "PDF", "Skills", "Claude", "Sonnet", "Opus", "Haiku", "Codex", "Español", "English", "Feedback"]);
+const PERMITIDOS = new Set(["Glim", "Buffer", "Drive", "Repo", "Checklist", "Preset", "Badge", "UTM", "HTML", "GIF", "Render", "JSON", "PDF", "Skills", "Claude", "Sonnet", "Opus", "Haiku", "Codex", "Español", "English", "Feedback"]);
 const CASTELLANO = /[áéíóúñ¿¡]|\b(el|la|los|las|del|de|en|con|para|sin|que|una|por|al|se|su|tu|lo|es|ya|más|cada|todo|todas|nada|ver|abrir|guardar|quitar|cerrar|borrar|buscar)\b/i;
 
 function sinComentarios(src) {

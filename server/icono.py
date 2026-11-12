@@ -56,7 +56,7 @@ def glifo_mascara(glifo, avatar=None):
     d = ImageDraw.Draw(m)
     c = S / 2
     if glifo == "musgo":
-        # La marca de Moss: una hoja gruesa en diagonal con el nervio central vaciado.
+        # La marca de Glim: una hoja gruesa en diagonal con el nervio central vaciado.
         largo, ancho = 640 * K, 380 * K
         r = (largo * largo / 4 + ancho * ancho / 4) / ancho
         d0 = r - ancho / 2

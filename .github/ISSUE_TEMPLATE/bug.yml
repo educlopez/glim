@@ -14,7 +14,7 @@ body:
     attributes:
       label: Pasos para reproducirlo
       placeholder: |
-        1. Abre Moss
+        1. Abre Glim
         2. Ve a Encargos
         3. ...
     validations:
@@ -22,7 +22,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Versión de Moss
+      label: Versión de Glim
       placeholder: "0.2.0"
     validations:
       required: true

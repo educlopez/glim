@@ -229,7 +229,7 @@ button { font: inherit; color: inherit; }
 .nodategroup { display: grid; gap: 4px; }
 
 /* ── Tablero de posts ─────────────────────────────────── */
-.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(300px, 1fr); gap: var(--s4); overflow-x: auto; padding-bottom: var(--s4); align-items: start; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(232px, 1fr); gap: var(--s3); overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: var(--s4); align-items: start; }
 .boardcol { display: grid; gap: var(--s3); padding: var(--s3); border-radius: var(--r-l); background: var(--bg-sunk); }
 .boardcolhead { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px; }
 .boardcolhead .estado { font-size: 13px; color: var(--ink); }

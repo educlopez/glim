@@ -1,13 +1,13 @@
-# Contribuir a Moss
+# Contribuir a Glim
 
-Gracias por echar una mano. Moss es pequeño y quiere seguir siéndolo: antes de una función grande, abre un issue y lo hablamos.
+Gracias por echar una mano. Glim es pequeño y quiere seguir siéndolo: antes de una función grande, abre un issue y lo hablamos.
 
 ## Puesta en marcha
 
 ```bash
-git clone https://github.com/educlopez/moss && cd moss
+git clone https://github.com/educlopez/glim && cd glim
 npm ci
-MOSS_BRAIN=./ejemplos/cerebro-minimo npm run dev   # interfaz y API en http://127.0.0.1:4321
+GLIM_BRAIN=./ejemplos/cerebro-minimo npm run dev   # interfaz y API en http://127.0.0.1:4321
 npm run app                                        # la app de Electron sobre el mismo código
 ```
 
@@ -23,12 +23,12 @@ npm run test:e2e
 - Commits con [Conventional Commits](https://www.conventionalcommits.org/) en inglés (`feat:`, `fix:`, `docs:`…).
 - La interfaz y los comentarios del código están en castellano.
 - Nada de emojis en la interfaz, el código ni los commits: usa los iconos de `lucide-react`.
-- Si tocas `server/esquema.js`, ejecuta `npm run esquema` y sube `schema/moss.config.schema.json`.
+- Si tocas `server/esquema.js`, ejecuta `npm run esquema` y sube `schema/glim.config.schema.json`.
 - Una novedad visible lleva su entrada en `changelog/<versión>.md`.
 
 ## Dónde está cada cosa
 
-Lee [docs/arquitectura.md](docs/arquitectura.md). Resumen: `electron/` es la app de Mac, `server/` la API local que lee el cerebro, `src/` la interfaz en React y `docs/cerebro.md` la referencia de `moss.config.json`.
+Lee [docs/arquitectura.md](docs/arquitectura.md). Resumen: `electron/` es la app de Mac, `server/` la API local que lee el cerebro, `src/` la interfaz en React y `docs/cerebro.md` la referencia de `glim.config.json`.
 
 ## Código de conducta
 

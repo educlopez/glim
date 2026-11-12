@@ -1,5 +1,5 @@
 // Revisión de posts: comentarios anclados a un trozo del texto y OK por pieza (red). Idea de Postiz
-// (model Comments con anchorQuote y resolvedAt). Vive en local, <cerebro>/.moss/revisiones.json.
+// (model Comments con anchorQuote y resolvedAt). Vive en local, <cerebro>/.glim/revisiones.json.
 // Un OK aquí deja constancia de que la persona lo dio, con fecha; no programa ni cambia el estado del borrador.
 import fs from "node:fs";
 import path from "node:path";

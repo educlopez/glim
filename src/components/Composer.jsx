@@ -131,7 +131,7 @@ export function Composer() {
   // Desde una nota de Agentation: el texto de la nota y el objeto marcado.
   useEffect(() => {
     if (!r.params.nota) return;
-    fetch(`/api/file?path=${encodeURIComponent(".moss/feedback/" + r.params.nota)}`).then((x) => x.json()).then((j) => {
+    fetch(`/api/file?path=${encodeURIComponent(".glim/feedback/" + r.params.nota)}`).then((x) => x.json()).then((j) => {
       if (!j.text) return;
       setTexto(j.text.replace(/<!--[\s\S]*?-->/g, "").trim());
       setObjetivo(objetivoDeNota(j.text));

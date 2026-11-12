@@ -6,7 +6,7 @@ import path from "node:path";
 import { ROOT, read } from "./repo.js";
 import { rutas } from "./cerebro.js";
 
-const P = rutas.kitPublicacion || ".moss/kit-publicacion.json";
+const P = rutas.kitPublicacion || ".glim/kit-publicacion.json";
 const REDES = ["X", "Threads", "LinkedIn"];
 const cargar = () => { try { const d = JSON.parse(read(P)); return { firmas: d.firmas || [], presets: d.presets || [] }; } catch { return { firmas: [], presets: [] }; } };
 const guardar = (d) => fs.writeFileSync(path.join(ROOT, P), JSON.stringify({ version: 1, ...d }, null, 2) + "\n");

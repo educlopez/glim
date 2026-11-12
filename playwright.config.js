@@ -5,10 +5,10 @@ import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 // La copia se hace una vez; los workers heredan la variable y no copian de nuevo.
-if (!process.env.MOSS_E2E_BRAIN) {
-  const copia = fs.mkdtempSync(path.join(os.tmpdir(), "moss-e2e-"));
-  fs.cpSync(path.resolve(import.meta.dirname, "test/fixtures/cerebro"), copia, { recursive: true, filter: (s) => !s.includes(`${path.sep}.moss`) });
-  process.env.MOSS_E2E_BRAIN = copia;
+if (!process.env.GLIM_E2E_BRAIN) {
+  const copia = fs.mkdtempSync(path.join(os.tmpdir(), "glim-e2e-"));
+  fs.cpSync(path.resolve(import.meta.dirname, "test/fixtures/cerebro"), copia, { recursive: true, filter: (s) => !s.includes(`${path.sep}.glim`) });
+  process.env.GLIM_E2E_BRAIN = copia;
 }
 
 const PUERTO = 4455;
@@ -28,6 +28,6 @@ export default defineConfig({
     url: `http://127.0.0.1:${PUERTO}/`,
     reuseExistingServer: false,
     timeout: 60000,
-    env: { MOSS_BRAIN: process.env.MOSS_E2E_BRAIN, MOSS_TOKEN: "" },
+    env: { GLIM_BRAIN: process.env.GLIM_E2E_BRAIN, GLIM_TOKEN: "" },
   },
 });

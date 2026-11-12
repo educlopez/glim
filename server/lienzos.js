@@ -1,5 +1,5 @@
 // Lienzos: tableros libres para pensar una pieza con referencias, notas y flechas entre ellas (el Canvas de Pond).
-// Viven en la ruta `lienzos` del cerebro (por defecto .moss/lienzos.json), versionado como las referencias. Son internos: nunca se publican.
+// Viven en la ruta `lienzos` del cerebro (por defecto .glim/lienzos.json), versionado como las referencias. Son internos: nunca se publican.
 import fs from "node:fs";
 import path from "node:path";
 import { ROOT, read, hoyLocal } from "./repo.js";

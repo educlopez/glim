@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// En desarrollo la API va montada en Vite y lee el cerebro de MOSS_BRAIN (o el que eligió la app). El build solo
+// En desarrollo la API va montada en Vite y lee el cerebro de GLIM_BRAIN (o el que eligió la app). El build solo
 // compila la interfaz: no necesita cerebro.
 export default defineConfig(async ({ command }) => ({
   plugins: [react(), ...(command === "serve" ? [(await import("./server/api.js")).repoApi()] : [])],

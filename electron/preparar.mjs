@@ -14,7 +14,7 @@ else fs.rmSync(origen, { force: true });
 
 // Documento de Icon Composer del icono por defecto (hoja en tinta musgo). Va versionado: electron-builder lo compila
 // con actool (Xcode 26+) a Assets.car, y macOS 26 saca de él las versiones oscura, transparente y tintada.
-const DOC = path.join(AQUI, "Moss.icon");
+const DOC = path.join(AQUI, "Glim.icon");
 if (!fs.existsSync(path.join(DOC, "icon.json"))) {
   execFileSync("python3", ["-I", path.join(APP, "server", "icono.py"), JSON.stringify({ tinta: "musgo", glifo: "musgo", documento: DOC })], { stdio: "inherit" });
 }
@@ -41,4 +41,4 @@ if (!fs.existsSync(path.join(ICONOS, "app.png")) || !fs.existsSync(path.join(ICO
     fs.rmSync(set, { recursive: true, force: true });
   }
 }
-console.log(`Moss: ${APP}${fs.existsSync(origen) ? " (desde el checkout)" : ""}\nIconos: ${ICONOS}`);
+console.log(`Glim: ${APP}${fs.existsSync(origen) ? " (desde el checkout)" : ""}\nIconos: ${ICONOS}`);

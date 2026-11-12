@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   mac:
-    runs-on: macos-26  # actool necesita Xcode 26 para compilar electron/Moss.icon
+    runs-on: macos-26  # actool necesita Xcode 26 para compilar electron/Glim.icon
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4

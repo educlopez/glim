@@ -1,7 +1,7 @@
 {
-  "$ref": "#/definitions/MossConfig",
+  "$ref": "#/definitions/GlimConfig",
   "definitions": {
-    "MossConfig": {
+    "GlimConfig": {
       "type": "object",
       "properties": {
         "$schema": {
@@ -64,12 +64,12 @@
             "referencias": {
               "type": "string",
               "minLength": 1,
-              "default": ".moss/referencias.json"
+              "default": ".glim/referencias.json"
             },
             "lienzos": {
               "type": "string",
               "minLength": 1,
-              "default": ".moss/lienzos.json"
+              "default": ".glim/lienzos.json"
             },
             "mediaReferencias": {
               "type": "string",
@@ -303,7 +303,7 @@
               "properties": {
                 "comentario": {
                   "type": "string",
-                  "default": "moss"
+                  "default": "glim"
                 }
               },
               "additionalProperties": false
@@ -315,7 +315,7 @@
         "llavero": {
           "type": "string",
           "pattern": "^[\\w.-]+$",
-          "default": "moss"
+          "default": "glim"
         }
       },
       "required": [
@@ -325,6 +325,6 @@
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "moss.config.json",
-  "description": "Configuración de un cerebro de Moss: rutas, reglas, zona horaria, publicación y módulos."
+  "title": "glim.config.json",
+  "description": "Configuración de un cerebro de Glim: rutas, reglas, zona horaria, publicación y módulos."
 }

@@ -34,7 +34,7 @@ function redesDe(v, nombre) {
 }
 
 // El nombre de archivo va sin tildes ni mayúsculas; esto lo deja legible como título.
-// Las palabras propias del cerebro (nombres de proyectos, tildes) vienen de moss.config.json → titulos.
+// Las palabras propias del cerebro (nombres de proyectos, tildes) vienen de glim.config.json → titulos.
 const escapar = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const NOMBRES = [
   ...Object.entries(cfgTitulos).map(([de, a]) => [new RegExp(`\\b${escapar(de.toLowerCase())}\\b`, "g"), a]),

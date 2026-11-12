@@ -1,4 +1,4 @@
-// Registro de la app en archivo (~/Library/Logs/Moss/main.log), con rotación a 5 MB y una copia anterior.
+// Registro de la app en archivo (~/Library/Logs/Glim/main.log), con rotación a 5 MB y una copia anterior.
 // También recoge console.* del proceso principal y del servidor, que corre en el mismo proceso.
 import fs from "node:fs";
 import path from "node:path";

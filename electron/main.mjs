@@ -1,9 +1,9 @@
-// Moss para Mac. Abre un cerebro (un repo con moss.config.json), arranca su servidor local y lo enseña en una ventana
+// Glim para Mac. Abre un cerebro (un repo con glim.config.json), arranca su servidor local y lo enseña en una ventana
 // nativa, con el Dock, la barra de menús y avisos del sistema cuando un agente termina o falla.
 //
 // Dos modos:
 // - Empaquetada (release): sirve la interfaz compilada y la API desde el propio paquete (server/servidor.js).
-// - Desde el checkout (npm run app:instalar): la app es una capa fina que arranca Vite en la carpeta de Moss, así que
+// - Desde el checkout (npm run app:instalar): la app es una capa fina que arranca Vite en la carpeta de Glim, así que
 //   lo que cambie en el código se ve sin recompilar. origen.json guarda dónde está ese checkout.
 import { app, BrowserWindow, Notification, shell, Menu, dialog, ipcMain, nativeTheme, nativeImage, Tray, globalShortcut, session, crashReporter } from "electron";
 import crypto from "node:crypto";
@@ -17,7 +17,7 @@ import { iniciarRegistro, registro } from "./registro.mjs";
 import { buscarVersionNueva } from "./actualizador.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
-const NOMBRE = "Moss";
+const NOMBRE = "Glim";
 app.setName(NOMBRE);
 iniciarRegistro(app.getPath("logs"));
 crashReporter.start({ uploadToServer: false }); // volcados solo en local (carpeta Crashpad de la app)
@@ -31,7 +31,7 @@ globalThis.panelElectron = {
 };
 
 const leerJson = (f) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return null; } };
-const esCerebro = (p) => !!p && fs.existsSync(path.join(p, "moss.config.json"));
+const esCerebro = (p) => !!p && fs.existsSync(path.join(p, "glim.config.json"));
 const CONFIG = () => path.join(app.getPath("userData"), "config.json");
 const guardarConfig = (cambios) => { fs.mkdirSync(path.dirname(CONFIG()), { recursive: true }); fs.writeFileSync(CONFIG(), JSON.stringify({ ...(leerJson(CONFIG()) || {}), ...cambios }, null, 2)); };
 
@@ -50,7 +50,7 @@ function arreglarPath() {
 
 // ---- Elegir el cerebro ----
 const PLANTILLA_CONFIG = (nombre) => ({
-  $schema: "https://raw.githubusercontent.com/educlopez/moss/main/schema/moss.config.schema.json",
+  $schema: "https://raw.githubusercontent.com/educlopez/glim/main/schema/glim.config.schema.json",
   nombre, persona: os.userInfo().username, zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", idioma: "es",
   reglas: "AGENTS.md", rutas: { borradores: "borradores", aprendizajes: "aprendizajes.md" }, privadas: ["privado/"],
   publicar: { rama: "main", prefijos: { "borradores/": "borradores" }, prefijoPorDefecto: "repo" },
@@ -60,10 +60,10 @@ function crearCerebro(dir) {
   const nombre = path.basename(dir);
   fs.mkdirSync(path.join(dir, "borradores"), { recursive: true });
   const escribir = (f, t) => { if (!fs.existsSync(path.join(dir, f))) fs.writeFileSync(path.join(dir, f), t); };
-  escribir("moss.config.json", JSON.stringify(PLANTILLA_CONFIG(nombre), null, 2) + "\n");
+  escribir("glim.config.json", JSON.stringify(PLANTILLA_CONFIG(nombre), null, 2) + "\n");
   escribir("AGENTS.md", `# ${nombre}\n\nReglas para los agentes que trabajan en este repo.\n\n## Reglas duras\n\n1. Nunca publicar nada sin el OK explícito de la persona.\n`);
   escribir("aprendizajes.md", "# Aprendizajes\n");
-  escribir(".gitignore", ".moss/\nprivado/\n.DS_Store\n");
+  escribir(".gitignore", ".glim/\nprivado/\n.DS_Store\n");
   if (!fs.existsSync(path.join(dir, ".git"))) { try { execFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir }); } catch { /* sin git: funciona igual, sin publicar */ } }
   return dir;
 }
@@ -71,7 +71,7 @@ function crearCerebro(dir) {
 function clonar(slug, destino) {
   return new Promise((resolve, reject) => {
     const dir = path.join(destino, slug.split("/").pop().replace(/\.git$/, ""));
-    if (fs.existsSync(dir)) return esCerebro(dir) ? resolve(dir) : reject(new Error(`Ya existe ${dir} y no es un cerebro de Moss.`));
+    if (fs.existsSync(dir)) return esCerebro(dir) ? resolve(dir) : reject(new Error(`Ya existe ${dir} y no es un cerebro de Glim.`));
     const conGh = (() => { try { execFileSync("gh", ["auth", "status"], { stdio: "ignore", timeout: 8000 }); return true; } catch { return false; } })();
     const [cmd, args] = conGh ? ["gh", ["repo", "clone", slug, dir]] : ["git", ["clone", `https://github.com/${slug}.git`, dir]];
     execFile(cmd, args, { timeout: 600000, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } }, (err, _o, e) => (err ? reject(new Error(String(e || err.message).trim().split("\n").pop())) : resolve(dir)));
@@ -90,30 +90,30 @@ function bienvenida() {
     const terminar = (dir) => {
       if (hecho) return;
       hecho = true;
-      for (const c of ["moss:elegir", "moss:clonar", "moss:crear"]) ipcMain.removeHandler(c);
+      for (const c of ["glim:elegir", "glim:clonar", "glim:crear"]) ipcMain.removeHandler(c);
       resolve(dir);
       if (!w.isDestroyed()) w.close();
     };
     const preguntarCarpeta = (titulo, boton) => { const r = dialog.showOpenDialogSync(w, { title: titulo, buttonLabel: boton, properties: ["openDirectory", "createDirectory"] }); return r && r[0]; };
-    ipcMain.handle("moss:elegir", () => {
+    ipcMain.handle("glim:elegir", () => {
       const dir = preguntarCarpeta("Elige la carpeta de tu cerebro", "Abrir");
       if (!dir) return { ok: false };
-      if (!esCerebro(dir)) return { ok: false, error: "Esa carpeta no tiene moss.config.json. Créalo o usa «Crear un cerebro nuevo»." };
+      if (!esCerebro(dir)) return { ok: false, error: "Esa carpeta no tiene glim.config.json. Créalo o usa «Crear un cerebro nuevo»." };
       terminar(dir);
       return { ok: true };
     });
-    ipcMain.handle("moss:clonar", async (_e, slug) => {
+    ipcMain.handle("glim:clonar", async (_e, slug) => {
       if (!/^[\w.-]+\/[\w.-]+$/.test(String(slug || ""))) return { ok: false, error: "Escribe el repo como usuario/nombre." };
       const destino = preguntarCarpeta("¿Dónde lo guardo?", "Clonar aquí");
       if (!destino) return { ok: false };
       try {
         const dir = await clonar(slug, destino);
-        if (!esCerebro(dir)) return { ok: false, error: "Clonado, pero no tiene moss.config.json en la raíz." };
+        if (!esCerebro(dir)) return { ok: false, error: "Clonado, pero no tiene glim.config.json en la raíz." };
         terminar(dir);
         return { ok: true };
       } catch (x) { return { ok: false, error: x.message }; }
     });
-    ipcMain.handle("moss:crear", () => {
+    ipcMain.handle("glim:crear", () => {
       const dir = preguntarCarpeta("Elige o crea una carpeta para el cerebro", "Crear aquí");
       if (!dir) return { ok: false };
       try { terminar(crearCerebro(dir)); return { ok: true }; } catch (x) { return { ok: false, error: x.message }; }
@@ -125,7 +125,7 @@ function bienvenida() {
 
 async function cerebro() {
   const guardado = (leerJson(CONFIG()) || {}).cerebro;
-  const ok = [process.env.MOSS_BRAIN, guardado].find(esCerebro);
+  const ok = [process.env.GLIM_BRAIN, guardado].find(esCerebro);
   if (ok) return ok;
   const dir = await bienvenida();
   if (dir) guardarConfig({ cerebro: dir });
@@ -136,11 +136,11 @@ async function cerebro() {
 const TOKEN = crypto.randomBytes(32).toString("hex");
 
 async function arrancarServidor(raiz) {
-  process.env.MOSS_BRAIN = raiz;
-  process.env.MOSS_TOKEN = TOKEN;
-  process.env.MOSS_APP = "1";
+  process.env.GLIM_BRAIN = raiz;
+  process.env.GLIM_TOKEN = TOKEN;
+  process.env.GLIM_APP = "1";
   // Huella de este main.mjs: el panel la compara con la del checkout para saber si hay que reinstalar la app.
-  process.env.MOSS_APP_HASH = crypto.createHash("sha1").update(fs.readFileSync(path.join(AQUI, "main.mjs"))).digest("hex").slice(0, 12);
+  process.env.GLIM_APP_HASH = crypto.createHash("sha1").update(fs.readFileSync(path.join(AQUI, "main.mjs"))).digest("hex").slice(0, 12);
   const origen = (leerJson(path.join(AQUI, "origen.json")) || {}).app;
   if (!app.isPackaged || (origen && fs.existsSync(path.join(origen, "vite.config.js")))) {
     // Desde el checkout: Vite con la API montada (vite.config.js).
@@ -177,7 +177,7 @@ function blindar(base) {
   s.setPermissionRequestHandler((_wc, permiso, cb) => cb(PERMISOS.has(permiso)));
   s.setPermissionCheckHandler((_wc, permiso) => PERMISOS.has(permiso));
   // El token de la API viaja en una cookie solo para 127.0.0.1 (las cookies no distinguen puertos).
-  return s.cookies.set({ url: base, name: "moss_token", value: TOKEN, httpOnly: true, sameSite: "strict" });
+  return s.cookies.set({ url: base, name: "glim_token", value: TOKEN, httpOnly: true, sameSite: "strict" });
 }
 
 let win = null;
@@ -188,7 +188,7 @@ let raizCerebro = null;
 let tray = null;
 let aj = null; // últimos ajustes aplicados
 
-const leerAjustes = () => leerJson(path.join(raizCerebro, ".moss", "ajustes.json")) || {};
+const leerAjustes = () => leerJson(path.join(raizCerebro, ".glim", "ajustes.json")) || {};
 const vibrancia = () => ((aj && aj.estilo) === "clasico" ? "sidebar" : "hud"); // Cristal = hudWindow, el material de Rex
 const PREFERENCIAS = { contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true, spellcheck: true, preload: path.join(AQUI, "preload.cjs") };
 
@@ -295,7 +295,7 @@ function avisar(titulo, cuerpo, hash) {
   not.show();
 }
 
-const api = (ruta, opciones = {}) => fetch(`${base}${ruta}`, { ...opciones, headers: { "x-moss-token": TOKEN, ...(opciones.headers || {}) } });
+const api = (ruta, opciones = {}) => fetch(`${base}${ruta}`, { ...opciones, headers: { "x-glim-token": TOKEN, ...(opciones.headers || {}) } });
 
 async function vigilar() {
   try {

@@ -1,7 +1,7 @@
-// Mantiene Moss y el cerebro al día:
+// Mantiene Glim y el cerebro al día:
 // 1. Vigila el cerebro (FSEvents, recursivo) y avisa a la ventana para que relea en cuanto cambia un archivo.
 // 2. Cerebro: mira GitHub cada pocos minutos (git fetch), dice si hay cambios por traer y los trae (solo avance rápido).
-// 3. App: si Moss corre desde su checkout de git, mira si su rama principal trae versiones nuevas y se actualiza
+// 3. App: si Glim corre desde su checkout de git, mira si su rama principal trae versiones nuevas y se actualiza
 //    (pull, npm ci si cambió el lock, reinstalar la app si cambió electron/). Las instalaciones desde una release
 //    se actualizan con las releases de GitHub.
 import fs from "node:fs";
@@ -11,7 +11,7 @@ import { execFile, spawn } from "node:child_process";
 import { ROOT, APP, ESTADO, cfg } from "./cerebro.js";
 import { ajustes } from "./ajustes.js";
 
-const IGNORAR = /^(\.git|\.moss|node_modules|media\/referencias\/(previas|archivo|subidas\/pendientes)|.*\/node_modules|.*\.DS_Store$|.*~$)(\/|$)/;
+const IGNORAR = /^(\.git|\.glim|node_modules|media\/referencias\/(previas|archivo|subidas\/pendientes)|.*\/node_modules|.*\.DS_Store$|.*~$)(\/|$)/;
 const PRIVADAS = cfg.privadas.map((r) => r.replace(/\/$/, ""));
 const hash = (f) => { try { return crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 12); } catch { return null; } };
 const gitEn = (cwd) => (args, timeout = 30000) => new Promise((resolve) => execFile("git", args, { cwd, timeout, maxBuffer: 10e6, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } }, (err, stdout, stderr) => resolve({ ok: !err, out: String(stdout || "").trim(), err: String(stderr || err?.message || "").trim() })));
@@ -44,7 +44,7 @@ export function vigilar({ emitir: e, reiniciar } = {}) {
       clearTimeout(t);
       t = setTimeout(() => { emitir("repo:cambio", { archivos: [...pendientes].slice(0, 50) }); pendientes = new Set(); }, 350);
     });
-  } catch (x) { console.warn("[moss] no se pudo vigilar el cerebro:", x.message); }
+  } catch (x) { console.warn("[glim] no se pudo vigilar el cerebro:", x.message); }
   // Primera comprobación al arrancar y luego cada minuto mira si toca (Ajustes → Actualizaciones).
   const t0 = setTimeout(() => ciclo().catch(() => {}), 1500);
   let ultima = Date.now();
@@ -85,9 +85,9 @@ export async function estado(conFetch = false) {
     cambiosLocales: cambios,
     ultimoFetch: ultimoFetch ? new Date(ultimoFetch).toISOString() : null,
     npmInstall: hash(path.join(APP, "package-lock.json")) !== LOCK_AL_ARRANCAR,
-    app: process.env.MOSS_APP_HASH ? { nueva: hash(path.join(APP, "electron", "main.mjs")) !== process.env.MOSS_APP_HASH } : null,
+    app: process.env.GLIM_APP_HASH ? { nueva: hash(path.join(APP, "electron", "main.mjs")) !== process.env.GLIM_APP_HASH } : null,
     trabajando,
-    servidor: { inicio: new Date(INICIO).toISOString(), pid: process.pid, version: VERSION, node: process.versions.node, enApp: !!process.env.MOSS_APP, checkout: esCheckout },
+    servidor: { inicio: new Date(INICIO).toISOString(), pid: process.pid, version: VERSION, node: process.versions.node, enApp: !!process.env.GLIM_APP, checkout: esCheckout },
   };
   return estadoGit;
 }
@@ -109,7 +109,7 @@ const OCUPADO = "Hay un agente trabajando en un encargo. Espera a que termine.";
 export async function reiniciar(ocupado) {
   if (ocupado) throw new Error(OCUPADO);
   if (!reiniciarServidor) throw new Error("Este servidor no se reinicia en caliente: cierra y abre la app.");
-  setTimeout(() => Promise.resolve(reiniciarServidor()).catch((e) => console.warn("[moss] reinicio:", e.message)), 200);
+  setTimeout(() => Promise.resolve(reiniciarServidor()).catch((e) => console.warn("[glim] reinicio:", e.message)), 200);
   return { ok: true };
 }
 
@@ -136,7 +136,7 @@ export async function traer(ocupado) {
 }
 
 export async function instalarDependencias() {
-  if (!esCheckout) throw new Error("Esta instalación de Moss no es un checkout de git.");
+  if (!esCheckout) throw new Error("Esta instalación de Glim no es un checkout de git.");
   if (trabajando) throw new Error("Ya hay una actualización en marcha.");
   trabajando = "npm";
   try { const r = await correr("npm", ["ci", "--no-audit", "--no-fund"], APP); if (!r.ok) throw new Error(r.log); return { log: r.log }; }
@@ -146,7 +146,7 @@ export async function instalarDependencias() {
 // Recompila la app de Mac y la copia a ~/Applications. La ventana la reabre después (relanzar).
 export async function reinstalarApp(ocupado) {
   if (ocupado) throw new Error(OCUPADO);
-  if (!esCheckout) throw new Error("Esta instalación de Moss no es un checkout de git.");
+  if (!esCheckout) throw new Error("Esta instalación de Glim no es un checkout de git.");
   if (trabajando) throw new Error("Ya hay una actualización en marcha.");
   trabajando = "app";
   try {
@@ -189,7 +189,7 @@ export async function actualizar(ocupado, { relanzar = false } = {}) {
   if (trabajando) throw new Error("Ya hay una actualización en marcha.");
   const a = await actualizacion(true);
   if (!a.checkout) throw new Error("Esta instalación se actualiza con las releases de GitHub.");
-  if (!a.limpio) throw new Error("La carpeta de Moss tiene cambios sin subir. Súbelos o descártalos antes de actualizar.");
+  if (!a.limpio) throw new Error("La carpeta de Glim tiene cambios sin subir. Súbelos o descártalos antes de actualizar.");
   trabajando = "actualizar";
   try {
     if (a.rama !== RAMA_APP) { const sw = await gitApp(["switch", RAMA_APP]); if (!sw.ok) throw new Error(sw.err); }
@@ -228,10 +228,10 @@ async function automatica() {
   try {
     const r = await actualizar(null, { relanzar: true });
     if (r.reinicio === "ventana") emitir("panel:actualizado", r);
-  } catch (x) { console.warn("[moss] actualización automática:", x.message); }
+  } catch (x) { console.warn("[glim] actualización automática:", x.message); }
 }
 
-// Novedades de Moss (changelog/<versión>.md, como el changelog de Pond), de la más nueva a la más vieja.
+// Novedades de Glim (changelog/<versión>.md, como el changelog de Pond), de la más nueva a la más vieja.
 const cmpVer = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
 export function novedades() {
   const dir = path.join(APP, "changelog");

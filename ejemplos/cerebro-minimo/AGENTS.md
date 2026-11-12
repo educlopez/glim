@@ -1,6 +1,6 @@
 # mi-cerebro
 
-Reglas para cualquier agente que trabaje en este repo desde Moss.
+Reglas para cualquier agente que trabaje en este repo desde Glim.
 
 ## Reglas duras
 

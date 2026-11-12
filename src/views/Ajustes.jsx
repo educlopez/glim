@@ -131,7 +131,7 @@ const Tecla = ({ children }) => <span className="atajo fijo">{children}</span>;
 function Interfaz({ a, cambiar }) {
   const d = useData();
   const { idioma } = useI18n();
-  // Con «Automático», la ayuda dice qué idioma sale y de dónde (moss.config.json → idioma o el navegador).
+  // Con «Automático», la ayuda dice qué idioma sale y de dónde (glim.config.json → idioma o el navegador).
   const delCerebro = d && d.cerebro && d.cerebro.idioma;
   return (
     <>
@@ -468,7 +468,7 @@ export default function Ajustes() {
         </label>
         <button type="button" className={`ajserver ${seccion === "servidor" && !buscando ? "sel" : ""}`} onClick={() => { setQ(""); r.set({ seccion: "servidor" }); }}>
           <span className="ajservericon" aria-hidden="true"><Sprout size={18} /></span>
-          <span><strong>{(d.cerebro && d.cerebro.nombre) || "Moss"}</strong><span className="muted small">{d.claves.buffer ? t("ajustes.enMarchaBuffer") : t("ajustes.enMarcha")}</span></span>
+          <span><strong>{(d.cerebro && d.cerebro.nombre) || "Glim"}</strong><span className="muted small">{d.claves.buffer ? t("ajustes.enMarchaBuffer") : t("ajustes.enMarcha")}</span></span>
         </button>
         <nav className="ajnav" aria-label={t("ajustes.secciones")}>
           {SECCIONES.filter((x) => x.id !== "servidor").map((x) => (

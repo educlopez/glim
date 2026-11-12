@@ -65,7 +65,7 @@ const NAV = [
 ];
 const VIEWS = Object.fromEntries(NAV.flatMap((g) => g.items).filter((i) => i.view).map((i) => [i.path, i.view]));
 
-// Qué módulo del cerebro necesita cada vista (moss.config.json → rutas). Sin él, la vista no sale en el menú.
+// Qué módulo del cerebro necesita cada vista (glim.config.json → rutas). Sin él, la vista no sale en el menú.
 const MODULO = { registro: "registro", kit: "kit", plantillas: "plantillas", carruseles: "carruseles", og: "ogs", marcas: "marcas" };
 function nav(data) {
   const mod = (data && data.cerebro && data.cerebro.modulos) || null;
@@ -99,7 +99,7 @@ export default function App() {
   }, [route.path]);
 
   // Agentation (notas de diseño) solo en desarrollo. Agent Sync si su servidor MCP está levantado; si no, las notas se
-  // guardan en <cerebro>/.moss/feedback/.
+  // guardan en <cerebro>/.glim/feedback/.
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     fetch(`${MCP}/health`, { signal: AbortSignal.timeout(1200) }).then((r) => r.ok && setEndpoint(MCP)).catch(() => {});
@@ -174,7 +174,7 @@ export default function App() {
           <aside className="side">
             <a className="brand" href="#/">
               <span className="brandmark" aria-hidden="true"><Sprout size={15} /></span>
-              <span>{(data && data.cerebro && data.cerebro.nombre) || "Moss"}</span>
+              <span>{(data && data.cerebro && data.cerebro.nombre) || "Glim"}</span>
             </a>
             <nav aria-label={t("app.secciones")} className="nav">
               {nav(data).map((g) => (
@@ -222,7 +222,7 @@ export default function App() {
           </main>
           {post ? <PostDetail post={post} onClose={() => route.set({ ver: null })} /> : null}
           {data && route.params.pedir ? <Composer key={route.params.pedir + (route.params.nota || "") + (route.params.preset || "")} /> : null}
-          {import.meta.env.DEV ? <Agentation appName="Moss" useHashLocation endpoint={endpoint}
+          {import.meta.env.DEV ? <Agentation appName="Glim" useHashLocation endpoint={endpoint}
             identifyingAttributes={["data-post", "data-plantilla", "data-path", "data-component", "data-dia"]}
             onCopy={(o) => { save(o).catch(() => {}); }} onSubmit={(o) => save(o)} /> : null}
         </div>

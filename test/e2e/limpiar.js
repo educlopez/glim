@@ -2,5 +2,5 @@
 import fs from "node:fs";
 
 export default function limpiar() {
-  if (process.env.MOSS_E2E_BRAIN) fs.rmSync(process.env.MOSS_E2E_BRAIN, { recursive: true, force: true });
+  if (process.env.GLIM_E2E_BRAIN) fs.rmSync(process.env.GLIM_E2E_BRAIN, { recursive: true, force: true });
 }

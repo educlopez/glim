@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Esquema } from "../server/esquema.js";
 
-describe("Esquema de moss.config.json", () => {
+describe("Esquema de glim.config.json", () => {
   it("acepta una configuración mínima y rellena los valores por defecto", () => {
     const r = Esquema.safeParse({ nombre: "Mi cerebro" });
     expect(r.success).toBe(true);
@@ -11,7 +11,7 @@ describe("Esquema de moss.config.json", () => {
     expect(r.data.redes).toEqual(["X", "LinkedIn"]);
     expect(r.data.privadas).toEqual([]);
     expect(r.data.publicar.rama).toBe("main");
-    expect(r.data.llavero).toBe("moss");
+    expect(r.data.llavero).toBe("glim");
     expect(r.data.zonaHoraria).toBeUndefined();
   });
 

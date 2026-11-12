@@ -1,8 +1,8 @@
-# El cerebro: `moss.config.json`
+# El cerebro: `glim.config.json`
 
-Un cerebro es cualquier repo con un `moss.config.json` en la raíz. El esquema completo está en [`schema/moss.config.schema.json`](../schema/moss.config.schema.json) (añade `"$schema"` al archivo y tu editor autocompleta y valida). Hay un ejemplo mínimo en [`ejemplos/cerebro-minimo`](../ejemplos/cerebro-minimo).
+Un cerebro es cualquier repo con un `glim.config.json` en la raíz. El esquema completo está en [`schema/glim.config.schema.json`](../schema/glim.config.schema.json) (añade `"$schema"` al archivo y tu editor autocompleta y valida). Hay un ejemplo mínimo en [`ejemplos/cerebro-minimo`](../ejemplos/cerebro-minimo).
 
-Moss valida el archivo al arrancar y, si algo no cuadra, dice qué campo falla.
+Glim valida el archivo al arrancar y, si algo no cuadra, dice qué campo falla.
 
 ## Campos
 
@@ -30,7 +30,7 @@ Moss valida el archivo al arrancar y, si algo no cuadra, dice qué campo falla.
 | `publicar.contexto` | Contexto para la IA que redacta el commit y revisa | `""` |
 | `integraciones.buffer` | Activa Buffer (solo lectura). `importarDesde`: fecha desde la que se importan posts | desactivada |
 | `integraciones.dub` | Activa los enlaces cortos de Dub | desactivada |
-| `llavero` | Prefijo de las claves en el Llavero (`<prefijo>-buffer`) | `moss` |
+| `llavero` | Prefijo de las claves en el Llavero (`<prefijo>-buffer`) | `glim` |
 
 ### `rutas`
 
@@ -40,9 +40,9 @@ Todas relativas a la raíz del cerebro. Una vista sale en el menú solo si su ru
 |---|---|---|
 | `borradores` | Un `.md` por pieza con frontmatter (`red`, `estado`, `programado_para`…) | Posts, Calendario |
 | `aprendizajes` | Registro de decisiones (Markdown, lo más nuevo arriba) | Registro |
-| `calendario` | Markdown donde Moss reescribe lo programado entre `<!-- panel:inicio -->` y `<!-- panel:fin -->` | |
-| `referencias` | JSON de referencias | Referencias (`.moss/referencias.json`) |
-| `lienzos` | JSON de lienzos | Lienzos (`.moss/lienzos.json`) |
+| `calendario` | Markdown donde Glim reescribe lo programado entre `<!-- panel:inicio -->` y `<!-- panel:fin -->` | |
+| `referencias` | JSON de referencias | Referencias (`.glim/referencias.json`) |
+| `lienzos` | JSON de lienzos | Lienzos (`.glim/lienzos.json`) |
 | `media`, `mediaReferencias` | Medios renderizados y de referencias | Medios |
 | `indiceRecursos` | JSON con las plantillas (`plantillas: [{ id, tipo, estado, ruta }]`) | Plantillas |
 | `seriesCarrusel`, `mediaCarruseles` | JSON de carruseles y sus slides | Carruseles |
@@ -54,4 +54,4 @@ Todas relativas a la raíz del cerebro. Una vista sale en el menú solo si su ru
 
 ## Estado local
 
-`<cerebro>/.moss/` guarda lo que es de este equipo: encargos, ajustes, cachés de Buffer y del análisis de referencias, iconos generados y notas de feedback. Añade `.moss/` al `.gitignore` del cerebro.
+`<cerebro>/.glim/` guarda lo que es de este equipo: encargos, ajustes, cachés de Buffer y del análisis de referencias, iconos generados y notas de feedback. Añade `.glim/` al `.gitignore` del cerebro.

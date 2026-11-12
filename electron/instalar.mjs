@@ -7,9 +7,9 @@ import { fileURLToPath } from "node:url";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const release = path.resolve(AQUI, "../release");
-const dir = fs.readdirSync(release).map((d) => path.join(release, d, "Moss.app")).find((p) => fs.existsSync(p));
-if (!dir) throw new Error("No encuentro release/*/Moss.app. Ejecuta antes npm run app:build.");
-const destino = path.join(os.homedir(), "Applications", "Moss.app");
+const dir = fs.readdirSync(release).map((d) => path.join(release, d, "Glim.app")).find((p) => fs.existsSync(p));
+if (!dir) throw new Error("No encuentro release/*/Glim.app. Ejecuta antes npm run app:build.");
+const destino = path.join(os.homedir(), "Applications", "Glim.app");
 fs.mkdirSync(path.dirname(destino), { recursive: true });
 fs.rmSync(destino, { recursive: true, force: true });
 fs.cpSync(dir, destino, { recursive: true, verbatimSymlinks: true });

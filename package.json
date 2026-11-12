@@ -1,17 +1,17 @@
 {
-  "name": "moss",
-  "productName": "Moss",
-  "version": "0.2.0",
+  "name": "glim",
+  "productName": "Glim",
+  "version": "0.3.0",
   "description": "Una app de Mac para trabajar con agentes (Claude Code, Codex, Cursor, OpenCode…) sobre un repo de contenido: borradores, referencias, calendario y publicación con revisión.",
   "license": "MIT",
   "author": "Eduardo Calvo",
-  "homepage": "https://github.com/educlopez/moss",
+  "homepage": "https://github.com/educlopez/glim",
   "repository": {
     "type": "git",
-    "url": "https://github.com/educlopez/moss.git"
+    "url": "https://github.com/educlopez/glim.git"
   },
   "bugs": {
-    "url": "https://github.com/educlopez/moss/issues"
+    "url": "https://github.com/educlopez/glim/issues"
   },
   "private": true,
   "type": "module",
@@ -56,8 +56,8 @@
     "zod-to-json-schema": "^3.25.2"
   },
   "build": {
-    "appId": "com.educlopez.moss",
-    "productName": "Moss",
+    "appId": "com.educlopez.glim",
+    "productName": "Glim",
     "copyright": "Copyright © 2026 Eduardo Calvo",
     "directories": {
       "output": "release",
@@ -88,7 +88,7 @@
       "grantFileProtocolExtraPrivileges": false
     },
     "mac": {
-      "icon": "electron/Moss.icon",
+      "icon": "electron/Glim.icon",
       "category": "public.app-category.productivity",
       "darkModeSupport": true,
       "target": [
@@ -117,7 +117,7 @@
       {
         "provider": "github",
         "owner": "educlopez",
-        "repo": "moss",
+        "repo": "glim",
         "releaseType": "draft"
       }
     ]

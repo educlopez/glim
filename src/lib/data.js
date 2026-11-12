@@ -35,7 +35,7 @@ export const ESTADOS = [
 ];
 export const estadoLabel = (id) => (ESTADOS.find((e) => e.id === id) || { label: id || t("estado.sinEstado") }).label;
 
-// Redes y cadencia salen del cerebro (moss.config.json → redes, cadencia). `export let`: las vistas ven el valor nuevo.
+// Redes y cadencia salen del cerebro (glim.config.json → redes, cadencia). `export let`: las vistas ven el valor nuevo.
 export let REDES = ["X", "Threads", "LinkedIn"];
 let CADENCIA = {};
 export function configurarCerebro(c) {

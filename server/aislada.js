@@ -1,4 +1,4 @@
-// Copias aisladas de los encargos: cada encargo trabaja en su propio git worktree, en <cerebro>/.moss/copias/<id>.
+// Copias aisladas de los encargos: cada encargo trabaja en su propio git worktree, en <cerebro>/.glim/copias/<id>.
 // La copia arranca con el estado actual del repo (lo que hay en HEAD más los cambios sin subir) para que el agente vea
 // lo mismo que tú. Lo que cambie el agente se queda en la copia hasta que lo apliques al repo (o lo descartes).
 // Las carpetas pesadas que git ignora (medios, node_modules) se comparten con enlaces simbólicos: agentes.compartidas.
@@ -8,13 +8,13 @@ import { execFileSync } from "node:child_process";
 import { ROOT, ESTADO, cfg, rutas } from "./cerebro.js";
 
 const DIR = path.join(ESTADO, "copias");
-const IDENT = ["-c", "user.name=Moss", "-c", "user.email=moss@localhost", "-c", "commit.gpgsign=false"];
+const IDENT = ["-c", "user.name=Glim", "-c", "user.email=glim@localhost", "-c", "commit.gpgsign=false"];
 const git = (cwd, args, input) => execFileSync("git", args, { cwd, encoding: "utf8", maxBuffer: 200e6, input, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"] });
 const valido = (id) => /^[a-z0-9-]{6,80}$/.test(id || "");
 
 export const ruta = (id) => { if (!valido(id)) throw new Error("Id no válido"); return path.join(DIR, id); };
 const compartidas = () => [...new Set([rutas.media, ...cfg.agentes.compartidas])].filter((p) => p && fs.existsSync(path.join(ROOT, p)));
-const fuera = () => [".moss", ...compartidas()].map((p) => `:(exclude)${p}`);
+const fuera = () => [".glim", ...compartidas()].map((p) => `:(exclude)${p}`);
 
 // Crea la copia y deja un commit «base» con el estado actual del repo. Devuelve { base, creada }.
 export function crear(id) {
@@ -39,7 +39,7 @@ export function crear(id) {
       fs.symlinkSync(path.join(ROOT, p), destino);
     }
     git(dir, ["add", "-A", "--", ".", ...fuera()]);
-    git(dir, [...IDENT, "commit", "-q", "--allow-empty", "--no-verify", "-m", "moss: estado del repo al empezar el encargo"]);
+    git(dir, [...IDENT, "commit", "-q", "--allow-empty", "--no-verify", "-m", "glim: estado del repo al empezar el encargo"]);
     return { base: git(dir, ["rev-parse", "HEAD"]).trim(), creada: new Date().toISOString() };
   } catch (x) {
     borrar(id);

@@ -2,9 +2,10 @@
 //   - Caja en la barra lateral: versión, «Actualización disponible» y «Publicar cambios».
 //   - Hoja de actualización: qué trae main, qué hará (recargar o reinstalar y reiniciar) y botón Actualizar.
 //   - Hoja de publicación: cambios agrupados y los pasos en directo (seguridad, PR, revisión, CI, fusión).
-//   - Hoja de novedades: al abrir tras actualizar, lo nuevo de cada versión (changelog/ de Moss).
+//   - Hoja de novedades: al abrir tras actualizar, lo nuevo de cada versión (changelog/ de Glim).
 // El contenido del repo no necesita botón: el servidor avisa en cuanto cambia un archivo y la ventana relee sola.
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   RefreshCw, CloudDownload, CircleCheck, LoaderCircle, GitBranch, UploadCloud, X as Close, Circle, CircleX, CircleAlert,
   CircleMinus, GitPullRequest,
@@ -28,7 +29,9 @@ function Hoja({ titulo, sub, onClose, children, pie, ancho = 560, cerrable = tru
     window.addEventListener("keydown", on, true);
     return () => window.removeEventListener("keydown", on, true);
   }, [onClose, cerrable]);
-  return (
+  // Portal a <body>: la barra lateral es sticky (crea su propio contexto de apilado) y,
+  // dentro de ella, la hoja quedaba por debajo de las tarjetas del contenido.
+  return createPortal(
     <>
       <div className="scrim" onClick={() => cerrable && onClose()} aria-hidden="true" />
       <div className="hoja" role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} ref={ref} style={{ "--hoja-w": `${ancho}px` }}>
@@ -39,7 +42,8 @@ function Hoja({ titulo, sub, onClose, children, pie, ancho = 560, cerrable = tru
         <div className="hojabody">{children}</div>
         {pie ? <footer className="hojapie">{pie}</footer> : null}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
@@ -169,7 +173,7 @@ function HojaActualizar({ a, onClose }) {
   };
   return (
     <Hoja titulo={t("act.disponible")} onClose={onClose} cerrable={!estado}
-      sub={a.versionRemota && a.versionRemota !== a.versionLocal ? `Moss ${a.versionLocal} → ${a.versionRemota}` : t("act.cambiosNuevos", { n: a.atras })}
+      sub={a.versionRemota && a.versionRemota !== a.versionLocal ? `Glim ${a.versionLocal} → ${a.versionRemota}` : t("act.cambiosNuevos", { n: a.atras })}
       pie={<>
         <span className="small muted">{a.requiereApp ? t("act.cambiaNucleo") : t("act.seRecarga")}</span>
         <span className="flex1" />
@@ -192,7 +196,7 @@ export function Novedades({ desde, onClose }) {
   const lista = n.novedades.filter((x) => !desde || cmp(x.version, desde) > 0);
   const cerrar = () => { ponerVista(n.version); onClose(); };
   return (
-    <Hoja titulo={t("act.novedades")} sub={`Moss ${n.version}`} onClose={cerrar} ancho={600}
+    <Hoja titulo={t("act.novedades")} sub={`Glim ${n.version}`} onClose={cerrar} ancho={600}
       pie={<><span className="flex1" /><button type="button" className="btn primary" onClick={cerrar}>{t("act.seguir")}</button></>}>
       {(lista.length ? lista : n.novedades.slice(0, 1)).map((x) => (
         <article key={x.version} className="novedad">
@@ -254,7 +258,7 @@ export function Actualizacion({ onReload }) {
     <>
       <div className="updatebox" data-component="actualizacion">
         <div className="updatehead">
-          <button type="button" className="appver small" onClick={() => { setDesde(null); setHoja("novedades"); }} title={t("act.verNovedades")}>Moss <span className="mono">{a.versionLocal}</span></button>
+          <button type="button" className="appver small" onClick={() => { setDesde(null); setHoja("novedades"); }} title={t("act.verNovedades")}>Glim <span className="mono">{a.versionLocal}</span></button>
           {a.rama !== "main" ? <span className="ramachip mono small" title={t("act.rama", { rama: a.rama })}><GitBranch size={11} aria-hidden="true" />{a.rama}</span> : null}
           <button type="button" className="iconbtn tiny" onClick={comprobar} disabled={comprobando} aria-label={t("act.buscar")}>
             <RefreshCw size={13} aria-hidden="true" className={comprobando ? "spin" : ""} />

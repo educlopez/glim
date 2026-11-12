@@ -1,10 +1,10 @@
-// «Publicar cambios»: lo que la persona pulsa en Moss para subir lo que hay en local en el cerebro (suyo o de los
+// «Publicar cambios»: lo que la persona pulsa en Glim para subir lo que hay en local en el cerebro (suyo o de los
 // encargos). Cada pulsación es su OK para esa publicación; un agente nunca la lanza.
-//   1. Cambios: qué hay sin subir, agrupado por zona (prefijos de moss.config.json).
+//   1. Cambios: qué hay sin subir, agrupado por zona (prefijos de glim.config.json).
 //   2. Seguridad: secretos, rutas privadas o prohibidas, el correo de git y archivos grandes. Bloquea.
 //   3. Comprobaciones: JSON válido, node --check y py_compile de lo que cambia.
 //   4. Redacción: la IA escribe el commit (con prefijo). Plan B sin IA.
-//   5. Rama moss/<fecha>-<tema>, commit y push.  6. PR a la rama principal.
+//   5. Rama glim/<fecha>-<tema>, commit y push.  6. PR a la rama principal.
 //   7. Revisión de la IA contra las reglas del cerebro, como comentario en la PR. Si bloquea, la PR queda en borrador.
 //   8. CI de GitHub (si hay).  9. Espera cancelable.  10. Fusión (squash), vuelta a la rama principal y limpieza.
 import fs from "node:fs";
@@ -63,7 +63,7 @@ const DURO = [
   [/\b(?:api[_-]?key|token|secret|password)\s*[:=]\s*["'][A-Za-z0-9_\-.]{20,}["']/i, "credencial asignada en el código"],
 ];
 const empieza = (r) => new RegExp(`^${r.replace(/\/$/, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\/|$)`);
-const PROHIBIDAS = [...cfg.privadas, ...PUB.prohibidas, ".moss"].map(empieza).concat([/(^|\/)\.env(\.|$)/]);
+const PROHIBIDAS = [...cfg.privadas, ...PUB.prohibidas, ".glim"].map(empieza).concat([/(^|\/)\.env(\.|$)/]);
 const VETADOS = PUB.terminosVetados.length ? new RegExp(`\\b(${PUB.terminosVetados.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`, "i") : null;
 async function seguridad(lista) {
   const bloqueos = [], avisos = [];
@@ -94,7 +94,7 @@ async function seguridad(lista) {
   for (const [f, l] of lineas) {
     for (const [re, que] of DURO) if (re.test(l) && !vistos.has(`${f}${que}`)) { vistos.add(`${f}${que}`); bloqueos.push(`${f}: posible ${que}`); }
     if (email && l.includes(email) && !vistos.has(`${f}email`)) { vistos.add(`${f}email`); bloqueos.push(`${f}: contiene tu correo`); }
-    if (VETADOS && VETADOS.test(l) && f !== cfg.reglas && f !== "moss.config.json" && !vistos.has(`${f}vetado`)) {
+    if (VETADOS && VETADOS.test(l) && f !== cfg.reglas && f !== "glim.config.json" && !vistos.has(`${f}vetado`)) {
       vistos.add(`${f}vetado`); avisos.push(`${f}: contiene un término vetado (${VETADOS.exec(l)[1]})`);
     }
   }
@@ -148,7 +148,7 @@ ${diff}`;
     const z = c.zonas.slice().sort((a, b) => b.total - a.total)[0];
     const pref = z && z.zona !== "otros" ? z.zona : PUB.prefijoPorDefecto;
     return {
-      titulo: `${pref}: cambios desde Moss (${c.total} archivos)`, cuerpo: c.zonas.map((x) => `- ${x.zona}: ${x.total} archivos`).join("\n"), tipo: "chore",
+      titulo: `${pref}: cambios desde Glim (${c.total} archivos)`, cuerpo: c.zonas.map((x) => `- ${x.zona}: ${x.total} archivos`).join("\n"), tipo: "chore",
       via: `plan B (${e.message.slice(0, 80)})`,
     };
   }
@@ -213,7 +213,7 @@ export async function publicar() {
     paso("subir", "en-curso");
     const base = PUB.rama;
     await git(["fetch", "--quiet", "origin", base], { timeout: 60000 });
-    const rama = `moss/${new Date().toISOString().slice(0, 10)}-${slug(r.titulo)}-${Date.now().toString(36).slice(-4)}`;
+    const rama = `glim/${new Date().toISOString().slice(0, 10)}-${slug(r.titulo)}-${Date.now().toString(36).slice(-4)}`;
     const sw = await git(["switch", "-c", rama]);
     if (!sw.ok) return fallar("subir", sw.err);
     actual.rama = rama;
@@ -225,7 +225,7 @@ export async function publicar() {
     paso("subir", "ok", rama);
 
     paso("pr", "en-curso");
-    const cuerpoPr = `${r.cuerpo || ""}\n\n## Comprobaciones\n\n- Seguridad: ${s.avisos.length ? s.avisos.join("; ") : "sin secretos ni rutas prohibidas"}\n- JSON y sintaxis: correctos\n\nPublicado desde Moss (botón «Publicar cambios»), con el OK de ${P}.`;
+    const cuerpoPr = `${r.cuerpo || ""}\n\n## Comprobaciones\n\n- Seguridad: ${s.avisos.length ? s.avisos.join("; ") : "sin secretos ni rutas prohibidas"}\n- JSON y sintaxis: correctos\n\nPublicado desde Glim (botón «Publicar cambios»), con el OK de ${P}.`;
     const pr = await run("gh", ["pr", "create", "--base", base, "--head", rama, "--title", r.titulo, "--body-file", "-"], { input: cuerpoPr, timeout: 60000 });
     if (!pr.ok) return fallar("pr", pr.err.split("\n").slice(-2).join(" "));
     actual.pr = { url: pr.out.split("\n").pop(), numero: Number((/\/pull\/(\d+)/.exec(pr.out) || [])[1]) || null };

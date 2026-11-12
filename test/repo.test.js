@@ -30,9 +30,9 @@ describe("safe()", () => {
   });
 
   it("rechaza el estado local salvo el feedback", () => {
-    expect(safe(".moss/ajustes.json")).toBeNull();
-    expect(safe(".moss/encargos/x.json")).toBeNull();
-    expect(safe(".moss/feedback/nota.md")).not.toBeNull();
+    expect(safe(".glim/ajustes.json")).toBeNull();
+    expect(safe(".glim/encargos/x.json")).toBeNull();
+    expect(safe(".glim/feedback/nota.md")).not.toBeNull();
   });
 
   it("rechaza secretos, git y dependencias", () => {

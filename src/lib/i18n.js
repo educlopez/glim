@@ -25,7 +25,7 @@ export function setIdioma(id) {
   return actual;
 }
 
-// Idioma que toca: el ajuste del panel ("auto", "es", "en"); con "auto", el del cerebro (moss.config.json → idioma)
+// Idioma que toca: el ajuste del panel ("auto", "es", "en"); con "auto", el del cerebro (glim.config.json → idioma)
 // y, si no está soportado, el del navegador. Si nada encaja, castellano.
 export function resolverIdioma(ajuste, cerebro, navegador) {
   const base = (s) => String(s || "").toLowerCase().split(/[-_]/)[0];
@@ -37,7 +37,7 @@ export function resolverIdioma(ajuste, cerebro, navegador) {
 }
 
 // Último idioma usado en esta ventana, para no parpadear en castellano mientras carga /api/overview.
-const CLAVE_GUARDADA = "moss:idioma";
+const CLAVE_GUARDADA = "glim:idioma";
 export function idiomaGuardado() {
   try { const v = window.localStorage.getItem(CLAVE_GUARDADA); return DICCIONARIOS[v] ? v : null; } catch { return null; }
 }

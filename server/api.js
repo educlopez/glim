@@ -1,6 +1,6 @@
-// API local de Moss. Lee el cerebro en cada petición, sin caché, para reflejar siempre el disco.
-// Escribe solo en: <cerebro>/.moss/ (estado local), las referencias, los lienzos y los aprendizajes del cerebro, y las
-// carpetas de medios de referencias (subidas, previas y copias de páginas). Rutas en moss.config.json.
+// API local de Glim. Lee el cerebro en cada petición, sin caché, para reflejar siempre el disco.
+// Escribe solo en: <cerebro>/.glim/ (estado local), las referencias, los lienzos y los aprendizajes del cerebro, y las
+// carpetas de medios de referencias (subidas, previas y copias de páginas). Rutas en glim.config.json.
 // Se monta igual en el servidor de Vite (desarrollo) y en el servidor propio de la app (server/servidor.js).
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -221,15 +221,15 @@ function suscribir(req, res) {
 }
 
 // ---- Acceso ----
-// Solo desde este equipo: el host tiene que ser 127.0.0.1 o localhost (contra el rebinding de DNS). Con MOSS_TOKEN
+// Solo desde este equipo: el host tiene que ser 127.0.0.1 o localhost (contra el rebinding de DNS). Con GLIM_TOKEN
 // (lo pone la app al arrancar, aleatorio en cada arranque), además, toda petición a /api y /repo lleva el token en
-// la cookie moss_token o en la cabecera x-moss-token: otro programa del equipo no puede leer el cerebro.
-const TOKEN = process.env.MOSS_TOKEN || null;
+// la cookie glim_token o en la cabecera x-glim-token: otro programa del equipo no puede leer el cerebro.
+const TOKEN = process.env.GLIM_TOKEN || null;
 function autorizado(req) {
   if (!/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(String(req.headers.host || ""))) return false;
   if (!TOKEN) return true;
-  const ck = /(?:^|;\s*)moss_token=([^;]+)/.exec(req.headers.cookie || "");
-  const t = String(req.headers["x-moss-token"] || (ck && decodeURIComponent(ck[1])) || "");
+  const ck = /(?:^|;\s*)glim_token=([^;]+)/.exec(req.headers.cookie || "");
+  const t = String(req.headers["x-glim-token"] || (ck && decodeURIComponent(ck[1])) || "");
   return t.length === TOKEN.length && crypto.timingSafeEqual(Buffer.from(t), Buffer.from(TOKEN));
 }
 
@@ -253,7 +253,7 @@ export async function manejar(req, res, next) {
       fs.mkdirSync(FEEDBACK, { recursive: true });
       const name = new Date().toISOString().replace(/[:.]/g, "-") + ".md";
       fs.writeFileSync(path.join(FEEDBACK, name), `<!-- página: ${String(page || "").slice(0, 300)} -->\n\n${String(output || "")}\n`);
-      return json(res, { ok: true, file: `.moss/feedback/${name}` });
+      return json(res, { ok: true, file: `.glim/feedback/${name}` });
     } catch (e) { return json(res, { error: String(e.message || e) }, 400); }
   }
   for (const [method, re, fn] of RUTAS) {
@@ -278,7 +278,7 @@ export async function manejar(req, res, next) {
 export function arrancar({ reiniciar } = {}) {
   const parar = vivo.vigilar({ emitir, reiniciar });
   pub.alCambiar(() => emitir("panel:publicar"));
-  const t = setTimeout(() => icono.aplicar().catch((e) => console.warn("[moss] icono:", e.message)), 1200);
+  const t = setTimeout(() => icono.aplicar().catch((e) => console.warn("[glim] icono:", e.message)), 1200);
   t.unref?.();
   analisis.alAcabar(() => emitir("repo:cambio", { archivos: ["analisis"] }));
   buffer.arrancar(() => emitir("repo:cambio", { archivos: ["buffer"] }));
@@ -288,7 +288,7 @@ export function arrancar({ reiniciar } = {}) {
 // Plugin de Vite (desarrollo): monta la API en el servidor de Vite.
 export function repoApi() {
   return {
-    name: "moss-api",
+    name: "glim-api",
     configureServer(server) {
       const parar = arrancar({ reiniciar: () => server.restart() });
       server.httpServer && server.httpServer.on("close", parar);

@@ -12,5 +12,5 @@ electron/icon.icns
 electron/icon.iconset/
 electron/iconos/
 server/__pycache__/
-test/fixtures/cerebro/.moss/
+test/fixtures/cerebro/.glim/
 .claude/

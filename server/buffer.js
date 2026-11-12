@@ -1,7 +1,7 @@
 // Buffer en el panel: SOLO LECTURA hacia Buffer; el repo se reconcilia con lo que hay allí (reconciliar.js). Trae lo programado, enviado, en borrador o con error para cruzarlo con los
 // borradores del repo. No crea, edita ni programa nada (reglas 1 y 2 de AGENTS.md).
 // La clave nunca está en el repo ni llega al navegador: variable BUFFER_API_KEY o Llavero de macOS
-// (servicio "<llavero>-buffer"). Caché en <cerebro>/.moss/buffer.json (ignorado por git).
+// (servicio "<llavero>-buffer"). Caché en <cerebro>/.glim/buffer.json (ignorado por git).
 import fs from "node:fs";
 import path from "node:path";
 import { ROOT } from "./repo.js";

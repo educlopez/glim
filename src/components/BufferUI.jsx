@@ -12,7 +12,7 @@ const METRICAS = ["reactions", "comments", "reposts", "impressions", "views", "r
 const metrica = (m) => (METRICAS.includes(m.tipo) ? t(`buffer.metrica.${m.tipo}`) : m.nombre);
 const ESTADOS_BUFFER = ["draft", "scheduled", "sending", "sent", "error", "needs_approval"];
 export const estadoBuffer = (e) => (ESTADOS_BUFFER.includes(e) ? t(`buffer.estado.${e}`) : e);
-const cmd = (llavero) => `security add-generic-password -U -a buffer -s ${llavero || "moss"}-buffer -w "$(pbpaste)"`;
+const cmd = (llavero) => `security add-generic-password -U -a buffer -s ${llavero || "glim"}-buffer -w "$(pbpaste)"`;
 
 export function BufferEstado() {
   const d = useData();
