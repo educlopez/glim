@@ -4,10 +4,14 @@ import { RefreshCw, ExternalLink, CircleAlert, Plug, CircleCheck } from "lucide-
 import { useData } from "../lib/data.js";
 import { post, hace } from "../lib/api.js";
 import { RedIcon, CopyButton } from "./ui.jsx";
+import { fmtFechaHora, fmtNumero, t } from "../lib/i18n.js";
 
 const RED = { twitter: "X", threads: "Threads", linkedin: "LinkedIn" };
-const METRICA = { reactions: "reacciones", comments: "comentarios", reposts: "reposts", impressions: "impresiones", views: "vistas", reach: "alcance", clicks: "clics", engagementRate: "interacción", quotes: "citas", saves: "guardados", shares: "compartidos", follows: "seguidores" };
-export const ESTADO_BUFFER = { draft: "Borrador", scheduled: "Programado", sending: "Enviando", sent: "Publicado", error: "Error", needs_approval: "Pide aprobación" };
+// Etiquetas en el idioma activo: claves de src/locales/*.js.
+const METRICAS = ["reactions", "comments", "reposts", "impressions", "views", "reach", "clicks", "engagementRate", "quotes", "saves", "shares", "follows"];
+const metrica = (m) => (METRICAS.includes(m.tipo) ? t(`buffer.metrica.${m.tipo}`) : m.nombre);
+const ESTADOS_BUFFER = ["draft", "scheduled", "sending", "sent", "error", "needs_approval"];
+export const estadoBuffer = (e) => (ESTADOS_BUFFER.includes(e) ? t(`buffer.estado.${e}`) : e);
 const cmd = (llavero) => `security add-generic-password -U -a buffer -s ${llavero || "moss"}-buffer -w "$(pbpaste)"`;
 
 export function BufferEstado() {
@@ -26,12 +30,12 @@ export function BufferEstado() {
       <div className="bufferconnect" data-component="buffer-conectar">
         <Plug size={16} aria-hidden="true" />
         <div className="stack">
-          <strong className="small">Conecta Buffer para ver lo que de verdad está programado</strong>
-          <span className="small muted">1. En publish.buffer.com/settings/api pulsa «New Key» y cópiala. 2. Pega este comando en Terminal: guarda la clave del portapapeles en el Llavero, sin que pase por el repo ni por el chat. 3. Pulsa Comprobar.</span>
+          <strong className="small">{t("buffer.conecta")}</strong>
+          <span className="small muted">{t("buffer.pasos")}</span>
           <div className="row wrap gap-s">
             <code className="small cmdline">{CMD}</code>
-            <CopyButton text={CMD} label="Copiar comando" />
-            <button type="button" className="btn small" onClick={sincronizar} disabled={sync}>{sync ? "Comprobando…" : "Comprobar"}</button>
+            <CopyButton text={CMD} label={t("buffer.copiarComando")} />
+            <button type="button" className="btn small" onClick={sincronizar} disabled={sync}>{sync ? t("buffer.comprobando") : t("buffer.comprobar")}</button>
           </div>
           {err ? <span className="small formerror">{err}</span> : null}
         </div>
@@ -39,16 +43,16 @@ export function BufferEstado() {
     );
   }
   return (
-    <span className={`bufferpill ${b.error ? "is-error" : ""}`} title={b.error || [b.restantes != null ? `${b.restantes} peticiones a Buffer disponibles hoy` : "", (b.autoPublicados || []).length ? `Marcados como publicados por el panel: ${b.autoPublicados.slice(0, 6).map((a) => a.path.replace(/^borradores\//, "")).join(", ")}` : ""].filter(Boolean).join("\n")}>
+    <span className={`bufferpill ${b.error ? "is-error" : ""}`} title={b.error || [b.restantes != null ? t("buffer.restantes", { n: b.restantes }) : "", (b.autoPublicados || []).length ? t("buffer.autoPublicados", { lista: b.autoPublicados.slice(0, 6).map((a) => a.path.replace(/^borradores\//, "")).join(", ") }) : ""].filter(Boolean).join("\n")}>
       {b.error ? <CircleAlert size={13} aria-hidden="true" /> : <CircleCheck size={13} aria-hidden="true" />}
-      <span>Buffer {b.error ? "con error" : b.sincronizado ? `· ${hace(b.sincronizado)}` : "· sin datos"}</span>
+      <span>Buffer {b.error ? t("buffer.conError") : b.sincronizado ? `· ${hace(b.sincronizado)}` : t("buffer.sinDatos")}</span>
       {b.reconciliacion && !b.error ? (
         <span className={`small ${b.reconciliacion.error || b.reconciliacion.omitido ? "formerror" : "muted"}`}
-          title={b.reconciliacion.error || b.reconciliacion.omitido || `Última vuelta: ${b.reconciliacion.actualizados} borradores actualizados, ${b.reconciliacion.creados} importados, ${b.reconciliacion.devueltos} devueltos a pendiente`}>
-          {b.reconciliacion.error ? "· el repo no se pudo igualar" : b.reconciliacion.omitido ? "· descarga incompleta" : `· repo igual que Buffer desde 2026`}
+          title={b.reconciliacion.error || b.reconciliacion.omitido || t("buffer.ultimaVuelta", { actualizados: b.reconciliacion.actualizados, creados: b.reconciliacion.creados, devueltos: b.reconciliacion.devueltos })}>
+          {b.reconciliacion.error ? t("buffer.noIgualado") : b.reconciliacion.omitido ? t("buffer.descargaIncompleta") : t("buffer.igualado")}
         </span>
       ) : null}
-      <button type="button" className="iconbtn tiny" onClick={sincronizar} disabled={sync} aria-label="Sincronizar con Buffer">
+      <button type="button" className="iconbtn tiny" onClick={sincronizar} disabled={sync} aria-label={t("buffer.sincronizar")}>
         <RefreshCw size={13} aria-hidden="true" className={sync ? "spin" : ""} />
       </button>
       {err ? <span className="formerror small">{err}</span> : null}
@@ -61,10 +65,10 @@ export function BufferChip({ x }) {
   const red = RED[x.servicio] || x.servicio;
   return (
     <a className={`postchip bufferchip b-${x.estado}`} href="https://publish.buffer.com/calendar" target="_blank" rel="noreferrer"
-      title={`Solo en Buffer · ${ESTADO_BUFFER[x.estado] || x.estado} · ${x.canal}\n${x.texto}`} data-buffer={x.id}>
+      title={`${t("buffer.soloEnBuffer")} · ${estadoBuffer(x.estado)} · ${x.canal}\n${x.texto}`} data-buffer={x.id}>
       <RedIcon red={red} size={11} />
       {x.madrid ? <span className="chiptime">{x.madrid.hora}</span> : null}
-      <span className="chiptitle">{x.texto.split("\n")[0] || "(sin texto)"}</span>
+      <span className="chiptitle">{x.texto.split("\n")[0] || t("buffer.sinTexto")}</span>
       <span className="bufftag">Buffer</span>
     </a>
   );
@@ -80,12 +84,12 @@ export function BufferReal({ reales }) {
         return (
           <li key={x.id} className={`b-${x.estado}`}>
             <RedIcon red={red} size={13} />
-            <span><strong>{ESTADO_BUFFER[x.estado] || x.estado}</strong>{x.madrid ? ` · ${x.madrid.dia.slice(8)}/${x.madrid.dia.slice(5, 7)} ${x.madrid.hora}` : ""}</span>
-            {x.enlace ? <a href={x.enlace} target="_blank" rel="noreferrer" aria-label={`Ver en ${red}`}><ExternalLink size={13} aria-hidden="true" /></a> : null}
+            <span><strong>{estadoBuffer(x.estado)}</strong>{x.madrid ? ` · ${x.madrid.dia.slice(8)}/${x.madrid.dia.slice(5, 7)} ${x.madrid.hora}` : ""}</span>
+            {x.enlace ? <a href={x.enlace} target="_blank" rel="noreferrer" aria-label={t("buffer.verEn", { red })}><ExternalLink size={13} aria-hidden="true" /></a> : null}
             {x.error ? <span className="formerror small">{x.error}</span> : null}
             {x.metricas && x.metricas.length ? (
-              <span className="metricas" title={x.metricasEn ? `Buffer las actualizó ${new Date(x.metricasEn).toLocaleString("es-ES")}` : undefined}>
-                {x.metricas.slice(0, 6).map((m) => <span key={m.tipo} className="metrica"><strong>{m.unidad === "percentage" ? `${m.valor.toFixed(1)} %` : Math.round(m.valor).toLocaleString("es-ES")}</strong>{METRICA[m.tipo] || m.nombre}</span>)}
+              <span className="metricas" title={x.metricasEn ? t("buffer.metricasEn", { fecha: fmtFechaHora(x.metricasEn) }) : undefined}>
+                {x.metricas.slice(0, 6).map((m) => <span key={m.tipo} className="metrica"><strong>{m.unidad === "percentage" ? `${m.valor.toFixed(1)} %` : fmtNumero(Math.round(m.valor))}</strong>{metrica(m)}</span>)}
               </span>
             ) : null}
           </li>

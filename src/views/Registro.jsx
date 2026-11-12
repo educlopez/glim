@@ -7,8 +7,9 @@ import { useRouteCtx, hrefOf } from "../lib/route.js";
 import { post, md } from "../lib/api.js";
 import { PageHeader, Toggles, SearchBox, Empty } from "../components/ui.jsx";
 import { capital } from "../lib/format.js";
+import { fmtFecha, t } from "../lib/i18n.js";
 
-function Nueva({ ambitos, onClose, onSaved }) {
+function Nueva({ ambitos, archivo, onClose, onSaved }) {
   const [f, setF] = useState({ ambito: "repo", titulo: "", quePaso: "", aprendimos: "", accion: "" });
   const [err, setErr] = useState(null);
   const guardar = async (e) => {
@@ -18,20 +19,20 @@ function Nueva({ ambitos, onClose, onSaved }) {
   return (
     <form className="newentry" onSubmit={guardar}>
       <div className="row wrap gap-s">
-        <label className="field narrow"><span className="fieldlabel">Ámbito</span>
+        <label className="field narrow"><span className="fieldlabel">{t("registro.ambito")}</span>
           <input list="ambitos" value={f.ambito} onChange={(e) => setF({ ...f, ambito: e.target.value })} />
           <datalist id="ambitos">{ambitos.map((a) => <option key={a} value={a} />)}</datalist>
         </label>
-        <label className="field grow"><span className="fieldlabel">Título</span><input value={f.titulo} placeholder="Ejemplo: las slides de fuente van sin degradado" onChange={(e) => setF({ ...f, titulo: e.target.value })} autoFocus /></label>
+        <label className="field grow"><span className="fieldlabel">{t("registro.titulo")}</span><input value={f.titulo} placeholder={t("registro.tituloEjemplo")} onChange={(e) => setF({ ...f, titulo: e.target.value })} autoFocus /></label>
       </div>
-      <label className="field"><span className="fieldlabel">Qué pasó</span><textarea rows={2} value={f.quePaso} onChange={(e) => setF({ ...f, quePaso: e.target.value })} /></label>
-      <label className="field"><span className="fieldlabel">Qué aprendimos o decidimos</span><textarea rows={2} value={f.aprendimos} onChange={(e) => setF({ ...f, aprendimos: e.target.value })} /></label>
-      <label className="field"><span className="fieldlabel">Acción</span><input value={f.accion} placeholder="Cambio en una plantilla, en la guía de voz… o nada" onChange={(e) => setF({ ...f, accion: e.target.value })} /></label>
+      <label className="field"><span className="fieldlabel">{t("registro.quePaso")}</span><textarea rows={2} value={f.quePaso} onChange={(e) => setF({ ...f, quePaso: e.target.value })} /></label>
+      <label className="field"><span className="fieldlabel">{t("registro.aprendimosDecidimos")}</span><textarea rows={2} value={f.aprendimos} onChange={(e) => setF({ ...f, aprendimos: e.target.value })} /></label>
+      <label className="field"><span className="fieldlabel">{t("registro.accion")}</span><input value={f.accion} placeholder={t("registro.accionEjemplo")} onChange={(e) => setF({ ...f, accion: e.target.value })} /></label>
       {err ? <p className="formerror" role="alert">{err}</p> : null}
       <div className="row gap-s">
-        <button type="submit" className="btn primary"><Plus size={14} aria-hidden="true" /><span>Añadir al registro</span></button>
-        <button type="button" className="btn ghost" onClick={onClose}>Cancelar</button>
-        <span className="muted small">Se escribe arriba del todo en {archivo}.</span>
+        <button type="submit" className="btn primary"><Plus size={14} aria-hidden="true" /><span>{t("registro.anadir")}</span></button>
+        <button type="button" className="btn ghost" onClick={onClose}>{t("comun.cancelar")}</button>
+        <span className="muted small">{t("registro.seEscribe", { archivo })}</span>
       </div>
     </form>
   );
@@ -60,19 +61,19 @@ export default function Registro() {
   const nueva = r.params.nueva === "1";
   return (
     <>
-      <PageHeader title="Registro" sub="Decisiones y aprendizajes, lo más reciente arriba. Lo leen los agentes antes de cada pieza."
+      <PageHeader title={t("nav.registro")} sub={t("registro.sub")}
         actions={<>
-          <a className="btn ghost small" href={hrefOf("biblioteca", { doc: archivo })}><BookOpen size={14} aria-hidden="true" /><span>Archivo</span></a>
-          <button type="button" className="btn primary" onClick={() => r.set({ nueva: nueva ? null : "1" })} aria-expanded={nueva}>{nueva ? <Close size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}<span>{nueva ? "Cerrar" : "Añadir decisión"}</span></button>
+          <a className="btn ghost small" href={hrefOf("biblioteca", { doc: archivo })}><BookOpen size={14} aria-hidden="true" /><span>{t("postDetalle.archivo")}</span></a>
+          <button type="button" className="btn primary" onClick={() => r.set({ nueva: nueva ? null : "1" })} aria-expanded={nueva}>{nueva ? <Close size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}<span>{nueva ? t("comun.cerrar") : t("registro.anadirDecision")}</span></button>
         </>}>
-        <Toggles label="Ámbito" value={sel} onChange={(v) => r.set({ ambitos: v.length ? v.join(",") : null })} options={ambitos.map(([a, n]) => ({ id: a, label: a, count: n }))} />
-        <SearchBox value={q} onChange={setQ} placeholder="Buscar en el registro" />
+        <Toggles label={t("registro.ambito")} value={sel} onChange={(v) => r.set({ ambitos: v.length ? v.join(",") : null })} options={ambitos.map(([a, n]) => ({ id: a, label: a, count: n }))} />
+        <SearchBox value={q} onChange={setQ} placeholder={t("registro.buscar")} />
       </PageHeader>
       <div className="pad-x">
-        {nueva ? <Nueva ambitos={ambitos.map(([a]) => a)} onClose={() => r.set({ nueva: null })} onSaved={() => { window.dispatchEvent(new Event("panel:reload")); r.set({ nueva: null }); }} /> : null}
-        {!lista.length ? <Empty title="Nada coincide" /> : meses.map(({ m, items }) => (
+        {nueva ? <Nueva ambitos={ambitos.map(([a]) => a)} archivo={archivo} onClose={() => r.set({ nueva: null })} onSaved={() => { window.dispatchEvent(new Event("panel:reload")); r.set({ nueva: null }); }} /> : null}
+        {!lista.length ? <Empty title={t("comun.nadaCoincide")} /> : meses.map(({ m, items }) => (
           <section key={m} className="section">
-            <div className="sectionhead"><h2>{capital(new Date(m + "-01T12:00").toLocaleDateString("es-ES", { month: "long", year: "numeric" }))}<span className="count">{items.length}</span></h2></div>
+            <div className="sectionhead"><h2>{capital(fmtFecha(new Date(m + "-01T12:00"), { month: "long", year: "numeric" }))}<span className="count">{items.length}</span></h2></div>
             <ol className="timeline">
               {items.map((e) => (
                 <li key={e.n} className="regentry" data-component="registro" data-path={archivo}>
@@ -80,14 +81,14 @@ export default function Registro() {
                   <article className="regcard">
                     <header className="reghead">
                       <span className="tag">{e.ambito}</span>
-                      {e.panel ? <span className="tag accent"><Sparkles size={11} aria-hidden="true" /> Desde el panel</span> : null}
+                      {e.panel ? <span className="tag accent"><Sparkles size={11} aria-hidden="true" /> {t("registro.desdePanel")}</span> : null}
                       <h3>{e.titulo}</h3>
                     </header>
                     {e.quePaso || e.aprendimos || e.accion ? (
                       <div className="regcampos">
-                        <Campo k="Qué pasó" v={e.quePaso} />
-                        <Campo k="Qué aprendimos" v={e.aprendimos} />
-                        <Campo k="Acción" v={e.accion} />
+                        <Campo k={t("registro.quePaso")} v={e.quePaso} />
+                        <Campo k={t("registro.queAprendimos")} v={e.aprendimos} />
+                        <Campo k={t("registro.accion")} v={e.accion} />
                       </div>
                     ) : <div className="prose small" dangerouslySetInnerHTML={{ __html: md(e.cuerpo) }} />}
                   </article>

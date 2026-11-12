@@ -9,25 +9,26 @@ import { post, useEncargos } from "../lib/api.js";
 import { TIPOS_OBJETIVO, claveDe, parseClave, infoObjetivo, objetivoDeNota } from "../lib/objetivos.js";
 import { Segmented } from "./ui.jsx";
 import { Thumb } from "./Media.jsx";
+import { t } from "../lib/i18n.js";
 
-const MODELOS = [{ id: "", label: "Por defecto" }, { id: "sonnet", label: "Sonnet" }, { id: "opus", label: "Opus" }];
+const MODELOS = [{ id: "", get label() { return t("composer.porDefecto"); } }, { id: "sonnet", label: "Sonnet" }, { id: "opus", label: "Opus" }];
 
 function ObjetivoSelect({ value, onChange }) {
   const d = useData();
   return (
     <label className="selectbox">
-      <span className="sr">Sobre qué</span>
+      <span className="sr">{t("composer.sobreQue")}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="general">General (el repo entero)</option>
-        <optgroup label="Posts">
+        <option value="general">{t("composer.generalRepo")}</option>
+        <optgroup label={t("nav.posts")}>
           {d.posts.filter((p) => p.estado !== "descartado").map((p) => <option key={p.id} value={`post:${p.id}`}>{p.titulo} · {p.redes.join(", ")}</option>)}
         </optgroup>
-        <optgroup label="Plantillas">
+        <optgroup label={t("nav.plantillas")}>
           {d.plantillas.list.filter((t) => t.estado === "activa").map((t) => <option key={t.id} value={`plantilla:${t.id}`}>{t.id}</option>)}
         </optgroup>
-        <optgroup label="Carruseles">{d.carruseles.map((c) => <option key={c.slug} value={`carrusel:${c.slug}`}>{c.slug}</option>)}</optgroup>
-        <optgroup label="OG animadas">{d.ogs.map((o) => <option key={o.id} value={`og:${o.id}`}>{o.id}</option>)}</optgroup>
-        <optgroup label="Marcas">{d.marcas.map((m) => <option key={m.id} value={`marca:${m.id}`}>{m.data.nombre || m.id}</option>)}</optgroup>
+        <optgroup label={t("nav.carruseles")}>{d.carruseles.map((c) => <option key={c.slug} value={`carrusel:${c.slug}`}>{c.slug}</option>)}</optgroup>
+        <optgroup label={t("nav.og")}>{d.ogs.map((o) => <option key={o.id} value={`og:${o.id}`}>{o.id}</option>)}</optgroup>
+        <optgroup label={t("nav.marcas")}>{d.marcas.map((m) => <option key={m.id} value={`marca:${m.id}`}>{m.data.nombre || m.id}</option>)}</optgroup>
       </select>
     </label>
   );
@@ -37,10 +38,10 @@ function PlantillaPicker({ value, onChange }) {
   const d = useData();
   const activas = d.plantillas.list.filter((t) => t.estado === "activa");
   return (
-    <div className="pickrow" role="radiogroup" aria-label="Plantilla">
+    <div className="pickrow" role="radiogroup" aria-label={t("objetivo.plantilla")}>
       <button type="button" role="radio" aria-checked={!value} className="pick none" onClick={() => onChange(null)}>
-        <span className="pickthumb"><span className="muted small">Ninguna</span></span>
-        <span className="pickname">Sin plantilla</span>
+        <span className="pickthumb"><span className="muted small">{t("composer.ninguna")}</span></span>
+        <span className="pickname">{t("composer.sinPlantilla")}</span>
       </button>
       {activas.map((t) => (
         <button key={t.id} type="button" role="radio" aria-checked={value === t.id} className="pick" onClick={() => onChange(t.id)} title={t.uso || t.id}>
@@ -67,8 +68,8 @@ function RefsPicker({ value, onChange }) {
     <div className="stack">
       <label className="searchbox">
         <Search size={14} aria-hidden="true" />
-        <span className="sr">Buscar referencias</span>
-        <input type="search" value={q} placeholder="Buscar por título, nota o etiqueta" onChange={(e) => setQ(e.target.value)} />
+        <span className="sr">{t("composer.buscarRefs")}</span>
+        <input type="search" value={q} placeholder={t("composer.buscarPlaceholder")} onChange={(e) => setQ(e.target.value)} />
       </label>
       <div className="refpick">
         {lista.map((r) => (
@@ -78,7 +79,7 @@ function RefsPicker({ value, onChange }) {
             {sel.has(r.id) ? <Check size={14} className="pickcheck" aria-hidden="true" /> : null}
           </button>
         ))}
-        {!lista.length ? <p className="muted small">Nada coincide. Añade referencias en la sección Referencias.</p> : null}
+        {!lista.length ? <p className="muted small">{t("composer.nadaCoincide")}</p> : null}
       </div>
     </div>
   );
@@ -144,7 +145,7 @@ export function Composer() {
   const ocupado = enc.lista.find((e) => e.id === enc.ocupado);
 
   const enviar = async (lanzar) => {
-    if (!texto.trim()) { setError("Escribe qué hay que cambiar."); area.current.focus(); return; }
+    if (!texto.trim()) { setError(t("composer.escribeQue")); area.current.focus(); return; }
     setEnviando(true); setError(null);
     try {
       const j = await post("/api/encargos", { objetivo: o, texto, plantilla, referencias: refs, modelo: agente === "claude" ? modelo || null : null, agente, lanzar, preset: preset || null, firma: firma || null }); sonar("exito");
@@ -162,18 +163,18 @@ export function Composer() {
   return (
     <>
       <div className="scrim top" onClick={cerrar} aria-hidden="true" />
-      <div className="composer" role="dialog" aria-label="Pedir un cambio a un agente" data-component="composer">
+      <div className="composer" role="dialog" aria-label={t("composer.dialogo")} data-component="composer">
         <header className="composerhead">
           <div>
-            <p className="small muted"><Sparkles size={13} aria-hidden="true" /> Un agente en local, con el contexto del repo</p>
-            <h2>Pedir un cambio</h2>
+            <p className="small muted"><Sparkles size={13} aria-hidden="true" /> {t("composer.kicker")}</p>
+            <h2>{t("app.pedirCambio")}</h2>
           </div>
-          <button type="button" className="iconbtn" onClick={cerrar} aria-label="Cerrar"><Close size={18} aria-hidden="true" /></button>
+          <button type="button" className="iconbtn" onClick={cerrar} aria-label={t("comun.cerrar")}><Close size={18} aria-hidden="true" /></button>
         </header>
 
         <form className="composerbody" onSubmit={(e) => { e.preventDefault(); enviar(true); }}>
           <div className="field">
-            <span className="fieldlabel">Sobre qué</span>
+            <span className="fieldlabel">{t("composer.sobreQue")}</span>
             <div className="objrow">
               <span className="objthumb">{info.thumb ? <Thumb path={info.thumb.path} kind={info.thumb.kind} /> : <span className="muted small">{TIPOS_OBJETIVO[o.tipo]}</span>}</span>
               <div className="objinfo">
@@ -185,36 +186,36 @@ export function Composer() {
           </div>
 
           <label className="field">
-            <span className="fieldlabel">Qué hay que hacer</span>
+            <span className="fieldlabel">{t("composer.queHacer")}</span>
             <textarea ref={area} rows={4} value={texto} onChange={(e) => setTexto(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) enviar(true); }}
-              placeholder="Ejemplo: cambia la imagen de este post por un carrusel con la plantilla carrusel-ui-ux, siguiendo la referencia que adjunto. Mantén el texto." />
+              placeholder={t("composer.ejemplo")} />
           </label>
 
           <div className="field">
-            <span className="fieldlabel"><LayoutTemplate size={13} aria-hidden="true" /> Plantilla a usar <span className="muted">(opcional)</span></span>
+            <span className="fieldlabel"><LayoutTemplate size={13} aria-hidden="true" /> {t("composer.plantillaUsar")} <span className="muted">{t("comun.opcional")}</span></span>
             <PlantillaPicker value={plantilla} onChange={setPlantilla} />
           </div>
 
           <div className="field">
-            <span className="fieldlabel"><Images size={13} aria-hidden="true" /> Referencias <span className="muted">(opcional · {refs.length} elegida{refs.length === 1 ? "" : "s"})</span></span>
+            <span className="fieldlabel"><Images size={13} aria-hidden="true" /> {t("nav.referencias")} <span className="muted">{t("composer.refsElegidas", { n: refs.length })}</span></span>
             <RefsPicker value={refs} onChange={setRefs} />
           </div>
 
           {d.kit.presets.length || d.kit.firmas.length ? (
             <div className="row wrap gap-s">
               {d.kit.presets.length ? (
-                <label className="field grow"><span className="fieldlabel">Preset <span className="muted">(opcional)</span></span>
+                <label className="field grow"><span className="fieldlabel">Preset <span className="muted">{t("comun.opcional")}</span></span>
                   <span className="selectbox"><select value={preset} onChange={(e) => elegirPreset(e.target.value)}>
-                    <option value="">Ninguno</option>
+                    <option value="">{t("postDetalle.ninguno")}</option>
                     {d.kit.presets.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                   </select></span>
                 </label>
               ) : null}
               {d.kit.firmas.length ? (
-                <label className="field grow"><span className="fieldlabel">Firma <span className="muted">(opcional)</span></span>
+                <label className="field grow"><span className="fieldlabel">{t("composer.firma")} <span className="muted">{t("comun.opcional")}</span></span>
                   <span className="selectbox"><select value={firma} onChange={(e) => setFirma(e.target.value)}>
-                    <option value="">Sin firma</option>
+                    <option value="">{t("composer.sinFirma")}</option>
                     {d.kit.firmas.map((f) => <option key={f.id} value={f.id}>{f.nombre}</option>)}
                   </select></span>
                 </label>
@@ -223,28 +224,28 @@ export function Composer() {
           ) : null}
 
           <div className="field row wrap gap-s">
-            <span className="fieldlabel">Agente</span>
-            <Segmented label="Agente" value={agente} onChange={setAgente} options={(agentesL || []).filter((x) => x.instalado).map((x) => ({ id: x.id, label: x.nombre }))} />
+            <span className="fieldlabel">{t("composer.agente")}</span>
+            <Segmented label={t("composer.agente")} value={agente} onChange={setAgente} options={(agentesL || []).filter((x) => x.instalado).map((x) => ({ id: x.id, label: x.nombre }))} />
           </div>
           {agente === "claude" ? (
             <div className="field row wrap gap-s">
-              <span className="fieldlabel">Modelo</span>
-              <Segmented label="Modelo" value={modelo} onChange={setModelo} options={MODELOS} />
+              <span className="fieldlabel">{t("composer.modelo")}</span>
+              <Segmented label={t("composer.modelo")} value={modelo} onChange={setModelo} options={MODELOS} />
             </div>
           ) : null}
 
           <div className="field">
-            <button type="button" className="btn ghost small" onClick={verContexto} aria-expanded={!!contexto}><Eye size={14} aria-hidden="true" /><span>{contexto ? "Ocultar el contexto" : "Ver el contexto que recibirá el agente"}</span></button>
+            <button type="button" className="btn ghost small" onClick={verContexto} aria-expanded={!!contexto}><Eye size={14} aria-hidden="true" /><span>{contexto ? t("composer.ocultarContexto") : t("composer.verContexto")}</span></button>
             {contexto ? <pre className="raw contextpre">{contexto}</pre> : null}
           </div>
 
           {error ? <p className="formerror" role="alert">{error}</p> : null}
 
           <footer className="composerfoot">
-            <p className="small muted"><ShieldCheck size={14} aria-hidden="true" /> Edita archivos y renderiza en local. No publica, no programa y no hace commit.{ocupado ? ` Ahora mismo trabaja en «${ocupado.texto.slice(0, 40)}»: este irá a la cola.` : ""}</p>
+            <p className="small muted"><ShieldCheck size={14} aria-hidden="true" /> {t("composer.seguridad")}{ocupado ? t("composer.irACola", { texto: ocupado.texto.slice(0, 40) }) : ""}</p>
             <div className="row gap-s">
-              <button type="button" className="btn" disabled={enviando} onClick={() => enviar(false)}>Guardar sin lanzar</button>
-              <button type="submit" className="btn primary" disabled={enviando}><Sparkles size={14} aria-hidden="true" /><span>{enviando ? "Lanzando…" : "Lanzar"}</span><kbd>⌘↵</kbd></button>
+              <button type="button" className="btn" disabled={enviando} onClick={() => enviar(false)}>{t("composer.guardarSinLanzar")}</button>
+              <button type="submit" className="btn primary" disabled={enviando}><Sparkles size={14} aria-hidden="true" /><span>{enviando ? t("composer.lanzando") : t("composer.lanzar")}</span><kbd>⌘↵</kbd></button>
             </div>
           </footer>
         </form>
@@ -254,11 +255,11 @@ export function Composer() {
 }
 
 // Botón para abrir el formulario sobre un objeto concreto.
-export function PedirCambio({ objetivo, label = "Pedir cambio", className = "" }) {
+export function PedirCambio({ objetivo, label, className = "" }) {
   const r = useRouteCtx();
   return (
     <button type="button" className={`btn small primary ${className}`} onClick={() => r.set({ pedir: claveDe(objetivo) })}>
-      <Sparkles size={14} aria-hidden="true" /><span>{label}</span>
+      <Sparkles size={14} aria-hidden="true" /><span>{label || t("composer.pedirCambio")}</span>
     </button>
   );
 }

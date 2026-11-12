@@ -1,18 +1,21 @@
+import { t } from "./i18n.js";
+
 // Utilidades de la biblioteca de referencias: familias de color, duplicadas por huella visual, búsqueda con
 // sintaxis y empaquetado del mosaico. Ideas de Pond (raphaelsalaja/pond, MIT), reimplementadas.
 
+// label: getter, para que salga en el idioma activo al pintar.
 export const COLORES = [
-  { id: "rojo", label: "Rojo", hex: "#e5484d" },
-  { id: "naranja", label: "Naranja", hex: "#f76b15" },
-  { id: "amarillo", label: "Amarillo", hex: "#ffc53d" },
-  { id: "verde", label: "Verde", hex: "#30a46c" },
-  { id: "turquesa", label: "Turquesa", hex: "#12a594" },
-  { id: "azul", label: "Azul", hex: "#0090ff" },
-  { id: "morado", label: "Morado", hex: "#8e4ec6" },
-  { id: "rosa", label: "Rosa", hex: "#e93d82" },
-  { id: "negro", label: "Negro", hex: "#111113" },
-  { id: "gris", label: "Gris", hex: "#8b8d98" },
-  { id: "blanco", label: "Blanco", hex: "#f7f7f5" },
+  { id: "rojo", get label() { return t("refs.color.rojo"); }, hex: "#e5484d" },
+  { id: "naranja", get label() { return t("refs.color.naranja"); }, hex: "#f76b15" },
+  { id: "amarillo", get label() { return t("refs.color.amarillo"); }, hex: "#ffc53d" },
+  { id: "verde", get label() { return t("refs.color.verde"); }, hex: "#30a46c" },
+  { id: "turquesa", get label() { return t("refs.color.turquesa"); }, hex: "#12a594" },
+  { id: "azul", get label() { return t("refs.color.azul"); }, hex: "#0090ff" },
+  { id: "morado", get label() { return t("refs.color.morado"); }, hex: "#8e4ec6" },
+  { id: "rosa", get label() { return t("refs.color.rosa"); }, hex: "#e93d82" },
+  { id: "negro", get label() { return t("refs.color.negro"); }, hex: "#111113" },
+  { id: "gris", get label() { return t("refs.color.gris"); }, hex: "#8b8d98" },
+  { id: "blanco", get label() { return t("refs.color.blanco"); }, hex: "#f7f7f5" },
 ];
 
 function hsl(hex) {
@@ -61,6 +64,7 @@ const normUrl = (u) => { try { const x = new URL(u); return (x.hostname.replace(
 export { normUrl };
 
 // Mapa id → [{id, motivo, dist}] de referencias casi iguales: mismo archivo (sha), misma URL o imagen parecida.
+// motivo es un identificador (archivo, enlace, identica, parecida); la etiqueta sale de motivoDuplicada().
 export function duplicadas(lista) {
   const out = {};
   const add = (a, b, motivo, dist = 0) => {
@@ -70,15 +74,15 @@ export function duplicadas(lista) {
   const porSha = {}, porUrl = {};
   for (const r of lista) {
     const sha = r.analisis && r.analisis.sha;
-    if (sha) { if (porSha[sha] && porSha[sha].id !== r.id) add(porSha[sha], r, "mismo archivo"); else porSha[sha] = r; }
+    if (sha) { if (porSha[sha] && porSha[sha].id !== r.id) add(porSha[sha], r, "archivo"); else porSha[sha] = r; }
     const u = r.url && normUrl(r.url);
-    if (u) { if (porUrl[u] && porUrl[u].id !== r.id) add(porUrl[u], r, "mismo enlace"); else porUrl[u] = r; }
+    if (u) { if (porUrl[u] && porUrl[u].id !== r.id) add(porUrl[u], r, "enlace"); else porUrl[u] = r; }
   }
   const conHash = lista.filter((r) => r.analisis && r.analisis.dhash && !/^0+$/.test(r.analisis.dhash));
   for (let i = 0; i < conHash.length; i++) {
     for (let j = i + 1; j < conHash.length; j++) {
       const d = hamming(conHash[i].analisis.dhash, conHash[j].analisis.dhash);
-      if (d <= UMBRAL) add(conHash[i], conHash[j], d === 0 ? "imagen idéntica" : "imagen muy parecida", d);
+      if (d <= UMBRAL) add(conHash[i], conHash[j], d === 0 ? "identica" : "parecida", d);
     }
   }
   return out;
@@ -105,6 +109,8 @@ export function consulta(q, dups = {}) {
   }
   return (r) => conds.every((c) => c(r));
 }
+
+export const motivoDuplicada = (m) => t(`refs.motivo.${m}`);
 
 // Proporción de la miniatura en el mosaico, acotada para que nada quede ni muy alto ni muy fino.
 export function proporcion(r) {

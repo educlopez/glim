@@ -19,6 +19,7 @@ const ESQUEMA = {
   densidad: { ...uno("comoda", "compacta") },
   textoLateral: { ...uno(13, 12, 14, 15) },
   animacion: { ...uno("agil", "natural", "no") },
+  idioma: { ...uno("auto", "es", "en") }, // idioma de la interfaz; auto: el del cerebro (moss.config.json → idioma) o el del navegador
   // Icono de la app (server/icono.js): tinta del fondo, glifo de cristal y apariencia (auto sigue al sistema).
   icono: {
     tinta: { ...uno("musgo", "naranja", "mandarina", "fresa", "frambuesa", "uva", "ciruela", "arandano", "aqua", "teal", "helecho", "moca", "grafito") },

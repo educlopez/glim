@@ -5,6 +5,7 @@ import { siX, siThreads, siLinkedin } from "simple-icons";
 import { Check, Copy, Search } from "lucide-react";
 import { estadoLabel } from "../lib/data.js";
 import { copiar } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 
 const BRAND = { X: siX, Threads: siThreads, LinkedIn: siLinkedin };
 
@@ -79,12 +80,12 @@ export function Switch({ checked, onChange, children }) {
   );
 }
 
-export function CopyButton({ text, label = "Copiar", className = "" }) {
+export function CopyButton({ text, label, className = "" }) {
   const [done, setDone] = useState(false);
   return (
     <button type="button" className={`btn ghost small ${className}`} onClick={() => copiar(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1400); })}>
       {done ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
-      <span>{done ? "Copiado" : label}</span>
+      <span>{done ? t("comun.copiado") : label ?? t("comun.copiar")}</span>
     </button>
   );
 }

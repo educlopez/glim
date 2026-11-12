@@ -3,6 +3,7 @@ import { CalendarClock, CircleDashed, TriangleAlert, Layers } from "lucide-react
 import { Redes, Estado } from "./ui.jsx";
 import { Thumb } from "./Media.jsx";
 import { fechaPost } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 
 export function PostVisual({ post, ratio = "wide" }) {
   const v = post.visual;
@@ -19,8 +20,8 @@ export function PostVisual({ post, ratio = "wide" }) {
   return (
     <div className={`postvisual none r-${ratio}`}>
       <CircleDashed size={16} aria-hidden="true" />
-      <span>{falta ? "Medio fuera de este equipo" : "Sin visual"}</span>
-      {v.formato ? <span className="muted">Formato: {v.formato}</span> : null}
+      <span>{falta ? t("post.medioFuera") : t("post.sinVisual")}</span>
+      {v.formato ? <span className="muted">{t("post.formato", { formato: v.formato })}</span> : null}
     </div>
   );
 }
@@ -54,9 +55,9 @@ export function PostCard({ post, href, variant = "full" }) {
         <CalendarClock size={13} aria-hidden="true" />
         <span>{fechaPost(post)}</span>
         {post.idioma ? <span className="lang">{post.idioma.toUpperCase()}</span> : null}
-        {pieza && pieza.hilo ? <span className="lang">Hilo de {pieza.hilo.length}</span> : null}
+        {pieza && pieza.hilo ? <span className="lang">{t("post.hiloDe", { n: pieza.hilo.length })}</span> : null}
       </div>
-      {texto ? <p className="postcard-text" style={{ WebkitLineClamp: lineasDe(variant) }}>{texto}</p> : <p className="postcard-text muted">Sin texto todavía.</p>}
+      {texto ? <p className="postcard-text" style={{ WebkitLineClamp: lineasDe(variant) }}>{texto}</p> : <p className="postcard-text muted">{t("post.sinTexto")}</p>}
       {variant !== "mini" ? <PostVisual post={post} ratio={variant === "compact" ? "wide" : "wide"} /> : null}
       {alto.length ? (
         <div className="postcard-warn">
@@ -76,7 +77,7 @@ export function PostChip({ post, href }) {
       <Redes redes={post.redes} size={11} />
       {post.fecha && post.fecha.hora ? <span className="chiptime">{post.fecha.hora}</span> : null}
       <span className="chiptitle">{post.titulo}</span>
-      {post.avisos.some((a) => a.nivel === "alto") ? <TriangleAlert size={11} className="chipwarn" aria-label="Tiene avisos" /> : null}
+      {post.avisos.some((a) => a.nivel === "alto") ? <TriangleAlert size={11} className="chipwarn" aria-label={t("post.tieneAvisos")} /> : null}
     </a>
   );
 }

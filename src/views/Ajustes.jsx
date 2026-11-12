@@ -12,17 +12,18 @@ import { post, hace } from "../lib/api.js";
 import { Segmented, Switch } from "../components/ui.jsx";
 import { sonar } from "../lib/sonidos.js";
 import { Novedades, Publicar as PublicarHoja } from "../components/Actualizacion.jsx";
+import { t, useI18n } from "../lib/i18n.js";
 
 const recargar = () => window.dispatchEvent(new Event("panel:reload"));
 const Busqueda = createContext("");
 
 const SECCIONES = [
-  { id: "interfaz", label: "Interfaz", icon: LayoutPanelLeft, color: "#5b5f66" },
-  { id: "notificaciones", label: "Notificaciones", icon: Bell, color: "#ff453a" },
-  { id: "atajos", label: "Atajos", icon: Command, color: "#6e7177" },
-  { id: "encargos", label: "Encargos y agentes", icon: Sparkles, color: "#cf520d" },
-  { id: "integraciones", label: "Integraciones", icon: Blocks, color: "#a855f7" },
-  { id: "servidor", label: "Servidor y app", icon: Server, color: "#0a84ff" },
+  { id: "interfaz", get label() { return t("ajustes.sec.interfaz"); }, icon: LayoutPanelLeft, color: "#5b5f66" },
+  { id: "notificaciones", get label() { return t("ajustes.sec.notificaciones"); }, icon: Bell, color: "#ff453a" },
+  { id: "atajos", get label() { return t("ajustes.sec.atajos"); }, icon: Command, color: "#6e7177" },
+  { id: "encargos", get label() { return t("ajustes.sec.encargos"); }, icon: Sparkles, color: "#cf520d" },
+  { id: "integraciones", get label() { return t("ajustes.sec.integraciones"); }, icon: Blocks, color: "#a855f7" },
+  { id: "servidor", get label() { return t("ajustes.sec.servidor"); }, icon: Server, color: "#0a84ff" },
 ];
 
 function Grupo({ titulo, sub, pie, children }) {
@@ -82,15 +83,15 @@ function Clave({ servicio, hay, ayuda }) {
   return (
     <div className="stack">
       <div className="row wrap gap-s">
-        <span className={`ajestado ${hay ? "on" : ""}`}>{hay ? <><CircleCheck size={13} aria-hidden="true" /> Clave en el Llavero</> : <><CircleAlert size={13} aria-hidden="true" /> Sin clave</>}</span>
-        {hay ? <button type="button" className="btn small" disabled={cargando} onClick={() => accion("/api/ajustes/probar", { servicio }, "Conexión correcta")}><Plug size={13} aria-hidden="true" /><span>Probar</span></button> : null}
-        {hay ? <button type="button" className="btn ghost small" disabled={cargando} onClick={() => { if (window.confirm(`¿Quitar la clave de ${servicio} del Llavero? El panel dejará de conectarse hasta que pongas otra.`)) accion("/api/ajustes/clave/borrar", { servicio }, "Clave quitada"); }}><Unplug size={13} aria-hidden="true" /><span>Quitar</span></button> : null}
+        <span className={`ajestado ${hay ? "on" : ""}`}>{hay ? <><CircleCheck size={13} aria-hidden="true" /> {t("ajustes.clave.enLlavero")}</> : <><CircleAlert size={13} aria-hidden="true" /> {t("ajustes.clave.sinClave")}</>}</span>
+        {hay ? <button type="button" className="btn small" disabled={cargando} onClick={() => accion("/api/ajustes/probar", { servicio }, t("ajustes.clave.correcta"))}><Plug size={13} aria-hidden="true" /><span>{t("ajustes.clave.probar")}</span></button> : null}
+        {hay ? <button type="button" className="btn ghost small" disabled={cargando} onClick={() => { if (window.confirm(t("ajustes.clave.confirmarQuitar", { servicio }))) accion("/api/ajustes/clave/borrar", { servicio }, t("ajustes.clave.quitada")); }}><Unplug size={13} aria-hidden="true" /><span>{t("ajustes.quitar")}</span></button> : null}
       </div>
-      <form className="row gap-s" onSubmit={(e) => { e.preventDefault(); accion("/api/ajustes/clave", { servicio, clave: v }, "Clave guardada y probada"); }}>
-        <label className="field grow"><span className="sr">Nueva clave de {servicio}</span>
-          <input type="password" autoComplete="off" spellCheck={false} value={v} placeholder={hay ? "Pegar otra clave para cambiarla" : "Pegar la clave"} onChange={(e) => setV(e.target.value)} />
+      <form className="row gap-s" onSubmit={(e) => { e.preventDefault(); accion("/api/ajustes/clave", { servicio, clave: v }, t("ajustes.clave.guardada")); }}>
+        <label className="field grow"><span className="sr">{t("ajustes.clave.nueva", { servicio })}</span>
+          <input type="password" autoComplete="off" spellCheck={false} value={v} placeholder={hay ? t("ajustes.clave.pegarOtra") : t("ajustes.clave.pegar")} onChange={(e) => setV(e.target.value)} />
         </label>
-        <button type="submit" className="btn small primary" disabled={!v.trim() || cargando}><KeyRound size={13} aria-hidden="true" /><span>{cargando ? "Probando…" : "Guardar"}</span></button>
+        <button type="submit" className="btn small primary" disabled={!v.trim() || cargando}><KeyRound size={13} aria-hidden="true" /><span>{cargando ? t("ajustes.clave.probando") : t("comun.guardar")}</span></button>
       </form>
       {ayuda ? <p className="muted small">{ayuda}</p> : null}
       {msg ? <p className={`small ${msg.error ? "formerror" : "ok"}`} role="status">{msg.error || msg.ok}</p> : null}
@@ -119,8 +120,8 @@ function Grabador({ value, onChange }) {
   }, [grabando]);
   return (
     <div className="row gap-s">
-      <button type="button" className={`atajo ${grabando ? "grabando" : ""}`} onClick={() => setGrabando(!grabando)}>{grabando ? "Pulsa la combinación…" : value ? bonito(value) : "Grabar atajo"}</button>
-      {value ? <button type="button" className="btn ghost small" onClick={() => onChange("")}>Quitar</button> : null}
+      <button type="button" className={`atajo ${grabando ? "grabando" : ""}`} onClick={() => setGrabando(!grabando)}>{grabando ? t("ajustes.atajo.pulsa") : value ? bonito(value) : t("ajustes.atajo.grabar")}</button>
+      {value ? <button type="button" className="btn ghost small" onClick={() => onChange("")}>{t("ajustes.quitar")}</button> : null}
     </div>
   );
 }
@@ -128,53 +129,67 @@ function Grabador({ value, onChange }) {
 const Tecla = ({ children }) => <span className="atajo fijo">{children}</span>;
 
 function Interfaz({ a, cambiar }) {
+  const d = useData();
+  const { idioma } = useI18n();
+  // Con «Automático», la ayuda dice qué idioma sale y de dónde (moss.config.json → idioma o el navegador).
+  const delCerebro = d && d.cerebro && d.cerebro.idioma;
   return (
     <>
-      <Grupo titulo="Apariencia" pie="Con Cristal, la ventana entera deja ver el escritorio desenfocado, como Rex. En el navegador se ve como Clásico.">
-        <Fila label="Esquema de color" ayuda="Automático sigue el modo claro u oscuro de macOS." ancho>
-          <Tarjetas label="Esquema de color" value={a.tema} onChange={(v) => cambiar({ tema: v })} opciones={[
-            { id: "sistema", label: "Automático", vista: <Miniatura esquema="auto" estilo={a.estilo} /> },
-            { id: "claro", label: "Claro", vista: <Miniatura esquema="claro" estilo={a.estilo} /> },
-            { id: "oscuro", label: "Oscuro", vista: <Miniatura esquema="oscuro" estilo={a.estilo} /> },
+      <Grupo titulo={t("ajustes.idioma.titulo")}>
+        <Fila label={t("ajustes.idioma.label")} ayuda={a.idioma === "auto" ? t("ajustes.idioma.ayudaAuto", { idioma: t(`ajustes.idioma.nombre.${idioma}`), cerebro: delCerebro || "es" }) : t("ajustes.idioma.ayuda")}>
+          <Segmented label={t("ajustes.idioma.label")} value={a.idioma || "auto"} onChange={(v) => cambiar({ idioma: v })} options={[
+            { id: "auto", label: t("ajustes.automatico") },
+            { id: "es", label: "Español" },
+            { id: "en", label: "English" },
           ]} />
         </Fila>
-        <Fila label="Estilo de la interfaz" ancho>
-          <Tarjetas label="Estilo" value={a.estilo} onChange={(v) => cambiar({ estilo: v })} opciones={[
-            { id: "clasico", label: "Clásico", vista: <Miniatura esquema="auto" estilo="clasico" /> },
-            { id: "cristal", label: "Cristal", vista: <Miniatura esquema="auto" estilo="cristal" /> },
+      </Grupo>
+      <Grupo titulo={t("ajustes.apariencia")} pie={t("ajustes.aparienciaPie")}>
+        <Fila label={t("ajustes.esquema")} ayuda={t("ajustes.esquemaAyuda")} ancho>
+          <Tarjetas label={t("ajustes.esquema")} value={a.tema} onChange={(v) => cambiar({ tema: v })} opciones={[
+            { id: "sistema", label: t("ajustes.automatico"), vista: <Miniatura esquema="auto" estilo={a.estilo} /> },
+            { id: "claro", label: t("ajustes.claro"), vista: <Miniatura esquema="claro" estilo={a.estilo} /> },
+            { id: "oscuro", label: t("ajustes.oscuro"), vista: <Miniatura esquema="oscuro" estilo={a.estilo} /> },
           ]} />
         </Fila>
-        <Fila label="Teñir con el tema" ayuda="Un velo del color del tema sobre el desenfoque."><Switch checked={a.tenir} onChange={(v) => cambiar({ tenir: v })}><span className="sr">Teñir con el tema</span></Switch></Fila>
-        <Fila label="Cristal también en tarjetas y paneles" ayuda="Las tarjetas dejan pasar el fondo. Se lee algo peor sobre fondos muy cargados."><Switch checked={a.panelesCristal} onChange={(v) => cambiar({ panelesCristal: v })}><span className="sr">Cristal en paneles</span></Switch></Fila>
-      </Grupo>
-      <Grupo titulo="Ventana">
-        <Fila label="Densidad">
-          <Segmented label="Densidad" value={a.densidad} onChange={(v) => cambiar({ densidad: v })} options={[{ id: "comoda", label: "Cómoda", icon: Rows3 }, { id: "compacta", label: "Compacta", icon: Rows4 }]} />
+        <Fila label={t("ajustes.estiloInterfaz")} ancho>
+          <Tarjetas label={t("plantillas.estilo")} value={a.estilo} onChange={(v) => cambiar({ estilo: v })} opciones={[
+            { id: "clasico", label: t("ajustes.clasico"), vista: <Miniatura esquema="auto" estilo="clasico" /> },
+            { id: "cristal", label: t("ajustes.cristal"), vista: <Miniatura esquema="auto" estilo="cristal" /> },
+          ]} />
         </Fila>
-        <Fila label="Tamaño del texto de la barra lateral">
-          <span className="rango"><input type="range" min={0} max={3} step={1} value={[12, 13, 14, 15].indexOf(a.textoLateral)} onChange={(e) => cambiar({ textoLateral: [12, 13, 14, 15][Number(e.target.value)] })} aria-label="Tamaño del texto de la barra lateral" /><span className="muted small">{a.textoLateral} pt</span></span>
+        <Fila label={t("ajustes.tenir")} ayuda={t("ajustes.tenirAyuda")}><Switch checked={a.tenir} onChange={(v) => cambiar({ tenir: v })}><span className="sr">{t("ajustes.tenir")}</span></Switch></Fila>
+        <Fila label={t("ajustes.panelesCristal")} ayuda={t("ajustes.panelesCristalAyuda")}><Switch checked={a.panelesCristal} onChange={(v) => cambiar({ panelesCristal: v })}><span className="sr">{t("ajustes.panelesCristalSr")}</span></Switch></Fila>
+      </Grupo>
+      <Grupo titulo={t("ajustes.ventana")}>
+        <Fila label={t("ajustes.densidad")}>
+          <Segmented label={t("ajustes.densidad")} value={a.densidad} onChange={(v) => cambiar({ densidad: v })} options={[{ id: "comoda", label: t("ajustes.comoda"), icon: Rows3 }, { id: "compacta", label: t("ajustes.compacta"), icon: Rows4 }]} />
+        </Fila>
+        <Fila label={t("ajustes.textoLateral")}>
+          <span className="rango"><input type="range" min={0} max={3} step={1} value={[12, 13, 14, 15].indexOf(a.textoLateral)} onChange={(e) => cambiar({ textoLateral: [12, 13, 14, 15][Number(e.target.value)] })} aria-label={t("ajustes.textoLateral")} /><span className="muted small">{a.textoLateral} pt</span></span>
         </Fila>
       </Grupo>
-      <Grupo titulo="Animación">
-        <Fila label="Estilo de animación" ayuda="Desactivada también respeta «Reducir movimiento» de macOS.">
-          <Segmented label="Animación" value={a.animacion} onChange={(v) => cambiar({ animacion: v })} options={[{ id: "agil", label: "Ágil", icon: Zap }, { id: "natural", label: "Natural", icon: Waves }, { id: "no", label: "Desactivada", icon: Ban }]} />
+      <Grupo titulo={t("ajustes.animacion")}>
+        <Fila label={t("ajustes.estiloAnimacion")} ayuda={t("ajustes.estiloAnimacionAyuda")}>
+          <Segmented label={t("ajustes.animacion")} value={a.animacion} onChange={(v) => cambiar({ animacion: v })} options={[{ id: "agil", label: t("ajustes.agil"), icon: Zap }, { id: "natural", label: t("ajustes.natural"), icon: Waves }, { id: "no", label: t("ajustes.desactivada"), icon: Ban }]} />
         </Fila>
       </Grupo>
-      <Grupo titulo="Icono de la app" sub="Sigue la plantilla de iconos de macOS: forma de esquinas continuas, luz desde arriba y glifo de cristal. Cambia el Dock, la barra de menús y el icono de la app en el Finder.">
+      <Grupo titulo={t("ajustes.iconoApp")} sub={t("ajustes.iconoAppSub")}>
         <IconoApp a={a} cambiar={cambiar} />
-        <Fila label="Icono en la barra de menús" ayuda="Con el estado de los encargos y lo que espera revisión."><Switch checked={a.barraMenus} onChange={(v) => cambiar({ barraMenus: v })}><span className="sr">Barra de menús</span></Switch></Fila>
-        <Fila label="Mostrar la ventana al abrir" ayuda="Si lo apagas, la app arranca solo en el Dock y la barra de menús."><Switch checked={a.mostrarAlAbrir} onChange={(v) => cambiar({ mostrarAlAbrir: v })}><span className="sr">Mostrar al abrir</span></Switch></Fila>
+        <Fila label={t("ajustes.iconoBarra")} ayuda={t("ajustes.iconoBarraAyuda")}><Switch checked={a.barraMenus} onChange={(v) => cambiar({ barraMenus: v })}><span className="sr">{t("ajustes.barraMenus")}</span></Switch></Fila>
+        <Fila label={t("ajustes.mostrarAlAbrir")} ayuda={t("ajustes.mostrarAlAbrirAyuda")}><Switch checked={a.mostrarAlAbrir} onChange={(v) => cambiar({ mostrarAlAbrir: v })}><span className="sr">{t("ajustes.mostrarAlAbrirSr")}</span></Switch></Fila>
       </Grupo>
     </>
   );
 }
 
 const TINTAS = [
-  ["naranja", "Naranja", "#ff7528"], ["mandarina", "Mandarina", "#ff9f0a"], ["fresa", "Fresa", "#ff375f"], ["frambuesa", "Frambuesa", "#d6336c"],
-  ["uva", "Uva", "#bf5af2"], ["ciruela", "Ciruela", "#7d4bd6"], ["arandano", "Arándano", "#3a75f0"], ["aqua", "Aqua", "#40b4e8"],
-  ["teal", "Teal", "#2fb5a8"], ["helecho", "Helecho", "#34c759"], ["musgo", "Musgo", "#7a9a3a"], ["moca", "Moca", "#9a7350"], ["grafito", "Grafito", "#7c7c82"],
+  ["naranja", "#ff7528"], ["mandarina", "#ff9f0a"], ["fresa", "#ff375f"], ["frambuesa", "#d6336c"],
+  ["uva", "#bf5af2"], ["ciruela", "#7d4bd6"], ["arandano", "#3a75f0"], ["aqua", "#40b4e8"],
+  ["teal", "#2fb5a8"], ["helecho", "#34c759"], ["musgo", "#7a9a3a"], ["moca", "#9a7350"], ["grafito", "#7c7c82"],
 ];
-const GLIFOS = [["brote", "Brote"], ["estrella", "Destello"], ["ventana", "Ventana"], ["monograma", "Monograma"], ["avatar", "Tu foto"]];
+// Las etiquetas salen de src/locales/*.js (ajustes.tinta.<id>, ajustes.glifo.<id>).
+const GLIFOS = ["brote", "estrella", "ventana", "monograma", "avatar"];
 
 // Editor del icono: vista previa grande en claro y oscuro, tintas, glifos y apariencia.
 function IconoApp({ a, cambiar }) {
@@ -185,7 +200,7 @@ function IconoApp({ a, cambiar }) {
   useEffect(() => {
     let vivo = true;
     for (const ap of ["claro", "oscuro"]) post("/api/icono/vista", { tinta: i.tinta, glifo: i.glifo, apariencia: ap }).then((j) => vivo && setVistas((v) => ({ ...v, [ap]: j.ruta }))).catch(() => {});
-    for (const [g] of GLIFOS) post("/api/icono/vista", { tinta: i.tinta, glifo: g, apariencia: "claro" }).then((j) => vivo && setGlifosVista((v) => ({ ...v, [g]: j.ruta }))).catch(() => {});
+    for (const g of GLIFOS) post("/api/icono/vista", { tinta: i.tinta, glifo: g, apariencia: "claro" }).then((j) => vivo && setGlifosVista((v) => ({ ...v, [g]: j.ruta }))).catch(() => {});
     return () => { vivo = false; };
   }, [i.tinta, i.glifo]);
   const set = async (patch) => { setAplicando(true); try { await cambiar({ icono: patch }); } finally { setAplicando(false); } };
@@ -196,30 +211,30 @@ function IconoApp({ a, cambiar }) {
         <div className="iconovistas" aria-live="polite">
           {["claro", "oscuro"].map((ap) => (
             <figure key={ap} className={`iconovista ${ap}`}>
-              {vistas[ap] ? <img src={src(vistas[ap])} alt={`Icono en ${ap}`} width="112" height="112" /> : <span className="iconovacio" />}
-              <figcaption className="small muted">{ap === "claro" ? "Claro" : "Oscuro"}</figcaption>
+              {vistas[ap] ? <img src={src(vistas[ap])} alt={t("ajustes.iconoEn", { ap: ap === "claro" ? t("ajustes.claro") : t("ajustes.oscuro") })} width="112" height="112" /> : <span className="iconovacio" />}
+              <figcaption className="small muted">{ap === "claro" ? t("ajustes.claro") : t("ajustes.oscuro")}</figcaption>
             </figure>
           ))}
         </div>
         <div className="stack">
-          <div className="tintas" role="radiogroup" aria-label="Tinta">
-            {TINTAS.map(([id, label, hex]) => (
+          <div className="tintas" role="radiogroup" aria-label={t("ajustes.tinta")}>
+            {TINTAS.map(([id, hex]) => [id, t(`ajustes.tinta.${id}`), hex]).map(([id, label, hex]) => (
               <button key={id} type="button" role="radio" aria-checked={i.tinta === id} title={label} className="tinta" style={{ "--c": hex }} onClick={() => set({ tinta: id })}>
                 <span className="sr">{label}</span>
               </button>
             ))}
           </div>
-          <div className="glifos" role="radiogroup" aria-label="Glifo">
-            {GLIFOS.map(([id, label]) => (
+          <div className="glifos" role="radiogroup" aria-label={t("ajustes.glifo")}>
+            {GLIFOS.map((id) => [id, t(`ajustes.glifo.${id}`)]).map(([id, label]) => (
               <button key={id} type="button" role="radio" aria-checked={i.glifo === id} className="glifo" onClick={() => set({ glifo: id })}>
                 {glifosVista[id] ? <img src={src(glifosVista[id])} alt="" width="44" height="44" /> : <span className="iconovacio mini" />}
                 <span className="small">{label}</span>
               </button>
             ))}
           </div>
-          <Segmented label="Apariencia" value={i.apariencia} onChange={(v) => set({ apariencia: v })}
-            options={[{ id: "auto", label: "Automática", icon: Monitor }, { id: "claro", label: "Clara", icon: Sun }, { id: "oscuro", label: "Oscura", icon: Moon }]} />
-          <p className="muted small">{aplicando ? "Aplicando…" : "Automática cambia el icono del Dock con el modo claro u oscuro del sistema. El Finder usa siempre la versión clara."}</p>
+          <Segmented label={t("ajustes.apariencia")} value={i.apariencia} onChange={(v) => set({ apariencia: v })}
+            options={[{ id: "auto", label: t("ajustes.automatica"), icon: Monitor }, { id: "claro", label: t("ajustes.clara"), icon: Sun }, { id: "oscuro", label: t("ajustes.oscura"), icon: Moon }]} />
+          <p className="muted small">{aplicando ? t("ajustes.aplicando") : t("ajustes.iconoAyuda")}</p>
         </div>
       </div>
     </>
@@ -231,30 +246,30 @@ function Notificaciones({ a, cambiar }) {
   const set = (patch) => cambiar({ notif: patch });
   return (
     <>
-      <Grupo titulo="Sonidos de la interfaz" sub="Clics y confirmaciones sintetizados en el momento, sin archivos. Suenan al pulsar, al guardar y al quitar.">
-        <Fila label="Sonidos"><Switch checked={a.sonidos.activo} onChange={(v) => cambiar({ sonidos: { activo: v } })}><span className="sr">Sonidos</span></Switch></Fila>
-        <Fila label="Clics de botones e interruptores" ayuda="Si lo apagas, solo suenan las confirmaciones (guardar, quitar)."><Switch checked={a.sonidos.interfaz} onChange={(v) => cambiar({ sonidos: { interfaz: v } })}><span className="sr">Clics</span></Switch></Fila>
-        <Fila label="Volumen">
+      <Grupo titulo={t("ajustes.sonidosInterfaz")} sub={t("ajustes.sonidosInterfazSub")}>
+        <Fila label={t("ajustes.sonidos")}><Switch checked={a.sonidos.activo} onChange={(v) => cambiar({ sonidos: { activo: v } })}><span className="sr">{t("ajustes.sonidos")}</span></Switch></Fila>
+        <Fila label={t("ajustes.clics")} ayuda={t("ajustes.clicsAyuda")}><Switch checked={a.sonidos.interfaz} onChange={(v) => cambiar({ sonidos: { interfaz: v } })}><span className="sr">{t("ajustes.clicsSr")}</span></Switch></Fila>
+        <Fila label={t("ajustes.volumen")}>
           <span className="row gap-s">
-            <Segmented label="Volumen" value={a.sonidos.volumen} onChange={(v) => cambiar({ sonidos: { volumen: v } })} options={[30, 50, 70, 100].map((v) => ({ id: v, label: `${v} %` }))} />
-            <span className="row gap-s">{["toque", "activar", "exito", "papelera"].map((x) => <button key={x} type="button" className="btn ghost small" data-sin-sonido onClick={() => sonar(x)}>{{ toque: "Clic", activar: "Activar", exito: "Éxito", papelera: "Quitar" }[x]}</button>)}</span>
+            <Segmented label={t("ajustes.volumen")} value={a.sonidos.volumen} onChange={(v) => cambiar({ sonidos: { volumen: v } })} options={[30, 50, 70, 100].map((v) => ({ id: v, label: `${v} %` }))} />
+            <span className="row gap-s">{["toque", "activar", "exito", "papelera"].map((x) => <button key={x} type="button" className="btn ghost small" data-sin-sonido onClick={() => sonar(x)}>{t(`ajustes.sonido.${x}`)}</button>)}</span>
           </span>
         </Fila>
       </Grupo>
-      <Grupo titulo="Avisos del sistema" sub="Funcionan en la app de Mac, aunque la ventana esté cerrada.">
-        <Fila label="Mostrar notificaciones del sistema"><Switch checked={n.sistema} onChange={(v) => set({ sistema: v })}><span className="sr">Notificaciones</span></Switch></Fila>
-        <Fila label="Número en el icono del Dock" ayuda="Encargos que esperan revisión."><Switch checked={n.badge} onChange={(v) => set({ badge: v })}><span className="sr">Badge</span></Switch></Fila>
-        <Fila label="Sonido">
+      <Grupo titulo={t("ajustes.avisosSistema")} sub={t("ajustes.avisosSistemaSub")}>
+        <Fila label={t("ajustes.mostrarNotif")}><Switch checked={n.sistema} onChange={(v) => set({ sistema: v })}><span className="sr">{t("ajustes.sec.notificaciones")}</span></Switch></Fila>
+        <Fila label={t("ajustes.badge")} ayuda={t("ajustes.badgeAyuda")}><Switch checked={n.badge} onChange={(v) => set({ badge: v })}><span className="sr">Badge</span></Switch></Fila>
+        <Fila label={t("ajustes.sonido")}>
           <span className="selectbox"><select value={n.sonido} onChange={(e) => set({ sonido: e.target.value })}>
-            {["Glass", "Ping", "Pop", "Hero", "Submarine"].map((s) => <option key={s} value={s}>{s}</option>)}<option value="no">Sin sonido</option>
+            {["Glass", "Ping", "Pop", "Hero", "Submarine"].map((s) => <option key={s} value={s}>{s}</option>)}<option value="no">{t("ajustes.sinSonido")}</option>
           </select></span>
         </Fila>
       </Grupo>
-      <Grupo titulo="Cuándo avisar">
-        <Fila label="Un encargo termina"><Switch checked={n.terminado} onChange={(v) => set({ terminado: v })}><span className="sr">Terminado</span></Switch></Fila>
-        <Fila label="Un encargo falla"><Switch checked={n.fallo} onChange={(v) => set({ fallo: v })}><span className="sr">Falla</span></Switch></Fila>
-        <Fila label="Empieza un encargo de la cola"><Switch checked={n.cola} onChange={(v) => set({ cola: v })}><span className="sr">Empieza</span></Switch></Fila>
-        <Fila label="Buffer publica un post" ayuda="Cuando el panel lo marca como publicado."><Switch checked={n.publicado} onChange={(v) => set({ publicado: v })}><span className="sr">Publicado</span></Switch></Fila>
+      <Grupo titulo={t("ajustes.cuandoAvisar")}>
+        <Fila label={t("ajustes.avisoTermina")}><Switch checked={n.terminado} onChange={(v) => set({ terminado: v })}><span className="sr">{t("ajustes.avisoTerminaSr")}</span></Switch></Fila>
+        <Fila label={t("ajustes.avisoFalla")}><Switch checked={n.fallo} onChange={(v) => set({ fallo: v })}><span className="sr">{t("ajustes.avisoFallaSr")}</span></Switch></Fila>
+        <Fila label={t("ajustes.avisoEmpieza")}><Switch checked={n.cola} onChange={(v) => set({ cola: v })}><span className="sr">{t("ajustes.avisoEmpiezaSr")}</span></Switch></Fila>
+        <Fila label={t("ajustes.avisoPublica")} ayuda={t("ajustes.avisoPublicaAyuda")}><Switch checked={n.publicado} onChange={(v) => set({ publicado: v })}><span className="sr">{t("fecha.publicado")}</span></Switch></Fila>
       </Grupo>
     </>
   );
@@ -263,16 +278,16 @@ function Notificaciones({ a, cambiar }) {
 function Atajos({ a, cambiar }) {
   const q = useContext(Busqueda);
   const fijos = [
-    ["Pedir un cambio", "⌘N"], ["Ajustes…", "⌘,"], ["Resumen · Encargos · Calendario · Posts · Plantillas · Referencias · Registro", "⌘1 … ⌘7"],
-    ["Lanzar desde un formulario", "⌘↵"], ["Cerrar panel o formulario", "Esc"], ["Cerrar ventana", "⌘W"], ["Pantalla completa", "⌃⌘F"],
+    [t("app.pedirCambio"), "⌘N"], [t("ajustes.atajo.ajustes"), "⌘,"], [t("ajustes.atajo.vistas"), "⌘1 … ⌘7"],
+    [t("ajustes.atajo.lanzar"), "⌘↵"], [t("ajustes.atajo.cerrarPanel"), "Esc"], [t("ajustes.atajo.cerrarVentana"), "⌘W"], [t("ajustes.atajo.pantallaCompleta"), "⌃⌘F"],
   ].filter(([l]) => !q || l.toLowerCase().includes(q));
   return (
     <>
-      <Grupo titulo="Global" pie="Funciona desde cualquier app: muestra el panel, o lo oculta si ya está delante.">
-        <Fila label="Mostrar u ocultar el panel"><Grabador value={a.atajoGlobal} onChange={(v) => cambiar({ atajoGlobal: v })} /></Fila>
+      <Grupo titulo={t("ajustes.global")} pie={t("ajustes.globalPie")}>
+        <Fila label={t("ajustes.mostrarOcultar")}><Grabador value={a.atajoGlobal} onChange={(v) => cambiar({ atajoGlobal: v })} /></Fila>
       </Grupo>
       {fijos.length ? (
-        <Grupo titulo="En la app">
+        <Grupo titulo={t("ajustes.enLaApp")}>
           {fijos.map(([l, k]) => <Fila key={l} label={l}><Tecla>{k}</Tecla></Fila>)}
         </Grupo>
       ) : null}
@@ -289,36 +304,36 @@ function Encargos({ a, cambiar }) {
   const elegido = (l || []).find((x) => x.id === a.agente);
   return (
     <>
-      <Grupo titulo="Agente" sub="Quién hace los encargos en local. Edita el repo y renderiza; nunca publica, programa ni toca Buffer o Drive, y el panel avisa si hace commits."
-        pie={elegido && elegido.permisos ? `Permisos de ${elegido.nombre}: ${elegido.permisos}` : null}>
-        <div className="agentes" role="radiogroup" aria-label="Agente">
+      <Grupo titulo={t("composer.agente")} sub={t("ajustes.agenteSub")}
+        pie={elegido && elegido.permisos ? t("ajustes.permisosDe", { nombre: elegido.nombre, permisos: elegido.permisos }) : null}>
+        <div className="agentes" role="radiogroup" aria-label={t("composer.agente")}>
           {(l || []).map((x) => (
             <button key={x.id} type="button" role="radio" aria-checked={a.agente === x.id} disabled={!x.instalado} className="agente" onClick={() => cambiar({ agente: x.id })}>
-              <strong className="small">{x.nombre}{x.experimental ? <span className="tag">sin probar</span> : null}</strong>
-              <span className="muted small">{x.id === "propio" ? "Aider, Amp o el que quieras" : x.instalado ? x.version || "Instalado" : "No instalado"}</span>
+              <strong className="small">{x.nombre}{x.experimental ? <span className="tag">{t("ajustes.sinProbar")}</span> : null}</strong>
+              <span className="muted small">{x.id === "propio" ? t("ajustes.propioAyuda") : x.instalado ? x.version || t("ajustes.instalado") : t("ajustes.noInstalado")}</span>
               {x.instalado && x.login ? <code className="small muted">{x.login}</code> : null}
             </button>
           ))}
         </div>
-        <Fila label="Buscar agentes instalados"><button type="button" className="btn small" onClick={buscar} disabled={buscando}><RefreshCw size={13} aria-hidden="true" className={buscando ? "spin" : ""} /><span>Volver a buscar</span></button></Fila>
+        <Fila label={t("ajustes.buscarAgentes")}><button type="button" className="btn small" onClick={buscar} disabled={buscando}><RefreshCw size={13} aria-hidden="true" className={buscando ? "spin" : ""} /><span>{t("ajustes.volverBuscar")}</span></button></Fila>
         {a.agente === "claude" ? (
-          <Fila label="Modelo de Claude" ayuda="Se puede cambiar en cada encargo.">
-            <Segmented label="Modelo" value={a.modelo} onChange={(v) => cambiar({ modelo: v })} options={[{ id: "", label: "El de Claude Code" }, { id: "sonnet", label: "Sonnet" }, { id: "opus", label: "Opus" }]} />
+          <Fila label={t("ajustes.modeloClaude")} ayuda={t("ajustes.modeloClaudeAyuda")}>
+            <Segmented label={t("composer.modelo")} value={a.modelo} onChange={(v) => cambiar({ modelo: v })} options={[{ id: "", label: t("ajustes.elDeClaudeCode") }, { id: "sonnet", label: "Sonnet" }, { id: "opus", label: "Opus" }]} />
           </Fila>
         ) : a.agente === "propio" ? (
-          <Fila label="Comando" ayuda="{prompt} se cambia por el encargo; sin {prompt}, se le pasa por la entrada estándar." ancho>
-            <label className="field"><span className="sr">Comando</span><input defaultValue={a.comandoPropio} placeholder="aider --yes-always --message {prompt}" onBlur={(e) => e.target.value !== a.comandoPropio && cambiar({ comandoPropio: e.target.value })} /></label>
+          <Fila label={t("ajustes.comando")} ayuda={t("ajustes.comandoAyuda")} ancho>
+            <label className="field"><span className="sr">{t("ajustes.comando")}</span><input defaultValue={a.comandoPropio} placeholder="aider --yes-always --message {prompt}" onBlur={(e) => e.target.value !== a.comandoPropio && cambiar({ comandoPropio: e.target.value })} /></label>
           </Fila>
         ) : (
-          <Fila label={`Modelo de ${elegido ? elegido.nombre : a.agente}`} ayuda="Vacío: el que tenga configurado su CLI.">
-            <label className="field"><span className="sr">Modelo</span><input key={a.agente} defaultValue={(a.modelos || {})[a.agente] || ""} placeholder={{ codex: "gpt-5.5", cursor: "sonnet-4", opencode: "anthropic/claude-sonnet-4-5", gemini: "gemini-2.5-pro" }[a.agente] || ""} onBlur={(e) => cambiar({ modelos: { [a.agente]: e.target.value } })} /></label>
+          <Fila label={t("ajustes.modeloDe", { nombre: elegido ? elegido.nombre : a.agente })} ayuda={t("ajustes.modeloDeAyuda")}>
+            <label className="field"><span className="sr">{t("composer.modelo")}</span><input key={a.agente} defaultValue={(a.modelos || {})[a.agente] || ""} placeholder={{ codex: "gpt-5.5", cursor: "sonnet-4", opencode: "anthropic/claude-sonnet-4-5", gemini: "gemini-2.5-pro" }[a.agente] || ""} onBlur={(e) => cambiar({ modelos: { [a.agente]: e.target.value } })} /></label>
           </Fila>
         )}
-        <Fila label="Encargos a la vez" ayuda="Uno, para que dos agentes no editen los mismos archivos."><span className="muted small">1</span></Fila>
+        <Fila label={t("ajustes.aLaVez")} ayuda={t("ajustes.aLaVezAyuda")}><span className="muted small">1</span></Fila>
       </Grupo>
-      <Grupo titulo="Redactar y revisar al publicar">
-        <Fila label="Agente" ayuda="Escribe el commit y las novedades y revisa la PR, sin herramientas.">
-          <Segmented label="Agente al publicar" value={a.publicar.agente} onChange={(v) => cambiar({ publicar: { agente: v } })} options={[{ id: "claude", label: "Claude" }, { id: "codex", label: "Codex" }]} />
+      <Grupo titulo={t("ajustes.redactarRevisar")}>
+        <Fila label={t("composer.agente")} ayuda={t("ajustes.redactarAyuda")}>
+          <Segmented label={t("ajustes.agentePublicar")} value={a.publicar.agente} onChange={(v) => cambiar({ publicar: { agente: v } })} options={[{ id: "claude", label: "Claude" }, { id: "codex", label: "Codex" }]} />
         </Fila>
       </Grupo>
     </>
@@ -334,18 +349,18 @@ function Lectores() {
   useEffect(() => { leer(); const i = setInterval(leer, 4000); return () => clearInterval(i); }, []);
   const accion = async (url) => { setErr(null); try { await post(url); leer(); } catch (x) { setErr(x.message); } };
   return (
-    <Grupo titulo="Lectores de plataformas" sub="Traen el vídeo o las imágenes originales, el texto y el autor de un enlace que pegas en Referencias. Solo enlaces que pegas tú, uno a uno y con pausas: nada de sincronizar cuentas."
-      pie={err || (s && !s.disponible ? "Las sesiones solo funcionan desde la app de Mac. En el navegador, los lectores usan yt-dlp sin sesión." : "Las sesiones viven en el navegador interno de la app, separado de tu Chrome. Algunos sitios prohíben la descarga automática en sus condiciones: úsalo para tus referencias internas.")}>
+    <Grupo titulo={t("ajustes.lectores")} sub={t("ajustes.lectoresSub")}
+      pie={err || (s && !s.disponible ? t("ajustes.lectoresNavegador") : t("ajustes.lectoresApp"))}>
       {s ? Object.entries(s.sitios).map(([id, x]) => (
-        <Fila key={id} label={x.nombre} ayuda={x.conectado ? "Con sesión" : "Sin sesión: lee lo público"}>
+        <Fila key={id} label={x.nombre} ayuda={x.conectado ? t("ajustes.conSesion") : t("ajustes.sinSesionPublico")}>
           <span className="row gap-s">
-            <span className={`ajestado ${x.conectado ? "on" : ""}`}>{x.conectado ? "Conectado" : "Sin sesión"}</span>
+            <span className={`ajestado ${x.conectado ? "on" : ""}`}>{x.conectado ? t("ajustes.conectado") : t("ajustes.sinSesion")}</span>
             {x.conectado
-              ? <button type="button" className="btn small ghost" onClick={() => accion(`/api/lectores/${id}/salir`)}><Unplug size={13} aria-hidden="true" /><span>Cerrar sesión</span></button>
-              : <button type="button" className="btn small" disabled={!s.disponible} onClick={() => accion(`/api/lectores/${id}/entrar`)}><Plug size={13} aria-hidden="true" /><span>Iniciar sesión</span></button>}
+              ? <button type="button" className="btn small ghost" onClick={() => accion(`/api/lectores/${id}/salir`)}><Unplug size={13} aria-hidden="true" /><span>{t("ajustes.cerrarSesion")}</span></button>
+              : <button type="button" className="btn small" disabled={!s.disponible} onClick={() => accion(`/api/lectores/${id}/entrar`)}><Plug size={13} aria-hidden="true" /><span>{t("ajustes.iniciarSesion")}</span></button>}
           </span>
         </Fila>
-      )) : <Fila label="Cargando…" />}
+      )) : <Fila label={t("comun.cargando")} />}
     </Grupo>
   );
 }
@@ -355,24 +370,24 @@ function Integraciones({ a, cambiar, d }) {
   return (
     <>
       <Lectores />
-      <Grupo titulo="Buffer" sub="Solo lectura: el panel nunca crea, edita ni programa en Buffer.">
-        <Fila label="Clave de la API" ancho><Clave servicio="buffer" hay={d.claves.buffer} ayuda="Se crea en publish.buffer.com/settings/api con «New Key»." /></Fila>
-        <Fila label="Estado" ayuda={b.restantes != null ? `${b.restantes} peticiones disponibles hoy (compartidas con el MCP).` : null}>
-          <span className={`ajestado ${b.conectado && !b.error ? "on" : ""}`}>{b.error ? b.error : b.conectado ? `Conectado · ${b.canales.length} canales${b.sincronizado ? ` · ${hace(b.sincronizado)}` : ""}` : "Sin conectar"}</span>
+      <Grupo titulo="Buffer" sub={t("ajustes.bufferSub")}>
+        <Fila label={t("ajustes.claveApi")} ancho><Clave servicio="buffer" hay={d.claves.buffer} ayuda={t("ajustes.bufferClaveAyuda")} /></Fila>
+        <Fila label={t("postDetalle.estado")} ayuda={b.restantes != null ? t("ajustes.bufferRestantes", { n: b.restantes }) : null}>
+          <span className={`ajestado ${b.conectado && !b.error ? "on" : ""}`}>{b.error ? b.error : b.conectado ? `${t("ajustes.conectadoCanales", { n: b.canales.length })}${b.sincronizado ? ` · ${hace(b.sincronizado)}` : ""}` : t("ajustes.sinConectar")}</span>
         </Fila>
-        <Fila label="Sincronizar cada">
-          <span className="selectbox"><select value={a.buffer.cadaMin} onChange={(e) => cambiar({ buffer: { cadaMin: Number(e.target.value) } })}>{[5, 10, 15, 30, 60].map((n) => <option key={n} value={n}>{n} minutos</option>)}</select></span>
+        <Fila label={t("ajustes.sincronizarCada")}>
+          <span className="selectbox"><select value={a.buffer.cadaMin} onChange={(e) => cambiar({ buffer: { cadaMin: Number(e.target.value) } })}>{[5, 10, 15, 30, 60].map((n) => <option key={n} value={n}>{t("ajustes.minutos", { n })}</option>)}</select></span>
         </Fila>
-        <Fila label="Igualar el repo con Buffer" ayuda="Tras cada sincronización: estados, fechas, URLs e importación de lo que esté en Buffer sin borrador. Buffer manda."><Switch checked={a.buffer.autoPublicar} onChange={(v) => cambiar({ buffer: { autoPublicar: v } })}><span className="sr">Autopublicar</span></Switch></Fila>
+        <Fila label={t("ajustes.igualar")} ayuda={t("ajustes.igualarAyuda")}><Switch checked={a.buffer.autoPublicar} onChange={(v) => cambiar({ buffer: { autoPublicar: v } })}><span className="sr">{t("ajustes.autopublicar")}</span></Switch></Fila>
       </Grupo>
-      <Grupo titulo="Enlaces cortos (Dub)" sub="Un enlace por red con UTM: clics por post y por red. Los clics totales no piden plan de pago; la analítica detallada de Dub, sí.">
-        <Fila label="Activar enlaces cortos"><Switch checked={a.dub.activo} onChange={(v) => cambiar({ dub: { activo: v } })}><span className="sr">Activar</span></Switch></Fila>
-        <Fila label="Clave de la API" ancho><Clave servicio="dub" hay={d.claves.dub} ayuda="Se crea en app.dub.co, Settings → API Keys, con permiso de enlaces." /></Fila>
-        <Fila label="Activados por defecto en cada post" ayuda="Cada post se cambia en su panel, en «Publicación»."><Switch checked={a.dub.porDefecto} onChange={(v) => cambiar({ dub: { porDefecto: v } })}><span className="sr">Por defecto</span></Switch></Fila>
-        <Fila label="Dominio" ayuda="Vacío: el principal de tu cuenta de Dub, o dub.sh. Uno propio (go.tudominio.com) se lee mejor.">
-          <label className="field"><span className="sr">Dominio</span><input defaultValue={a.dub.dominio} placeholder="dub.sh" onBlur={(e) => e.target.value !== a.dub.dominio && cambiar({ dub: { dominio: e.target.value } })} /></label>
+      <Grupo titulo={t("enlaces.titulo")} sub={t("ajustes.dubSub")}>
+        <Fila label={t("ajustes.activarCortos")}><Switch checked={a.dub.activo} onChange={(v) => cambiar({ dub: { activo: v } })}><span className="sr">{t("ajustes.activar")}</span></Switch></Fila>
+        <Fila label={t("ajustes.claveApi")} ancho><Clave servicio="dub" hay={d.claves.dub} ayuda={t("ajustes.dubClaveAyuda")} /></Fila>
+        <Fila label={t("ajustes.porDefectoPost")} ayuda={t("ajustes.porDefectoPostAyuda")}><Switch checked={a.dub.porDefecto} onChange={(v) => cambiar({ dub: { porDefecto: v } })}><span className="sr">{t("composer.porDefecto")}</span></Switch></Fila>
+        <Fila label={t("ajustes.dominio")} ayuda={t("ajustes.dominioAyuda")}>
+          <label className="field"><span className="sr">{t("ajustes.dominio")}</span><input defaultValue={a.dub.dominio} placeholder="dub.sh" onBlur={(e) => e.target.value !== a.dub.dominio && cambiar({ dub: { dominio: e.target.value } })} /></label>
         </Fila>
-        <Fila label="Añadir UTM por red" ayuda="utm_source=x|threads|linkedin · utm_medium=social · utm_campaign=el post."><Switch checked={a.dub.utm} onChange={(v) => cambiar({ dub: { utm: v } })}><span className="sr">UTM</span></Switch></Fila>
+        <Fila label={t("ajustes.utm")} ayuda={t("ajustes.utmAyuda")}><Switch checked={a.dub.utm} onChange={(v) => cambiar({ dub: { utm: v } })}><span className="sr">UTM</span></Switch></Fila>
       </Grupo>
     </>
   );
@@ -387,41 +402,41 @@ function Servidor({ d, a, cambiar }) {
   const accion = async (url, body, ok) => { setMsg(null); try { await post(url, body); setMsg(ok); } catch (x) { setMsg(x.message); } };
   return (
     <>
-      <Grupo titulo="Actualizaciones" sub="La app sigue la rama main de GitHub, como una app de Mac sigue su canal de versiones.">
-        <Fila label="Buscar actualizaciones cada">
-          <span className="selectbox"><select value={a.actualizaciones.cadaMin} onChange={(e) => cambiar({ actualizaciones: { cadaMin: Number(e.target.value) } })}>{[5, 15, 30, 60].map((n) => <option key={n} value={n}>{n} minutos</option>)}</select></span>
+      <Grupo titulo={t("ajustes.actualizaciones")} sub={t("ajustes.actualizacionesSub")}>
+        <Fila label={t("ajustes.buscarCada")}>
+          <span className="selectbox"><select value={a.actualizaciones.cadaMin} onChange={(e) => cambiar({ actualizaciones: { cadaMin: Number(e.target.value) } })}>{[5, 15, 30, 60].map((n) => <option key={n} value={n}>{t("ajustes.minutos", { n })}</option>)}</select></span>
         </Fila>
-        <Fila label="Instalar actualizaciones automáticamente" ayuda="Solo si no hay cambios sin subir, ni un encargo ni una publicación en marcha. Si cambia el núcleo, la app se reinicia sola."><Switch checked={a.actualizaciones.automaticas} onChange={(v) => cambiar({ actualizaciones: { automaticas: v } })}><span className="sr">Automáticas</span></Switch></Fila>
-        <Fila label="Mostrar las novedades al actualizar"><Switch checked={a.actualizaciones.novedades} onChange={(v) => cambiar({ actualizaciones: { novedades: v } })}><span className="sr">Novedades</span></Switch></Fila>
-        <Fila label="Novedades"><button type="button" className="btn small" onClick={() => setNovedades(true)}>Ver novedades</button></Fila>
+        <Fila label={t("ajustes.instalarAuto")} ayuda={t("ajustes.instalarAutoAyuda")}><Switch checked={a.actualizaciones.automaticas} onChange={(v) => cambiar({ actualizaciones: { automaticas: v } })}><span className="sr">{t("ajustes.automaticas")}</span></Switch></Fila>
+        <Fila label={t("ajustes.mostrarNovedades")}><Switch checked={a.actualizaciones.novedades} onChange={(v) => cambiar({ actualizaciones: { novedades: v } })}><span className="sr">{t("act.novedades")}</span></Switch></Fila>
+        <Fila label={t("act.novedades")}><button type="button" className="btn small" onClick={() => setNovedades(true)}>{t("act.verNovedades")}</button></Fila>
       </Grupo>
-      <Grupo titulo="Publicar cambios" sub="Sube lo que hay en local: rama, PR a main, revisión y fusión. Cada pulsación del botón es tu OK para esa subida.">
-        <Fila label="Revisión de la IA antes de fusionar" ayuda="Revisa el diff contra las reglas del cerebro y lo comenta en la PR. Si encuentra algo grave, la PR queda en borrador."><Switch checked={a.publicar.revisar} onChange={(v) => cambiar({ publicar: { revisar: v } })}><span className="sr">Revisión</span></Switch></Fila>
-        <Fila label="Fusionar sola si todo pasa"><Switch checked={a.publicar.fusionarSola} onChange={(v) => cambiar({ publicar: { fusionarSola: v } })}><span className="sr">Fusionar sola</span></Switch></Fila>
-        <Fila label="Espera antes de fusionar" ayuda="Margen para cancelar después de ver la PR.">
-          <Segmented label="Espera" value={a.publicar.esperaMin} onChange={(v) => cambiar({ publicar: { esperaMin: v } })} options={[0, 2, 5, 10].map((v) => ({ id: v, label: v ? `${v} min` : "Nada" }))} />
+      <Grupo titulo={t("act.publicarCambios")} sub={t("ajustes.publicarSub")}>
+        <Fila label={t("ajustes.revisionIa")} ayuda={t("ajustes.revisionIaAyuda")}><Switch checked={a.publicar.revisar} onChange={(v) => cambiar({ publicar: { revisar: v } })}><span className="sr">{t("revision.titulo")}</span></Switch></Fila>
+        <Fila label={t("ajustes.fusionarSola")}><Switch checked={a.publicar.fusionarSola} onChange={(v) => cambiar({ publicar: { fusionarSola: v } })}><span className="sr">{t("ajustes.fusionarSolaSr")}</span></Switch></Fila>
+        <Fila label={t("ajustes.espera")} ayuda={t("ajustes.esperaAyuda")}>
+          <Segmented label={t("ajustes.esperaCorto")} value={a.publicar.esperaMin} onChange={(v) => cambiar({ publicar: { esperaMin: v } })} options={[0, 2, 5, 10].map((v) => ({ id: v, label: v ? `${v} min` : t("resumen.nada") }))} />
         </Fila>
-        <Fila label="Modelo para redactar y revisar">
-          <Segmented label="Modelo" value={a.publicar.modelo} onChange={(v) => cambiar({ publicar: { modelo: v } })} options={[{ id: "haiku", label: "Haiku" }, { id: "sonnet", label: "Sonnet" }, { id: "opus", label: "Opus" }]} />
+        <Fila label={t("ajustes.modeloRedactar")}>
+          <Segmented label={t("composer.modelo")} value={a.publicar.modelo} onChange={(v) => cambiar({ publicar: { modelo: v } })} options={[{ id: "haiku", label: "Haiku" }, { id: "sonnet", label: "Sonnet" }, { id: "opus", label: "Opus" }]} />
         </Fila>
-        <Fila label="Publicar ahora"><button type="button" className="btn small" onClick={() => setPublicar(true)}>Publicar cambios…</button></Fila>
+        <Fila label={t("ajustes.publicarAhora")}><button type="button" className="btn small" onClick={() => setPublicar(true)}>{t("ajustes.publicarCambiosPuntos")}</button></Fila>
       </Grupo>
       {novedades ? <Novedades onClose={() => setNovedades(false)} /> : null}
       {publicar ? <PublicarHoja onClose={() => setPublicar(false)} /> : null}
-      <Grupo titulo="Servidor del panel">
-        <Fila label="Estado" ayuda={s ? `En marcha desde ${hace(s.servidor.inicio)} · proceso ${s.servidor.pid} · Node ${s.servidor.node}` : null}>
-          <button type="button" className="btn small" onClick={() => accion("/api/sistema/reiniciar", {}, "Reiniciando el servidor…")}><RotateCcw size={13} aria-hidden="true" /><span>Reiniciar</span></button>
+      <Grupo titulo={t("ajustes.servidorPanel")}>
+        <Fila label={t("postDetalle.estado")} ayuda={s ? t("ajustes.enMarchaDesde", { cuando: hace(s.servidor.inicio), pid: s.servidor.pid, node: s.servidor.node }) : null}>
+          <button type="button" className="btn small" onClick={() => accion("/api/sistema/reiniciar", {}, t("ajustes.reiniciandoServidor"))}><RotateCcw size={13} aria-hidden="true" /><span>{t("ajustes.reiniciar")}</span></button>
         </Fila>
-        <Fila label="Rama" ayuda={s ? `${s.cambiosLocales} archivos con cambios sin commit` : null}><code className="small">{s ? s.rama : "…"}</code></Fila>
-        <Fila label="Versión" ayuda={s && s.app ? `App ${s.app.enApp} · repo ${s.app.enRepo}` : "Abierto en el navegador"}><span className="small">{s ? s.servidor.version : "…"}</span></Fila>
+        <Fila label={t("ajustes.rama")} ayuda={s ? t("ajustes.cambiosSinCommit", { n: s.cambiosLocales }) : null}><code className="small">{s ? s.rama : "…"}</code></Fila>
+        <Fila label={t("ajustes.version")} ayuda={s && s.app ? `App ${s.app.enApp} · repo ${s.app.enRepo}` : t("ajustes.abiertoNavegador")}><span className="small">{s ? s.servidor.version : "…"}</span></Fila>
       </Grupo>
-      <Grupo titulo="Carpetas">
-        <Fila label="Repo" ayuda={d.raiz}><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "repo" })}><FolderOpen size={13} aria-hidden="true" /><span>Abrir en el Finder</span></button></Fila>
-        <Fila label="Datos locales" ayuda="Encargos, revisiones, ajustes y cachés de Buffer y Dub. No se suben a git."><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "datos" })}><FolderOpen size={13} aria-hidden="true" /><span>Abrir en el Finder</span></button></Fila>
+      <Grupo titulo={t("ajustes.carpetas")}>
+        <Fila label="Repo" ayuda={d.raiz}><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "repo" })}><FolderOpen size={13} aria-hidden="true" /><span>{t("ajustes.abrirFinder")}</span></button></Fila>
+        <Fila label={t("ajustes.datosLocales")} ayuda={t("ajustes.datosLocalesAyuda")}><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "datos" })}><FolderOpen size={13} aria-hidden="true" /><span>{t("ajustes.abrirFinder")}</span></button></Fila>
       </Grupo>
-      <Grupo titulo="Restablecer">
-        <Fila label="Volver a los ajustes por defecto" ayuda="Interfaz, notificaciones, atajos y encargos. No toca Buffer, Dub ni las claves.">
-          <button type="button" className="btn small" onClick={() => { if (window.confirm("¿Volver a los ajustes por defecto? Buffer, Dub y las claves se quedan como están.")) accion("/api/ajustes/restablecer", {}, "Ajustes restablecidos").then(recargar); }}>Restablecer</button>
+      <Grupo titulo={t("ajustes.restablecer")}>
+        <Fila label={t("ajustes.volverDefecto")} ayuda={t("ajustes.volverDefectoAyuda")}>
+          <button type="button" className="btn small" onClick={() => { if (window.confirm(t("ajustes.confirmarRestablecer"))) accion("/api/ajustes/restablecer", {}, t("ajustes.restablecidos")).then(recargar); }}>{t("ajustes.restablecer")}</button>
         </Fila>
       </Grupo>
       {msg ? <p className="small muted" role="status">{msg}</p> : null}
@@ -446,14 +461,14 @@ export default function Ajustes() {
   return (
     <div className={`ajustesapp ${ventana ? "en-ventana" : ""}`} data-component="ajustes">
       <aside className="ajside">
-        <label className="searchbox ajbuscar"><Search size={14} aria-hidden="true" /><span className="sr">Buscar en ajustes</span>
-          <input type="search" value={q} placeholder="Buscar en ajustes" onChange={(e) => setQ(e.target.value)} />
+        <label className="searchbox ajbuscar"><Search size={14} aria-hidden="true" /><span className="sr">{t("ajustes.buscar")}</span>
+          <input type="search" value={q} placeholder={t("ajustes.buscar")} onChange={(e) => setQ(e.target.value)} />
         </label>
         <button type="button" className={`ajserver ${seccion === "servidor" && !buscando ? "sel" : ""}`} onClick={() => { setQ(""); r.set({ seccion: "servidor" }); }}>
           <span className="ajservericon" aria-hidden="true"><Sprout size={18} /></span>
-          <span><strong>{(d.cerebro && d.cerebro.nombre) || "Moss"}</strong><span className="muted small">{d.claves.buffer ? "En marcha · Buffer conectado" : "En marcha"}</span></span>
+          <span><strong>{(d.cerebro && d.cerebro.nombre) || "Moss"}</strong><span className="muted small">{d.claves.buffer ? t("ajustes.enMarchaBuffer") : t("ajustes.enMarcha")}</span></span>
         </button>
-        <nav className="ajnav" aria-label="Secciones de ajustes">
+        <nav className="ajnav" aria-label={t("ajustes.secciones")}>
           {SECCIONES.filter((x) => x.id !== "servidor").map((x) => (
             <button key={x.id} type="button" className="ajnavitem" aria-current={seccion === x.id && !buscando ? "page" : undefined} onClick={() => { setQ(""); r.set({ seccion: x.id }); }}>
               <span className="ajnavicon" style={{ background: x.color }}><x.icon size={13} aria-hidden="true" /></span>{x.label}
@@ -464,10 +479,10 @@ export default function Ajustes() {
       <section className="ajmain">
         <header className="ajhead">
           <span className="ajnavbtns">
-            <button type="button" className="iconbtn" onClick={() => window.history.back()} aria-label="Atrás"><ChevronLeft size={16} aria-hidden="true" /></button>
-            <button type="button" className="iconbtn" onClick={() => window.history.forward()} aria-label="Adelante"><ChevronRight size={16} aria-hidden="true" /></button>
+            <button type="button" className="iconbtn" onClick={() => window.history.back()} aria-label={t("ajustes.atras")}><ChevronLeft size={16} aria-hidden="true" /></button>
+            <button type="button" className="iconbtn" onClick={() => window.history.forward()} aria-label={t("ajustes.adelante")}><ChevronRight size={16} aria-hidden="true" /></button>
           </span>
-          <h1>{buscando ? `Resultados para «${q.trim()}»` : actual.label}</h1>
+          <h1>{buscando ? t("ajustes.resultados", { q: q.trim() }) : actual.label}</h1>
         </header>
         <div className="ajbody">
           {err ? <p className="formerror">{err}</p> : null}

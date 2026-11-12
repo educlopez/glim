@@ -7,56 +7,60 @@ import { Thumb, Player } from "../components/Media.jsx";
 import { Drawer } from "../components/Drawer.jsx";
 import { PedirCambio } from "../components/Composer.jsx";
 import { hrefOf, useRouteCtx } from "../lib/route.js";
+import { t } from "../lib/i18n.js";
 
-const TIPOS = { carrusel: "Carruseles", video: "Vídeo", imagen: "Imagen", componente: "Componentes" };
-const ESTADOS = [{ id: "activa", label: "Activas" }, { id: "desaconsejada", label: "Desaconsejadas" }, { id: "retirada", label: "Retiradas" }, { id: "todas", label: "Todas" }];
+// Tipo y estado vienen del índice de plantillas (identificadores); aquí solo se traduce la etiqueta.
+const TIPOS = ["carrusel", "video", "imagen", "componente"];
+const tipoLabel = (tipo) => (TIPOS.includes(tipo) ? t(`plantillas.tipo.${tipo}`) : tipo);
+const estadoPl = (e) => (["activa", "desaconsejada", "retirada"].includes(e) ? t(`plantillas.estado.${e}`) : e);
+const ESTADOS = ["activa", "desaconsejada", "retirada", "todas"].map((id) => ({ id, get label() { return t(`plantillas.filtro.${id}`); } }));
 
-function TemplateCard({ t, href }) {
-  const prev = t.previews[0];
+function TemplateCard({ pl, href }) {
+  const prev = pl.previews[0];
   return (
-    <a className="card" href={href} data-plantilla={t.id} data-path={t.dir}>
+    <a className="card" href={href} data-plantilla={pl.id} data-path={pl.dir}>
       <div className="cardmedia r-wide">
-        {prev ? <Thumb path={prev.path} kind={prev.kind} /> : <div className="nopreview"><span>Sin render en media/</span></div>}
+        {prev ? <Thumb path={prev.path} kind={prev.kind} /> : <div className="nopreview"><span>{t("plantillas.sinRenderMedia")}</span></div>}
       </div>
       <div className="cardbody">
-        <div className="cardtitle"><span className="mono">{t.id}</span><Estado id={t.estado} label={t.estado} /></div>
-        <p className="cardtext clamp3">{t.para}</p>
+        <div className="cardtitle"><span className="mono">{pl.id}</span><Estado id={pl.estado} label={estadoPl(pl.estado)} /></div>
+        <p className="cardtext clamp3">{pl.para}</p>
         <div className="cardmeta">
-          {t.requiere_firma ? <span className="tag"><PenTool size={12} aria-hidden="true" /> Firma</span> : null}
-          {!t.existe ? <span className="tag warn"><FolderX size={12} aria-hidden="true" /> Fuera de este repo</span> : null}
-          {t.previews.length > 1 ? <span className="tag">{t.previews.length} renders</span> : null}
+          {pl.requiere_firma ? <span className="tag"><PenTool size={12} aria-hidden="true" /> {t("composer.firma")}</span> : null}
+          {!pl.existe ? <span className="tag warn"><FolderX size={12} aria-hidden="true" /> {t("plantillas.fueraRepo")}</span> : null}
+          {pl.previews.length > 1 ? <span className="tag">{t("plantillas.renders", { n: pl.previews.length })}</span> : null}
         </div>
       </div>
     </a>
   );
 }
 
-function TemplateDetail({ t, onClose }) {
+function TemplateDetail({ pl, onClose }) {
   return (
-    <Drawer open onClose={onClose} title={<span className="mono">{t.id}</span>} kicker={<><Estado id={t.estado} label={t.estado} /><span className="muted">{TIPOS[t.tipo] || t.tipo}</span></>}
-      actions={<>{t.readme ? <a className="btn ghost small" href={hrefOf("biblioteca", { doc: t.readme })}><BookOpen size={14} aria-hidden="true" /><span>Guía</span></a> : null}<PedirCambio objetivo={{ tipo: "plantilla", id: t.id }} label="Editar con Claude" /></>}>
-      <div className="stackl" data-plantilla={t.id} data-path={t.dir}>
-        <p className="lead">{t.para}</p>
-        {t.no_usar ? <p className="callout"><strong>No usar para:</strong> {t.no_usar}</p> : null}
-        {t.motivo_no_tal_cual ? <p className="callout"><strong>No tal cual:</strong> {t.motivo_no_tal_cual}</p> : null}
-        {t.previews.length ? (
+    <Drawer open onClose={onClose} title={<span className="mono">{pl.id}</span>} kicker={<><Estado id={pl.estado} label={estadoPl(pl.estado)} /><span className="muted">{tipoLabel(pl.tipo)}</span></>}
+      actions={<>{pl.readme ? <a className="btn ghost small" href={hrefOf("biblioteca", { doc: pl.readme })}><BookOpen size={14} aria-hidden="true" /><span>{t("ogs.guia")}</span></a> : null}<PedirCambio objetivo={{ tipo: "plantilla", id: pl.id }} label={t("plantillas.editarClaude")} /></>}>
+      <div className="stackl" data-plantilla={pl.id} data-path={pl.dir}>
+        <p className="lead">{pl.para}</p>
+        {pl.no_usar ? <p className="callout"><strong>{t("plantillas.noUsar")}</strong> {pl.no_usar}</p> : null}
+        {pl.motivo_no_tal_cual ? <p className="callout"><strong>{t("plantillas.noTalCual")}</strong> {pl.motivo_no_tal_cual}</p> : null}
+        {pl.previews.length ? (
           <div className="previewgrid">
-            {t.previews.map((m) => <figure key={m.path}><Player path={m.path} kind={m.kind} /><figcaption className="small muted mono">{m.path.replace(/^media\//, "")}</figcaption></figure>)}
+            {pl.previews.map((m) => <figure key={m.path}><Player path={m.path} kind={m.kind} /><figcaption className="small muted mono">{m.path.replace(/^media\//, "")}</figcaption></figure>)}
           </div>
-        ) : <Empty title="Sin render local">Renderiza la plantilla o busca en Medios. Los renders viven en media/, que no se versiona.</Empty>}
+        ) : <Empty title={t("carruseles.sinRenderLocal")}>{t("plantillas.sinRenderAyuda")}</Empty>}
         <Fields rows={[
-          ["Ruta", <span className="row gap-s"><code>{t.ruta}</code><CopyButton text={t.dir} label="Copiar" /></span>],
-          ["Serie", t.serie ? <code>{t.serie}</code> : null],
-          ["Ejemplo", t.ejemplo ? <code>{t.ejemplo}</code> : null],
-          ["Fondo", t.fondo],
-          ["Estilo", t.estilo],
-          ["Firma", t.requiere_firma ? `Obligatoria${t.nota_firma ? `. ${t.nota_firma}` : ""}` : "No hace falta"],
-          ["Obligatoria si", t.obligatoria_si],
-          ["Úsala tal cual", t.uso_tal_cual === undefined ? null : t.uso_tal_cual ? "Sí" : "No"],
-          ["También", t.tambien],
-          ["Tokens", t.tokens ? <code>{typeof t.tokens === "string" ? t.tokens : JSON.stringify(t.tokens)}</code> : null],
-          ["Primera referencia", t.referencia_primera],
-          ["Retirada el", t.retirada_el],
+          [t("medios.ruta"), <span className="row gap-s"><code>{pl.ruta}</code><CopyButton text={pl.dir} label={t("comun.copiar")} /></span>],
+          [t("plantillas.serie"), pl.serie ? <code>{pl.serie}</code> : null],
+          [t("plantillas.ejemplo"), pl.ejemplo ? <code>{pl.ejemplo}</code> : null],
+          [t("plantillas.fondo"), pl.fondo],
+          [t("plantillas.estilo"), pl.estilo],
+          [t("composer.firma"), pl.requiere_firma ? `${t("plantillas.obligatoria")}${pl.nota_firma ? `. ${pl.nota_firma}` : ""}` : t("plantillas.noHaceFalta")],
+          [t("plantillas.obligatoriaSi"), pl.obligatoria_si],
+          [t("plantillas.talCual"), pl.uso_tal_cual === undefined ? null : pl.uso_tal_cual ? t("comun.si") : t("comun.no")],
+          [t("plantillas.tambien"), pl.tambien],
+          ["Tokens", pl.tokens ? <code>{typeof pl.tokens === "string" ? pl.tokens : JSON.stringify(pl.tokens)}</code> : null],
+          [t("plantillas.primeraRef"), pl.referencia_primera],
+          [t("plantillas.retiradaEl"), pl.retirada_el],
         ]} />
       </div>
     </Drawer>
@@ -74,22 +78,22 @@ export default function Templates() {
 
   return (
     <>
-      <PageHeader title="Plantillas" sub={`Índice de recursos ${d.plantillas.meta.version || ""}. Una pieza lista para programar solo usa lo que está aquí.`}
-        actions={<a className="btn ghost small" href={hrefOf("biblioteca", { doc: "estrategia/indice-recursos.md" })}><BookOpen size={14} aria-hidden="true" /><span>Índice completo</span></a>}>
-        <Segmented label="Estado" value={estado} onChange={(v) => r.set({ estado: v === "activa" ? null : v })}
+      <PageHeader title={t("nav.plantillas")} sub={t("plantillas.sub", { version: d.plantillas.meta.version || "" })}
+        actions={<a className="btn ghost small" href={hrefOf("biblioteca", { doc: "estrategia/indice-recursos.md" })}><BookOpen size={14} aria-hidden="true" /><span>{t("plantillas.indiceCompleto")}</span></a>}>
+        <Segmented label={t("postDetalle.estado")} value={estado} onChange={(v) => r.set({ estado: v === "activa" ? null : v })}
           options={ESTADOS.map((e) => ({ ...e, count: e.id === "todas" ? d.plantillas.list.length : d.plantillas.list.filter((t) => t.estado === e.id).length }))} />
-        <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder="Buscar plantilla" />
+        <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder={t("plantillas.buscar")} />
       </PageHeader>
       {list.length ? tipos.map((tipo) => {
         const items = list.filter((t) => t.tipo === tipo);
         return items.length ? (
           <section key={tipo} className="section">
-            <div className="sectionhead"><h2>{TIPOS[tipo] || tipo}<span className="count">{items.length}</span></h2></div>
-            <div className="cardgrid">{items.map((t) => <TemplateCard key={t.id} t={t} href={r.withParams({ ver: t.id })} />)}</div>
+            <div className="sectionhead"><h2>{tipoLabel(tipo)}<span className="count">{items.length}</span></h2></div>
+            <div className="cardgrid">{items.map((t) => <TemplateCard key={t.id} pl={t} href={r.withParams({ ver: t.id })} />)}</div>
           </section>
         ) : null;
-      }) : <Empty icon={SearchX} title="Ninguna plantilla con este filtro"><button type="button" className="link" onClick={() => r.go("plantillas", { estado: "todas" })}>Ver todas</button></Empty>}
-      {abierta ? <TemplateDetail t={abierta} onClose={() => r.set({ ver: null })} /> : null}
+      }) : <Empty icon={SearchX} title={t("plantillas.ninguna")}><button type="button" className="link" onClick={() => r.go("plantillas", { estado: "todas" })}>{t("plantillas.verTodas")}</button></Empty>}
+      {abierta ? <TemplateDetail pl={abierta} onClose={() => r.set({ ver: null })} /> : null}
     </>
   );
 }

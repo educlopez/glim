@@ -6,6 +6,7 @@ import { useData } from "../lib/data.js";
 import { SearchBox, Empty, Fields, CopyButton } from "../components/ui.jsx";
 import { hrefOf, useRouteCtx } from "../lib/route.js";
 import { repo, haceDias } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 
 function frontmatter(text) {
   const m = /^---\n([\s\S]*?)\n---\n?/.exec(text);
@@ -50,7 +51,7 @@ function Reader({ path }) {
   const { rows, html } = useMemo(() => {
     if (!st.text || !path.endsWith(".md")) return { rows: [], html: null };
     const { rows, body } = frontmatter(st.text);
-    const md = body.replace(/<!--([\s\S]*?)-->/g, (_, c) => (c.trim() ? `\n\n> **Nota interna (no se publica):** ${c.trim().replace(/\n+/g, " ")}\n\n` : ""));
+    const md = body.replace(/<!--([\s\S]*?)-->/g, (_, c) => (c.trim() ? `\n\n> **${t("biblioteca.notaInterna")}** ${c.trim().replace(/\n+/g, " ")}\n\n` : ""));
     const out = marked.parse(md, { gfm: true })
       .replace(/href="(?!https?:|mailto:|#)([^"]+)"/g, (_, h) => { const p = resolver(base, h); const l = linkFor(p); return l ? `href="${l}"` : `href="${repo(p)}" target="_blank"`; })
       .replace(/src="(?!https?:|data:)([^"]+)"/g, (_, s) => `src="${repo(resolver(base, s))}"`)
@@ -58,13 +59,13 @@ function Reader({ path }) {
     return { rows, html: out };
   }, [st.text, path]);
 
-  if (st.loading) return <p className="muted pad">Abriendo {path}…</p>;
-  if (st.error) return <Empty title={`No se puede abrir ${path}`}>{st.error}</Empty>;
+  if (st.loading) return <p className="muted pad">{t("biblioteca.abriendo", { path })}</p>;
+  if (st.error) return <Empty title={t("biblioteca.noSePuede", { path })}>{st.error}</Empty>;
   return (
     <article className="reader" data-path={path}>
       <div className="readerhead">
         <span className="mono small muted">{path}</span>
-        <span className="row gap-s"><span className="muted small">Modificado {haceDias(st.mtime)}</span><CopyButton text={path} label="Copiar ruta" /></span>
+        <span className="row gap-s"><span className="muted small">{t("biblioteca.modificado", { cuando: haceDias(st.mtime) })}</span><CopyButton text={path} label={t("biblioteca.copiarRuta")} /></span>
       </div>
       {rows.length ? <div className="frontbox"><Fields rows={rows} /></div> : null}
       {html ? <div className="prose" dangerouslySetInnerHTML={{ __html: html }} /> : <pre className="raw">{st.text}</pre>}
@@ -86,10 +87,10 @@ export default function Library() {
 
   return (
     <div className="library">
-      <nav className="libnav" aria-label="Documentos">
+      <nav className="libnav" aria-label={t("biblioteca.documentos")}>
         <div className="libnavhead">
-          <h1>Biblioteca</h1>
-          <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder="Buscar documento" />
+          <h1>{t("nav.biblioteca")}</h1>
+          <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder={t("biblioteca.buscar")} />
         </div>
         <div className="libnavlist">
           {grupos.length ? grupos.map((g) => (
@@ -102,7 +103,7 @@ export default function Library() {
                 </a>
               ))}
             </div>
-          )) : <Empty icon={SearchX} title="Nada coincide" />}
+          )) : <Empty icon={SearchX} title={t("comun.nadaCoincide")} />}
         </div>
       </nav>
       <div className="libreader"><Reader path={doc} /></div>

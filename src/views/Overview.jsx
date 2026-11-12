@@ -6,7 +6,8 @@ import { useData, ESTADOS } from "../lib/data.js";
 import { PageHeader, Section, Empty, Estado } from "../components/ui.jsx";
 import { PostCard, PostChip } from "../components/PostCard.jsx";
 import { Thumb } from "../components/Media.jsx";
-import { parseDia, isoDia, addDias, lunesDe, DIAS_CORTOS, fechaLarga, haceDias } from "../lib/format.js";
+import { parseDia, isoDia, addDias, lunesDe, diasCortos, fechaLarga, haceDias } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 import { hrefOf, useRouteCtx } from "../lib/route.js";
 
 export default function Overview() {
@@ -14,6 +15,7 @@ export default function Overview() {
   const r = useRouteCtx();
   const lunes = lunesDe(parseDia(d.hoy));
   const semana = Array.from({ length: 7 }, (_, i) => addDias(lunes, i));
+  const dias = diasCortos();
   const activos = d.posts.filter((p) => p.estado !== "descartado");
   const okPendiente = d.posts.filter((p) => p.estado === "pendiente-ok");
   const proximos = d.posts.filter((p) => p.estado === "programado" && p.fecha && p.fecha.dia >= d.hoy);
@@ -24,11 +26,11 @@ export default function Overview() {
 
   return (
     <>
-      <PageHeader title="Resumen" sub={fechaLarga(d.hoy)}
-        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><Sparkles size={14} aria-hidden="true" /><span>Pedir un cambio</span></button>} />
+      <PageHeader title={t("nav.resumen")} sub={fechaLarga(d.hoy)}
+        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><Sparkles size={14} aria-hidden="true" /><span>{t("app.pedirCambio")}</span></button>} />
 
       {encargos.length ? (
-        <Section id="h-encargos" title="Encargos en marcha y para revisar" count={encargos.length} actions={<a className="btn ghost small" href={hrefOf("encargos", {})}><span>Ver todos</span><ArrowRight size={14} aria-hidden="true" /></a>}>
+        <Section id="h-encargos" title={t("resumen.encargos")} count={encargos.length} actions={<a className="btn ghost small" href={hrefOf("encargos", {})}><span>{t("comun.verTodos")}</span><ArrowRight size={14} aria-hidden="true" /></a>}>
           <div className="cardgrid posts">{encargos.slice(0, 6).map((e) => <EncargoCard key={e.id} e={e} href={hrefOf("encargos", { ver: e.id })} />)}</div>
         </Section>
       ) : null}
@@ -41,20 +43,20 @@ export default function Overview() {
           </a>
         ))}
         <a className="stat" href={hrefOf("posts", { avisos: "1" })}>
-          <span className="estado e-aviso">Con avisos</span>
+          <span className="estado e-aviso">{t("resumen.conAvisos")}</span>
           <strong>{new Set(avisos.map((a) => a.post.id)).size}</strong>
         </a>
       </div>
 
-      <Section id="h-semana" title="Esta semana" actions={<a className="btn ghost small" href={hrefOf("calendario", { vista: "semana" })}><span>Abrir calendario</span><ArrowRight size={14} aria-hidden="true" /></a>}>
+      <Section id="h-semana" title={t("resumen.estaSemana")} actions={<a className="btn ghost small" href={hrefOf("calendario", { vista: "semana" })}><span>{t("resumen.abrirCalendario")}</span><ArrowRight size={14} aria-hidden="true" /></a>}>
         <div className="weekstrip">
           {semana.map((dia, i) => {
             const iso = isoDia(dia);
             const lista = activos.filter((p) => p.fecha && p.fecha.dia === iso);
             return (
               <div key={iso} className={`stripday ${iso === d.hoy ? "today" : ""} ${iso < d.hoy ? "past" : ""}`}>
-                <div className="stripdayhead"><span>{DIAS_CORTOS[i]}</span><strong>{dia.getDate()}</strong></div>
-                {lista.length ? lista.map((p) => <PostChip key={p.id} post={p} href={r.withParams({ ver: p.id })} />) : <span className="weekempty">Nada</span>}
+                <div className="stripdayhead"><span>{dias[i]}</span><strong>{dia.getDate()}</strong></div>
+                {lista.length ? lista.map((p) => <PostChip key={p.id} post={p} href={r.withParams({ ver: p.id })} />) : <span className="weekempty">{t("resumen.nada")}</span>}
               </div>
             );
           })}
@@ -62,20 +64,20 @@ export default function Overview() {
       </Section>
 
       <div className="twocol">
-        <Section id="h-ok" title="Necesitan tu OK" count={okPendiente.length}>
+        <Section id="h-ok" title={t("resumen.necesitanOk")} count={okPendiente.length}>
           {okPendiente.length ? (
             <div className="cardgrid posts narrow">
               {okPendiente.map((p) => <PostCard key={p.id} post={p} variant="compact" href={r.withParams({ ver: p.id })} />)}
             </div>
-          ) : <Empty title="Nada esperando tu OK" />}
+          ) : <Empty title={t("resumen.nadaOk")} />}
         </Section>
 
         <div>
-          <Section id="h-prox" title="Próximos programados" count={proximos.length}>
+          <Section id="h-prox" title={t("resumen.proximos")} count={proximos.length}>
             {proximos.length ? <div className="stack">{proximos.map((p) => <PostCard key={p.id} post={p} variant="compact" href={r.withParams({ ver: p.id })} />)}</div>
-              : <Empty title="Nada programado a partir de hoy">Programa en Buffer solo con tu OK; aparecerá aquí al anotarlo en el borrador.</Empty>}
+              : <Empty title={t("resumen.nadaProgramado")}>{t("resumen.nadaProgramadoAyuda")}</Empty>}
           </Section>
-          <Section id="h-avisos" title="Avisos" count={avisos.length}>
+          <Section id="h-avisos" title={t("resumen.avisos")} count={avisos.length}>
             {avisos.length ? (
               <ul className="alertlist">
                 {avisos.map((a, i) => (
@@ -87,12 +89,12 @@ export default function Overview() {
                   </li>
                 ))}
               </ul>
-            ) : <Empty title="Sin avisos" />}
+            ) : <Empty title={t("resumen.sinAvisos")} />}
           </Section>
         </div>
       </div>
 
-      <Section id="h-renders" title="Últimos renders" actions={<a className="btn ghost small" href={hrefOf("medios", {})}><span>Ver todos</span><ArrowRight size={14} aria-hidden="true" /></a>}>
+      <Section id="h-renders" title={t("resumen.ultimosRenders")} actions={<a className="btn ghost small" href={hrefOf("medios", {})}><span>{t("comun.verTodos")}</span><ArrowRight size={14} aria-hidden="true" /></a>}>
         <div className="cardgrid tiles">
           {renders.map((m) => (
             <a key={m.path} className="tile" href={hrefOf("medios", { ver: m.path })} data-path={m.path}>

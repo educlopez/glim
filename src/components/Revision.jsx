@@ -6,6 +6,7 @@ import { useData } from "../lib/data.js";
 import { useRouteCtx } from "../lib/route.js";
 import { post as enviar, hace } from "../lib/api.js";
 import { RedIcon } from "./ui.jsx";
+import { fmtFechaHora, t } from "../lib/i18n.js";
 
 const recargar = () => window.dispatchEvent(new Event("panel:reload"));
 
@@ -47,41 +48,41 @@ export function Revision({ post, seleccion, setSeleccion }) {
     if (await accion("/api/revisiones", { post: post.id, red: seleccion.red, parte: seleccion.parte, cita: seleccion.cita, texto, tipo: "cambio" })) { setTexto(""); setSeleccion(null); window.getSelection()?.removeAllRanges(); }
   };
   const aClaude = () => {
-    const t = ["Resuelve estos comentarios de revisión del post. Cambia solo lo que piden y mantén el resto del texto:", "",
-      ...abiertos.map((c, n) => `${n + 1}. ${c.red ? `[${c.red}] ` : ""}${c.cita ? `Sobre «${c.cita}»: ` : ""}${c.texto}`)].join("\n");
-    try { sessionStorage.setItem("composer:texto", t); } catch { /* sin almacenamiento: se escribe a mano */ }
+    const txt = [t("revision.prompt"), "",
+      ...abiertos.map((c, n) => `${n + 1}. ${c.red ? `[${c.red}] ` : ""}${c.cita ? t("revision.sobre", { cita: c.cita }) : ""}${c.texto}`)].join("\n");
+    try { sessionStorage.setItem("composer:texto", txt); } catch { /* sin almacenamiento: se escribe a mano */ }
     r.set({ pedir: `post:${post.id}` });
   };
 
   return (
     <section className="detailsection revision" data-component="revision">
-      <h3><MessageSquareQuote size={14} aria-hidden="true" /> Revisión <span className="muted small">selecciona un trozo del texto para comentarlo</span></h3>
+      <h3><MessageSquareQuote size={14} aria-hidden="true" /> {t("revision.titulo")} <span className="muted small">{t("revision.ayuda")}</span></h3>
 
       {post.estado !== "publicado" && post.estado !== "descartado" ? <div className="oks">
         {post.piezas.map((pz) => {
           const ok = oks.find((o) => o.red === pz.red);
           return ok ? (
-            <span key={pz.red} className="okbadge" title={`OK dado ${new Date(ok.creado).toLocaleString("es-ES")}`}>
+            <span key={pz.red} className="okbadge" title={t("revision.okDado", { fecha: fmtFechaHora(ok.creado) })}>
               <BadgeCheck size={14} aria-hidden="true" /><RedIcon red={pz.red} size={12} /> OK {hace(ok.creado)}
-              <button type="button" className="iconbtn tiny" onClick={() => accion(`/api/revisiones/${ok.id}/quitar`)} aria-label={`Retirar el OK de ${pz.red}`}><Undo2 size={12} aria-hidden="true" /></button>
+              <button type="button" className="iconbtn tiny" onClick={() => accion(`/api/revisiones/${ok.id}/quitar`)} aria-label={t("revision.retirarOk", { red: pz.red })}><Undo2 size={12} aria-hidden="true" /></button>
             </span>
           ) : (
             <button key={pz.red} type="button" className="btn small" onClick={() => accion("/api/revisiones", { post: post.id, red: pz.red, tipo: "ok" })}>
-              <Check size={14} aria-hidden="true" /><RedIcon red={pz.red} size={12} /><span>Dar el OK</span>
+              <Check size={14} aria-hidden="true" /><RedIcon red={pz.red} size={12} /><span>{t("revision.darOk")}</span>
             </button>
           );
         })}
       </div> : null}
-      {oks.length ? <p className="muted small">El OK queda registrado con fecha. No programa nada: programar sigue siendo en Buffer.</p> : null}
+      {oks.length ? <p className="muted small">{t("revision.okNota")}</p> : null}
 
       {seleccion ? (
         <div className="miniform">
           <blockquote className="cita">«{seleccion.cita}»</blockquote>
-          <textarea rows={2} autoFocus value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Qué cambiar aquí"
+          <textarea rows={2} autoFocus value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={t("revision.queCambiar")}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && texto.trim()) guardar(); }} />
           <div className="row gap-s">
-            <button type="button" className="btn small primary" disabled={!texto.trim()} onClick={guardar}>Guardar comentario</button>
-            <button type="button" className="btn ghost small" onClick={() => setSeleccion(null)}>Cancelar</button>
+            <button type="button" className="btn small primary" disabled={!texto.trim()} onClick={guardar}>{t("revision.guardar")}</button>
+            <button type="button" className="btn ghost small" onClick={() => setSeleccion(null)}>{t("comun.cancelar")}</button>
           </div>
         </div>
       ) : null}
@@ -94,14 +95,14 @@ export function Revision({ post, seleccion, setSeleccion }) {
               <p>{c.texto}</p>
               <div className="row gap-s small muted">
                 <span>{hace(c.creado)}</span>
-                <button type="button" className="link" onClick={() => accion(`/api/revisiones/${c.id}/resolver`, { valor: !c.resuelto })}>{c.resuelto ? "Reabrir" : "Resuelto"}</button>
-                <button type="button" className="iconbtn tiny" onClick={() => accion(`/api/revisiones/${c.id}/quitar`)} aria-label="Borrar el comentario"><Trash2 size={12} aria-hidden="true" /></button>
+                <button type="button" className="link" onClick={() => accion(`/api/revisiones/${c.id}/resolver`, { valor: !c.resuelto })}>{c.resuelto ? t("revision.reabrir") : t("revision.resuelto")}</button>
+                <button type="button" className="iconbtn tiny" onClick={() => accion(`/api/revisiones/${c.id}/quitar`)} aria-label={t("revision.borrar")}><Trash2 size={12} aria-hidden="true" /></button>
               </div>
             </li>
           ))}
         </ul>
       ) : null}
-      {abiertos.length ? <button type="button" className="btn small primary" onClick={aClaude}><Sparkles size={14} aria-hidden="true" /><span>Mandar {abiertos.length} comentario{abiertos.length === 1 ? "" : "s"} a Claude</span></button> : null}
+      {abiertos.length ? <button type="button" className="btn small primary" onClick={aClaude}><Sparkles size={14} aria-hidden="true" /><span>{t("revision.mandar", { n: abiertos.length })}</span></button> : null}
       {err ? <p className="formerror small">{err}</p> : null}
     </section>
   );

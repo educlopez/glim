@@ -1,15 +1,16 @@
 // Un "objetivo" es aquello sobre lo que se pide un cambio: "post:<id>", "plantilla:<id>", "general"…
 // Aquí se resuelve a título, miniatura y enlace para pintarlo en cualquier sitio.
 import { hrefOf } from "./route.js";
+import { t } from "./i18n.js";
 
 export const TIPOS_OBJETIVO = {
-  general: "General",
-  post: "Post",
-  plantilla: "Plantilla",
-  carrusel: "Carrusel",
-  og: "OG animada",
-  marca: "Marca",
-  medio: "Archivo",
+  get general() { return t("objetivo.general"); },
+  get post() { return t("objetivo.post"); },
+  get plantilla() { return t("objetivo.plantilla"); },
+  get carrusel() { return t("objetivo.carrusel"); },
+  get og() { return t("objetivo.og"); },
+  get marca() { return t("objetivo.marca"); },
+  get medio() { return t("objetivo.medio"); },
 };
 
 export const claveDe = (o) => (!o || o.tipo === "general" ? "general" : `${o.tipo}:${o.id}`);
@@ -22,7 +23,7 @@ export function parseClave(k) {
 const kindOf = (p) => (/\.(mp4|webm|mov)$/i.test(p || "") ? "video" : "image");
 
 export function infoObjetivo(d, o) {
-  if (!d || !o || o.tipo === "general") return { titulo: "General", thumb: null, href: null };
+  if (!d || !o || o.tipo === "general") return { titulo: t("objetivo.general"), thumb: null, href: null };
   const { tipo, id } = o;
   if (tipo === "post") {
     const p = d.posts.find((x) => x.id === id);

@@ -8,6 +8,7 @@ import {
 import { DataContext, useOverview } from "./lib/data.js";
 import { useRoute, hrefOf, RouteContext } from "./lib/route.js";
 import { EncargosContext, useEncargosPoll } from "./lib/api.js";
+import { I18nProvider, guardarIdioma, idiomaGuardado, resolverIdioma, setIdioma, t } from "./lib/i18n.js";
 import { PostDetail } from "./components/PostDetail.jsx";
 import { Composer } from "./components/Composer.jsx";
 import { Actualizacion } from "./components/Actualizacion.jsx";
@@ -33,32 +34,33 @@ const MCP = "http://localhost:4747";
 const REGLAS = "AGENTS.md"; // marcador; nav() lo cambia por el archivo de reglas del cerebro
 
 // Para añadir una vista: créala en views/ y añádela aquí. El menú y el router salen de esta lista.
+// group y label son claves de src/locales/*.js.
 const NAV = [
-  { group: "Trabajo", items: [
-    { path: "encargos", label: "Encargos", icon: Sparkles, view: Encargos, count: (_d, enc) => enc.lista.filter((e) => ["cola", "en-curso", "revisar", "error"].includes(e.estado)).length || null },
-    { path: "referencias", label: "Referencias", icon: Images, view: Referencias, count: (d) => d.referencias.filter((r) => r.fuente === "propia").length || null },
-    { path: "lienzos", label: "Lienzos", icon: Spline, view: Lienzos, count: (d) => (d.lienzos || []).length || null },
-    { path: "registro", label: "Registro", icon: History, view: Registro, count: (d) => d.registro.length },
-    { path: "kit", label: "Kit", icon: Layers, view: Kit, count: (d) => d.kit.presets.length + d.kit.firmas.length || null },
+  { group: "nav.grupo.trabajo", items: [
+    { path: "encargos", label: "nav.encargos", icon: Sparkles, view: Encargos, count: (_d, enc) => enc.lista.filter((e) => ["cola", "en-curso", "revisar", "error"].includes(e.estado)).length || null },
+    { path: "referencias", label: "nav.referencias", icon: Images, view: Referencias, count: (d) => d.referencias.filter((r) => r.fuente === "propia").length || null },
+    { path: "lienzos", label: "nav.lienzos", icon: Spline, view: Lienzos, count: (d) => (d.lienzos || []).length || null },
+    { path: "registro", label: "nav.registro", icon: History, view: Registro, count: (d) => d.registro.length },
+    { path: "kit", label: "nav.kit", icon: Layers, view: Kit, count: (d) => d.kit.presets.length + d.kit.firmas.length || null },
   ] },
-  { group: "Contenido", items: [
-    { path: "", label: "Resumen", icon: LayoutDashboard, view: Overview },
-    { path: "calendario", label: "Calendario", icon: CalendarDays, view: Calendar },
-    { path: "posts", label: "Posts", icon: PenLine, view: Posts, count: (d) => d.posts.filter((p) => p.estado !== "descartado").length },
+  { group: "nav.grupo.contenido", items: [
+    { path: "", label: "nav.resumen", icon: LayoutDashboard, view: Overview },
+    { path: "calendario", label: "nav.calendario", icon: CalendarDays, view: Calendar },
+    { path: "posts", label: "nav.posts", icon: PenLine, view: Posts, count: (d) => d.posts.filter((p) => p.estado !== "descartado").length },
   ] },
-  { group: "Plantillas", items: [
-    { path: "plantillas", label: "Plantillas", icon: LayoutTemplate, view: Templates, count: (d) => d.plantillas.list.filter((t) => t.estado === "activa").length },
-    { path: "carruseles", label: "Carruseles", icon: GalleryHorizontal, view: Carousels, count: (d) => d.carruseles.length },
-    { path: "og", label: "OG animadas", icon: Share2, view: Ogs, count: (d) => d.ogs.length },
-    { path: "marcas", label: "Marcas", icon: Palette, view: Brands, count: (d) => d.marcas.length },
-    { path: "medios", label: "Medios", icon: Film, view: MediaView },
+  { group: "nav.grupo.plantillas", items: [
+    { path: "plantillas", label: "nav.plantillas", icon: LayoutTemplate, view: Templates, count: (d) => d.plantillas.list.filter((t) => t.estado === "activa").length },
+    { path: "carruseles", label: "nav.carruseles", icon: GalleryHorizontal, view: Carousels, count: (d) => d.carruseles.length },
+    { path: "og", label: "nav.og", icon: Share2, view: Ogs, count: (d) => d.ogs.length },
+    { path: "marcas", label: "nav.marcas", icon: Palette, view: Brands, count: (d) => d.marcas.length },
+    { path: "medios", label: "nav.medios", icon: Film, view: MediaView },
   ] },
-  { group: "Conocimiento", items: [
-    { path: "biblioteca", label: "Biblioteca", icon: BookOpen, view: Library, match: (r) => r.path === "biblioteca" && r.params.doc !== REGLAS },
-    { path: "biblioteca", params: { doc: REGLAS }, label: "Reglas duras", icon: ShieldAlert, match: (r) => r.path === "biblioteca" && r.params.doc === REGLAS },
+  { group: "nav.grupo.conocimiento", items: [
+    { path: "biblioteca", label: "nav.biblioteca", icon: BookOpen, view: Library, match: (r) => r.path === "biblioteca" && r.params.doc !== REGLAS },
+    { path: "biblioteca", params: { doc: REGLAS }, label: "nav.reglas", icon: ShieldAlert, match: (r) => r.path === "biblioteca" && r.params.doc === REGLAS },
   ] },
-  { group: "Panel", items: [
-    { path: "ajustes", label: "Ajustes", icon: Settings, view: Ajustes },
+  { group: "nav.grupo.panel", items: [
+    { path: "ajustes", label: "nav.ajustes", icon: Settings, view: Ajustes },
   ] },
 ];
 const VIEWS = Object.fromEntries(NAV.flatMap((g) => g.items).filter((i) => i.view).map((i) => [i.path, i.view]));
@@ -83,6 +85,14 @@ export default function App() {
   const [endpoint, setEndpoint] = useState(undefined);
   const [saved, setSaved] = useState(null);
   const lastPath = useRef(route.path);
+  // Idioma de la interfaz: ajuste del panel → idioma del cerebro → navegador. Mientras carga, el último que se usó.
+  const navegador = typeof navigator !== "undefined" ? navigator.languages || [navigator.language] : [];
+  const idioma = data
+    ? resolverIdioma(data.ajustes && data.ajustes.idioma, data.cerebro && data.cerebro.idioma, navegador)
+    : idiomaGuardado() || resolverIdioma(null, null, navegador);
+  // Se fija ya: los t() del JSX de este mismo componente se evalúan aquí, antes de que pinte I18nProvider.
+  setIdioma(idioma);
+  useEffect(() => { if (data) guardarIdioma(idioma); }, [data, idioma]);
 
   useEffect(() => {
     if (lastPath.current !== route.path) { window.scrollTo(0, 0); document.querySelector(".main")?.scrollTo(0, 0); lastPath.current = route.path; }
@@ -131,7 +141,7 @@ export default function App() {
     if (!output || !output.trim()) return;
     const r = await fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json", "x-panel": "1" }, body: JSON.stringify({ output, page: window.location.href }) });
     const j = await r.json();
-    if (!r.ok) throw new Error(j.error || "No se pudo guardar");
+    if (!r.ok) throw new Error(j.error || t("app.noSeGuardo"));
     setSaved(j.file);
     reload();
   }, [reload]);
@@ -143,17 +153,20 @@ export default function App() {
   // Ventana de Ajustes de la app (⌘,): solo los ajustes, sin la barra lateral del panel.
   if (route.path === "ajustes" && route.params.ventana === "1") {
     return (
+      <I18nProvider idioma={idioma}>
       <RouteContext.Provider value={route}>
         <DataContext.Provider value={data}>
           <EncargosContext.Provider value={enc}>
-            {data ? <Ajustes /> : <p className="muted pad">Leyendo…</p>}
+            {data ? <Ajustes /> : <p className="muted pad">{t("app.leyendo")}</p>}
           </EncargosContext.Provider>
         </DataContext.Provider>
       </RouteContext.Provider>
+      </I18nProvider>
     );
   }
 
   return (
+    <I18nProvider idioma={idioma}>
     <RouteContext.Provider value={route}>
       <DataContext.Provider value={data}>
       <EncargosContext.Provider value={enc}>
@@ -163,17 +176,17 @@ export default function App() {
               <span className="brandmark" aria-hidden="true"><Sprout size={15} /></span>
               <span>{(data && data.cerebro && data.cerebro.nombre) || "Moss"}</span>
             </a>
-            <nav aria-label="Secciones" className="nav">
+            <nav aria-label={t("app.secciones")} className="nav">
               {nav(data).map((g) => (
                 <div key={g.group} className="navgroup">
-                  <p className="navlabel">{g.group}</p>
+                  <p className="navlabel">{t(g.group)}</p>
                   {g.items.map((it) => {
                     const active = it.match ? it.match(route) : route.path === it.path;
                     return (
                       <a key={it.label} href={hrefOf(it.path, it.params)} className="navitem" aria-current={active ? "page" : undefined}
                         onClick={it.path === "ajustes" && window.panelApp && window.panelApp.abrirAjustes ? (e) => { e.preventDefault(); window.panelApp.abrirAjustes(); } : undefined}>
                         <it.icon size={16} aria-hidden="true" />
-                        <span>{it.label}</span>
+                        <span>{t(it.label)}</span>
                         {data && it.count && it.count(data, enc) ? <span className="count">{it.count(data, enc)}</span> : null}
                       </a>
                     );
@@ -183,29 +196,29 @@ export default function App() {
             </nav>
             <div className="sidefoot">
               <button type="button" className="btn primary" onClick={() => route.set({ pedir: "general" })}>
-                <Sparkles size={14} aria-hidden="true" /><span>Pedir un cambio</span>
+                <Sparkles size={14} aria-hidden="true" /><span>{t("app.pedirCambio")}</span>
               </button>
               {trabajando ? (
                 <a className="working" href={hrefOf("encargos", { ver: trabajando.id })}>
                   <LoaderCircle size={14} className="spin" aria-hidden="true" />
-                  <span><strong>Agente trabajando</strong><span className="muted">{trabajando.texto.slice(0, 60)}</span></span>
+                  <span><strong>{t("app.agenteTrabajando")}</strong><span className="muted">{trabajando.texto.slice(0, 60)}</span></span>
                 </a>
               ) : null}
               {import.meta.env.DEV ? <div className="feedbackbox">
-                <p className="small"><MessageSquareText size={14} aria-hidden="true" /> <strong>Feedback</strong></p>
+                <p className="small"><MessageSquareText size={14} aria-hidden="true" /> <strong>{t("app.feedback")}</strong></p>
                 <p className="muted small">
-                  Usa la barra de abajo a la derecha. {endpoint ? "Conectada al agente por MCP." : "Al copiar o enviar, la nota se guarda en .moss/feedback/."}
+                  {t("app.feedbackUsa")} {endpoint ? t("app.feedbackMcp") : t("app.feedbackLocal")}
                 </p>
-                {data && data.feedback.length ? <p className="small">{data.feedback.length} nota{data.feedback.length === 1 ? "" : "s"} guardada{data.feedback.length === 1 ? "" : "s"}</p> : null}
-                {saved ? <p className="small ok" role="status">Guardada en {saved.split("/").pop()}</p> : null}
+                {data && data.feedback.length ? <p className="small">{t("app.notasGuardadas", { n: data.feedback.length })}</p> : null}
+                {saved ? <p className="small ok" role="status">{t("app.guardadaEn", { archivo: saved.split("/").pop() })}</p> : null}
               </div> : null}
               {data ? <Actualizacion onReload={reload} /> : null}
             </div>
           </aside>
           <main className={`main ${["biblioteca", "ajustes"].includes(route.path) || (route.path === "lienzos" && route.params.l) ? "flush" : ""}`}>
-            {error ? <div className="banner" role="alert">No se pudo leer el repo ({error}). Comprueba que Moss sigue abierto (o <code>npm run dev</code>, en desarrollo).</div> : null}
-            {!data ? (!error ? <p className="muted pad">Leyendo el repo…</p> : null)
-              : View ? <View /> : <div className="pad"><p>Esa sección no existe.</p><a href="#/">Volver al resumen</a></div>}
+            {error ? <div className="banner" role="alert">{t("app.errorRepo", { error })}<code>npm run dev</code>{t("app.errorRepoFin")}</div> : null}
+            {!data ? (!error ? <p className="muted pad">{t("app.leyendoRepo")}</p> : null)
+              : View ? <View /> : <div className="pad"><p>{t("app.noExiste")}</p><a href="#/">{t("app.volverResumen")}</a></div>}
           </main>
           {post ? <PostDetail post={post} onClose={() => route.set({ ver: null })} /> : null}
           {data && route.params.pedir ? <Composer key={route.params.pedir + (route.params.nota || "") + (route.params.preset || "")} /> : null}
@@ -216,5 +229,6 @@ export default function App() {
       </EncargosContext.Provider>
       </DataContext.Provider>
     </RouteContext.Provider>
+    </I18nProvider>
   );
 }

@@ -5,6 +5,7 @@ import { useRouteCtx } from "../lib/route.js";
 import { useData, ESTADOS, REDES } from "../lib/data.js";
 import { PageHeader, Segmented, Toggles, SearchBox, Switch, RedIcon, Empty, Estado } from "../components/ui.jsx";
 import { PostCard } from "../components/PostCard.jsx";
+import { t } from "../lib/i18n.js";
 
 export default function Posts() {
   const d = useData();
@@ -16,11 +17,11 @@ export default function Posts() {
   const soloAvisos = r.params.avisos === "1";
 
   const list = useMemo(() => {
-    const t = q.toLowerCase();
+    const s = q.toLowerCase();
     return d.posts.filter((p) =>
       p.redes.some((x) => redes.includes(x)) &&
       (!soloAvisos || p.avisos.some((a) => a.nivel !== "bajo")) &&
-      (!t || (p.titulo + " " + p.piezas.map((x) => x.texto).join(" ")).toLowerCase().includes(t)));
+      (!s || (p.titulo + " " + p.piezas.map((x) => x.texto).join(" ")).toLowerCase().includes(s)));
   }, [d.posts, q, redes.join(), soloAvisos]);
 
   const columnas = ESTADOS.filter((e) => conDescartados || e.id !== "descartado");
@@ -28,19 +29,19 @@ export default function Posts() {
 
   return (
     <>
-      <PageHeader title="Posts" sub={`${d.posts.length} borradores en borradores/. Pulsa una tarjeta para ver el post completo.`}
-        actions={<Segmented label="Vista" value={vista} onChange={(v) => r.set({ vista: v === "tablero" ? null : v })}
-          options={[{ id: "tablero", label: "Tablero", icon: Columns3 }, { id: "rejilla", label: "Rejilla", icon: LayoutGrid }]} />}>
-        <SearchBox value={q} onChange={(v) => r.set({ q: v || null }, true)} placeholder="Buscar en títulos y textos" />
-        <Toggles label="Redes" value={redes} onChange={(v) => r.set({ redes: v.length === REDES.length || !v.length ? null : v.join(",") })}
+      <PageHeader title={t("nav.posts")} sub={t("posts.sub", { n: d.posts.length })}
+        actions={<Segmented label={t("comun.vista")} value={vista} onChange={(v) => r.set({ vista: v === "tablero" ? null : v })}
+          options={[{ id: "tablero", label: t("posts.tablero"), icon: Columns3 }, { id: "rejilla", label: t("posts.rejilla"), icon: LayoutGrid }]} />}>
+        <SearchBox value={q} onChange={(v) => r.set({ q: v || null }, true)} placeholder={t("posts.buscar")} />
+        <Toggles label={t("comun.redes")} value={redes} onChange={(v) => r.set({ redes: v.length === REDES.length || !v.length ? null : v.join(",") })}
           options={REDES.map((x) => ({ id: x, label: x, icon: <RedIcon red={x} size={12} />, count: d.posts.filter((p) => p.redes.includes(x)).length }))} />
-        <Switch checked={soloAvisos} onChange={(v) => r.set({ avisos: v ? "1" : null })}>Solo con avisos ({conAvisos})</Switch>
-        <Switch checked={conDescartados} onChange={(v) => r.set({ descartados: v ? "1" : null })}>Mostrar descartados</Switch>
+        <Switch checked={soloAvisos} onChange={(v) => r.set({ avisos: v ? "1" : null })}>{t("posts.soloAvisos", { n: conAvisos })}</Switch>
+        <Switch checked={conDescartados} onChange={(v) => r.set({ descartados: v ? "1" : null })}>{t("posts.mostrarDescartados")}</Switch>
       </PageHeader>
 
       {!list.length ? (
-        <Empty icon={SearchX} title="Ningún post con estos filtros">
-          <button type="button" className="link" onClick={() => r.go("posts", {})}>Quitar todos los filtros</button>
+        <Empty icon={SearchX} title={t("posts.ninguno")}>
+          <button type="button" className="link" onClick={() => r.go("posts", {})}>{t("posts.quitarFiltros")}</button>
         </Empty>
       ) : vista === "tablero" ? (
         <div className="board">
@@ -50,7 +51,7 @@ export default function Posts() {
               <section key={e.id} className="boardcol" aria-label={e.label}>
                 <header className="boardcolhead"><Estado id={e.id} /><span className="count">{items.length}</span></header>
                 <div className="boardcards">
-                  {items.length ? items.map((p) => <PostCard key={p.id} post={p} href={r.withParams({ ver: p.id })} />) : <p className="weekempty">Vacío</p>}
+                  {items.length ? items.map((p) => <PostCard key={p.id} post={p} href={r.withParams({ ver: p.id })} />) : <p className="weekempty">{t("posts.vacio")}</p>}
                 </div>
               </section>
             );

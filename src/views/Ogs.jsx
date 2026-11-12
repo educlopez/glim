@@ -8,6 +8,7 @@ import { Drawer } from "../components/Drawer.jsx";
 import { PedirCambio } from "../components/Composer.jsx";
 import { hrefOf, useRouteCtx } from "../lib/route.js";
 import { repo } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 
 // Escala el HTML real (1200×630) al ancho disponible sin deformarlo.
 function LiveFrame({ src }) {
@@ -22,7 +23,7 @@ function LiveFrame({ src }) {
   }, []);
   return (
     <div ref={ref} className="liveframe">
-      <iframe title="OG en vivo" src={src} style={{ transform: `scale(${k})` }} />
+      <iframe title={t("ogs.enVivo")} src={src} style={{ transform: `scale(${k})` }} />
     </div>
   );
 }
@@ -31,11 +32,11 @@ function Detail({ o, onClose }) {
   const [modo, setModo] = useState(o.render ? "render" : "vivo");
   return (
     <Drawer open onClose={onClose} width={900} title={o.id} kicker={<span className="muted">{o.marca}</span>}
-      actions={<><a className="btn ghost small" href={repo(o.html)} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>Abrir HTML</span></a><PedirCambio objetivo={{ tipo: "og", id: o.id }} /></>}>
+      actions={<><a className="btn ghost small" href={repo(o.html)} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("ogs.abrirHtml")}</span></a><PedirCambio objetivo={{ tipo: "og", id: o.id }} /></>}>
       <div className="stackl" data-path={o.html}>
-        <Segmented label="Vista" value={modo} onChange={setModo} options={[{ id: "render", label: "Render MP4" }, { id: "vivo", label: "HTML en vivo" }]} />
-        {modo === "vivo" ? <LiveFrame src={repo(o.html)} /> : o.render ? <Player path={o.render} kind="video" /> : <p className="muted">Sin render local.</p>}
-        <Fields rows={[["HTML", <code>{o.html}</code>], ["Render", o.render ? <code>{o.render}</code> : "Sin render"], ["GIF", o.gif ? <code>{o.gif}</code> : null]]} />
+        <Segmented label={t("comun.vista")} value={modo} onChange={setModo} options={[{ id: "render", label: t("ogs.renderMp4") }, { id: "vivo", label: t("ogs.htmlVivo") }]} />
+        {modo === "vivo" ? <LiveFrame src={repo(o.html)} /> : o.render ? <Player path={o.render} kind="video" /> : <p className="muted">{t("ogs.sinRenderLocal")}</p>}
+        <Fields rows={[["HTML", <code>{o.html}</code>], ["Render", o.render ? <code>{o.render}</code> : t("comun.sinRender")], ["GIF", o.gif ? <code>{o.gif}</code> : null]]} />
       </div>
     </Drawer>
   );
@@ -47,12 +48,12 @@ export default function Ogs() {
   const abierta = r.params.ver && d.ogs.find((o) => o.id === r.params.ver);
   return (
     <>
-      <PageHeader title="OG animadas" sub="Vista previa de enlace de cada web, en HTML con logos y componentes reales. Pasa el ratón para reproducir."
-        actions={<a className="btn ghost small" href={hrefOf("biblioteca", { doc: "plantillas/og-animada/README.md" })}><BookOpen size={14} aria-hidden="true" /><span>Guía</span></a>} />
+      <PageHeader title={t("nav.og")} sub={t("ogs.sub")}
+        actions={<a className="btn ghost small" href={hrefOf("biblioteca", { doc: "plantillas/og-animada/README.md" })}><BookOpen size={14} aria-hidden="true" /><span>{t("ogs.guia")}</span></a>} />
       <div className="cardgrid ogs">
         {d.ogs.map((o) => (
           <a key={o.id} className="card" href={r.withParams({ ver: o.id })} data-path={o.html}>
-            <div className="cardmedia r-og">{o.render ? <HoverVideo path={o.render} alt={o.id} /> : <div className="nopreview"><span>Sin render</span></div>}</div>
+            <div className="cardmedia r-og">{o.render ? <HoverVideo path={o.render} alt={o.id} /> : <div className="nopreview"><span>{t("comun.sinRender")}</span></div>}</div>
             <div className="cardbody"><div className="cardtitle"><span>{o.id}</span><span className="muted small">{o.marca}</span></div></div>
           </a>
         ))}

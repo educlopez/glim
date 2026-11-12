@@ -10,6 +10,7 @@ import { sonar } from "../lib/sonidos.js";
 import { repo } from "../lib/format.js";
 import { proporcion, consulta } from "../lib/refs.js";
 import { PageHeader, Empty } from "../components/ui.jsx";
+import { t } from "../lib/i18n.js";
 
 const recargar = () => window.dispatchEvent(new Event("panel:reload"));
 const nid = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
@@ -37,10 +38,10 @@ function Lista() {
   const porId = Object.fromEntries(d.referencias.map((x) => [x.id, x]));
   return (
     <>
-      <PageHeader title="Lienzos" sub="Tableros libres con referencias, notas y flechas, para pensar una pieza antes de pedirla">
+      <PageHeader title={t("nav.lienzos")} sub={t("lienzos.sub")}>
         <form className="row gap-s" onSubmit={crear}>
-          <input className="lznombrenuevo" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre del lienzo nuevo" aria-label="Nombre del lienzo nuevo" maxLength={60} />
-          <button type="submit" className="btn primary"><Plus size={14} aria-hidden="true" /><span>Nuevo lienzo</span></button>
+          <input className="lznombrenuevo" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder={t("lienzos.nombreNuevo")} aria-label={t("lienzos.nombreNuevo")} maxLength={60} />
+          <button type="submit" className="btn primary"><Plus size={14} aria-hidden="true" /><span>{t("lienzos.nuevo")}</span></button>
         </form>
         {err ? <span className="formerror small">{err}</span> : null}
       </PageHeader>
@@ -57,14 +58,14 @@ function Lista() {
                   </div>
                   <div className="cardbody">
                     <span className="cardtitle"><span>{l.nombre}</span></span>
-                    <span className="cardtext">{refs.length} referencias · {l.nodos.length - refs.length} notas · {l.enlaces.length} flechas · {hace(l.actualizado)}</span>
+                    <span className="cardtext">{t("lienzos.resumen", { refs: refs.length, notas: l.nodos.length - refs.length, flechas: l.enlaces.length })} · {hace(l.actualizado)}</span>
                   </div>
                 </a>
               );
             })}
           </div>
         ) : (
-          <Empty icon={Spline} title="Aún no hay lienzos">Crea uno y arrastra referencias desde el panel de la derecha. Doble clic en el fondo añade una nota.</Empty>
+          <Empty icon={Spline} title={t("lienzos.vacio")}>{t("lienzos.vacioAyuda")}</Empty>
         )}
       </div>
     </>
@@ -76,7 +77,7 @@ function Nodo({ n, ref_, sel, onDown, onResize, onConectar, onTexto, onColor, ed
   const comun = { "data-nodo": n.id, style: estilo, onPointerDown: (e) => onDown(e, n) };
   const asas = (
     <>
-      <span className="lzasa" title="Arrastra hasta otro elemento para unirlos" onPointerDown={(e) => { e.stopPropagation(); onConectar(e, n); }} aria-hidden="true" />
+      <span className="lzasa" title={t("lienzos.unir")} onPointerDown={(e) => { e.stopPropagation(); onConectar(e, n); }} aria-hidden="true" />
       <span className="lzresize" onPointerDown={(e) => { e.stopPropagation(); onResize(e, n); }} aria-hidden="true" />
     </>
   );
@@ -85,14 +86,14 @@ function Nodo({ n, ref_, sel, onDown, onResize, onConectar, onTexto, onColor, ed
     return (
       <div className={`lznodo lzref${sel ? " sel" : ""}`} {...comun}>
         <div className="lzrefmedia" style={{ backgroundColor: x && x.analisis && x.analisis.fondo }}>
-          {!x ? <span className="muted small">Referencia borrada</span>
+          {!x ? <span className="muted small">{t("lienzos.refBorrada")}</span>
             : x.tipo === "video" && x.thumb ? <img src={repo(x.thumb)} alt="" draggable={false} />
             : x.thumb || (x.archivo && x.tipo === "imagen") ? <img src={repo(x.thumb || x.archivo)} alt="" draggable={false} />
-            : <span className="muted small">{x.dominio || "Enlace"}</span>}
+            : <span className="muted small">{x.dominio || t("lienzos.enlace")}</span>}
         </div>
         <div className="lzreftitulo">
           <span>{x ? x.titulo : n.ref}</span>
-          {x ? <a href={hrefOf("referencias", { ver: x.id })} onPointerDown={(e) => e.stopPropagation()} aria-label="Abrir la referencia"><ExternalLink size={12} aria-hidden="true" /></a> : null}
+          {x ? <a href={hrefOf("referencias", { ver: x.id })} onPointerDown={(e) => e.stopPropagation()} aria-label={t("lienzos.abrirRef")}><ExternalLink size={12} aria-hidden="true" /></a> : null}
         </div>
         {asas}
       </div>
@@ -104,11 +105,11 @@ function Nodo({ n, ref_, sel, onDown, onResize, onConectar, onTexto, onColor, ed
       onDoubleClick={(e) => { e.stopPropagation(); setEditar(n.id); }}>
       {editando
         ? <textarea autoFocus defaultValue={n.texto} onPointerDown={(e) => e.stopPropagation()} onChange={(e) => onTexto(n.id, e.target.value)} onBlur={() => setEditar(null)}
-            onKeyDown={(e) => { if (e.key === "Escape" || (e.key === "Enter" && (e.metaKey || e.ctrlKey))) e.currentTarget.blur(); }} aria-label="Texto" />
-        : <div className="lztexto">{n.texto || <span className="muted">{n.tipo === "nota" ? "Doble clic para escribir" : "Título"}</span>}</div>}
+            onKeyDown={(e) => { if (e.key === "Escape" || (e.key === "Enter" && (e.metaKey || e.ctrlKey))) e.currentTarget.blur(); }} aria-label={t("kit.texto")} />
+        : <div className="lztexto">{n.texto || <span className="muted">{n.tipo === "nota" ? t("lienzos.dobleClic") : t("lienzos.titulo")}</span>}</div>}
       {sel && n.tipo === "nota" && !editando ? (
         <div className="lzcolores" onPointerDown={(e) => e.stopPropagation()}>
-          {COLORES_NOTA.map((c) => <button key={c} type="button" className={`c-${c}`} aria-label={c} aria-pressed={(n.color || "amarillo") === c} onClick={() => onColor(n.id, c)} />)}
+          {COLORES_NOTA.map((c) => <button key={c} type="button" className={`c-${c}`} aria-label={t(`lienzos.color.${c}`)} aria-pressed={(n.color || "amarillo") === c} onClick={() => onColor(n.id, c)} />)}
         </div>
       ) : null}
       {asas}
@@ -274,11 +275,11 @@ function Editor({ inicial }) {
 
   const mandar = () => {
     const refs = nodos.filter((n) => n.tipo === "ref" && porId[n.ref]).map((n) => n.ref);
-    const nombreDe = (id) => { const n = nodos.find((m) => m.id === id); return !n ? "?" : n.tipo === "ref" ? (porId[n.ref] || {}).titulo || n.ref : (n.texto || "").split("\n")[0].slice(0, 60) || "nota"; };
+    const nombreDe = (id) => { const n = nodos.find((m) => m.id === id); return !n ? "?" : n.tipo === "ref" ? (porId[n.ref] || {}).titulo || n.ref : (n.texto || "").split("\n")[0].slice(0, 60) || t("lienzos.notaMin"); };
     const textos = nodos.filter((n) => n.tipo !== "ref" && n.texto).map((n) => (n.tipo === "titulo" ? `## ${n.texto}` : `- ${n.texto.replace(/\n/g, "\n  ")}`));
     const flechas = enlaces.map((e) => `- ${nombreDe(e.de)} → ${nombreDe(e.a)}`);
-    const t = [`Lienzo «${nombre}»`, textos.length ? `\nNotas:\n${textos.join("\n")}` : "", flechas.length ? `\nRelaciones:\n${flechas.join("\n")}` : ""].join("\n").trim();
-    try { sessionStorage.setItem("composer:texto", t); } catch {}
+    const txt = [t("lienzos.promptLienzo", { nombre }), textos.length ? `\n${t("lienzos.promptNotas")}\n${textos.join("\n")}` : "", flechas.length ? `\n${t("lienzos.promptRelaciones")}\n${flechas.join("\n")}` : ""].join("\n").trim();
+    try { sessionStorage.setItem("composer:texto", txt); } catch {}
     r.set({ pedir: "general", ref: refs.slice(0, 12).join(",") || null });
   };
 
@@ -317,31 +318,31 @@ function Editor({ inicial }) {
               onColor={(id, c) => setNodos((l) => l.map((m) => (m.id === id ? { ...m, color: c } : m)))} />
           ))}
         </div>
-        {!nodos.length ? <p className="lzvacio muted">Arrastra referencias desde la derecha · doble clic en el fondo para una nota · tira del punto de un elemento hasta otro para unirlos</p> : null}
+        {!nodos.length ? <p className="lzvacio muted">{t("lienzos.vacioEditor")}</p> : null}
       </div>
 
-      <div className="lzbarra" role="toolbar" aria-label="Lienzo">
-        <a className="iconbtn" href={hrefOf("lienzos")} aria-label="Todos los lienzos"><ArrowLeft size={15} aria-hidden="true" /></a>
-        <input className="lznombre" value={nombre} onChange={(e) => setNombre(e.target.value)} aria-label="Nombre del lienzo" maxLength={60} />
-        <span className={`lzguardado small ${guardado}`} role="status">{guardado === "guardado" ? "Guardado" : guardado === "error" ? "No se pudo guardar" : "Guardando…"}</span>
+      <div className="lzbarra" role="toolbar" aria-label={t("lienzos.lienzo")}>
+        <a className="iconbtn" href={hrefOf("lienzos")} aria-label={t("lienzos.todos")}><ArrowLeft size={15} aria-hidden="true" /></a>
+        <input className="lznombre" value={nombre} onChange={(e) => setNombre(e.target.value)} aria-label={t("lienzos.nombre")} maxLength={60} />
+        <span className={`lzguardado small ${guardado}`} role="status">{guardado === "guardado" ? t("lienzos.guardado") : guardado === "error" ? t("app.noSeGuardo") : t("lienzos.guardando")}</span>
         <span className="lzsep" />
-        <button type="button" className="btn ghost small" onClick={() => nota()} title="Nota (N)"><StickyNote size={14} aria-hidden="true" /><span>Nota</span></button>
-        <button type="button" className="btn ghost small" onClick={() => nota(undefined, undefined, "titulo")} title="Título (T)"><Type size={14} aria-hidden="true" /><span>Título</span></button>
+        <button type="button" className="btn ghost small" onClick={() => nota()} title={t("lienzos.notaAtajo")}><StickyNote size={14} aria-hidden="true" /><span>{t("lienzos.nota")}</span></button>
+        <button type="button" className="btn ghost small" onClick={() => nota(undefined, undefined, "titulo")} title={t("lienzos.tituloAtajo")}><Type size={14} aria-hidden="true" /><span>{t("lienzos.titulo")}</span></button>
         <span className="lzsep" />
-        <button type="button" className="iconbtn" onClick={() => zoom(1 / 1.2)} aria-label="Alejar (-)"><ZoomOut size={15} aria-hidden="true" /></button>
-        <button type="button" className="lzzoom small" onClick={() => setVista((v) => ({ ...v, z: 1 }))} title="Volver al 100 %">{Math.round(vista.z * 100)} %</button>
-        <button type="button" className="iconbtn" onClick={() => zoom(1.2)} aria-label="Acercar (+)"><ZoomIn size={15} aria-hidden="true" /></button>
-        <button type="button" className="iconbtn" onClick={encajar} aria-label="Encajar todo (F)"><Maximize size={15} aria-hidden="true" /></button>
+        <button type="button" className="iconbtn" onClick={() => zoom(1 / 1.2)} aria-label={t("lienzos.alejar")}><ZoomOut size={15} aria-hidden="true" /></button>
+        <button type="button" className="lzzoom small" onClick={() => setVista((v) => ({ ...v, z: 1 }))} title={t("lienzos.volver100")}>{Math.round(vista.z * 100)} %</button>
+        <button type="button" className="iconbtn" onClick={() => zoom(1.2)} aria-label={t("lienzos.acercar")}><ZoomIn size={15} aria-hidden="true" /></button>
+        <button type="button" className="iconbtn" onClick={encajar} aria-label={t("lienzos.encajar")}><Maximize size={15} aria-hidden="true" /></button>
         <span className="lzsep" />
-        {sel ? <button type="button" className="btn ghost small" onClick={quitarSel}><Trash2 size={14} aria-hidden="true" /><span>Quitar {sel.tipo === "enlace" ? "flecha" : "elemento"}</span></button> : null}
-        <button type="button" className="btn small primary" onClick={mandar} disabled={!nodos.length}><Sparkles size={14} aria-hidden="true" /><span>Usar en un encargo</span></button>
-        <button type="button" className={`iconbtn${lateral ? " on" : ""}`} onClick={() => setLateral((v) => !v)} aria-pressed={lateral} aria-label="Panel de referencias"><PanelRight size={15} aria-hidden="true" /></button>
+        {sel ? <button type="button" className="btn ghost small" onClick={quitarSel}><Trash2 size={14} aria-hidden="true" /><span>{sel.tipo === "enlace" ? t("lienzos.quitarFlecha") : t("lienzos.quitarElemento")}</span></button> : null}
+        <button type="button" className="btn small primary" onClick={mandar} disabled={!nodos.length}><Sparkles size={14} aria-hidden="true" /><span>{t("lienzos.usarEncargo")}</span></button>
+        <button type="button" className={`iconbtn${lateral ? " on" : ""}`} onClick={() => setLateral((v) => !v)} aria-pressed={lateral} aria-label={t("lienzos.panelRefs")}><PanelRight size={15} aria-hidden="true" /></button>
       </div>
 
       {lateral ? (
-        <aside className="lzlateral" aria-label="Referencias para arrastrar">
-          <label className="searchbox"><Search size={14} aria-hidden="true" /><span className="sr">Buscar</span><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar · color:azul #motion" /></label>
-          <p className="muted small">Arrastra al lienzo o pulsa para ponerla en el centro.</p>
+        <aside className="lzlateral" aria-label={t("lienzos.refsArrastrar")}>
+          <label className="searchbox"><Search size={14} aria-hidden="true" /><span className="sr">{t("comun.buscar")}</span><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("lienzos.buscarPlaceholder")} /></label>
+          <p className="muted small">{t("lienzos.arrastraAyuda")}</p>
           <div className="lzrefs">
             {refsLista.map((x) => (
               <button key={x.id} type="button" className="lzrefitem" draggable onDragStart={(e) => { e.dataTransfer.setData("text/x-referencia", x.id); e.dataTransfer.effectAllowed = "copy"; }}
@@ -353,12 +354,12 @@ function Editor({ inicial }) {
           </div>
           <div className="lzpeligro">
             {borrar
-              ? <><span className="small">¿Borrar el lienzo? Las referencias no se tocan.</span><button type="button" className="btn small danger" onClick={async () => { await post(`/api/lienzos/${inicial.id}/quitar`); sonar("papelera"); recargar(); r.set({ l: null }); }}>Borrar</button><button type="button" className="btn ghost small" onClick={() => setBorrar(false)}>Cancelar</button></>
-              : <button type="button" className="btn ghost small" onClick={() => setBorrar(true)}><Trash2 size={13} aria-hidden="true" /><span>Borrar lienzo</span></button>}
+              ? <><span className="small">{t("lienzos.borrarConfirm")}</span><button type="button" className="btn small danger" onClick={async () => { await post(`/api/lienzos/${inicial.id}/quitar`); sonar("papelera"); recargar(); r.set({ l: null }); }}>{t("comun.borrar")}</button><button type="button" className="btn ghost small" onClick={() => setBorrar(false)}>{t("comun.cancelar")}</button></>
+              : <button type="button" className="btn ghost small" onClick={() => setBorrar(true)}><Trash2 size={13} aria-hidden="true" /><span>{t("lienzos.borrar")}</span></button>}
           </div>
         </aside>
       ) : null}
-      <p className="lzatajos small muted" aria-hidden="true">N nota · T título · F encajar · +/− zoom · ⌘ + rueda zoom · Supr quitar</p>
+      <p className="lzatajos small muted" aria-hidden="true">{t("lienzos.atajos")}</p>
     </div>
   );
 }
@@ -367,7 +368,7 @@ export default function Lienzos() {
   const d = useData();
   const r = useRouteCtx();
   const l = r.params.l && (d.lienzos || []).find((x) => x.id === r.params.l);
-  if (r.params.l && !l) return <div className="pad-x"><Empty icon={Spline} title="Ese lienzo no existe"><a href={hrefOf("lienzos")}>Ver todos</a></Empty></div>;
+  if (r.params.l && !l) return <div className="pad-x"><Empty icon={Spline} title={t("lienzos.noExiste")}><a href={hrefOf("lienzos")}>{t("comun.verTodos")}</a></Empty></div>;
   // key: el editor se monta una vez por lienzo; las recargas del repo no pisan lo que estás moviendo.
   return l ? <Editor key={l.id} inicial={l} /> : <Lista />;
 }

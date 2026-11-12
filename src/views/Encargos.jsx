@@ -14,6 +14,7 @@ import { Drawer } from "../components/Drawer.jsx";
 import { Thumb, Player } from "../components/Media.jsx";
 import { EncargoCard, EstadoEncargo } from "../components/EncargoCard.jsx";
 import { CopiaAislada } from "../components/CopiaAislada.jsx";
+import { t } from "../lib/i18n.js";
 
 const ICONOS = { leer: FileText, editar: FilePen, crear: FilePlus, terminal: Terminal, buscar: Search, skill: Sparkles, agente: Bot, web: Globe, plan: ListChecks, herramienta: Wrench };
 const esMedio = (p) => /^media\/.+\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i.test(p);
@@ -41,7 +42,7 @@ function Cronometro({ desde }) {
   return <span className="mono">{duracion(Date.now() - new Date(desde).getTime())}</span>;
 }
 
-const NOMBRE_AGENTE = { claude: "Claude", codex: "Codex", cursor: "Cursor", opencode: "OpenCode", gemini: "Gemini", propio: "El agente" };
+const NOMBRE_AGENTE = { claude: "Claude", codex: "Codex", cursor: "Cursor", opencode: "OpenCode", gemini: "Gemini", get propio() { return t("encargos.elAgente"); } };
 export const nombreAgente = (id) => NOMBRE_AGENTE[id] || "Claude";
 
 function Ronda({ ronda, n, eventos, viva, agente }) {
@@ -53,27 +54,27 @@ function Ronda({ ronda, n, eventos, viva, agente }) {
   return (
     <section className="ronda">
       <div className="rondapide">
-        <span className="rondawho">{n === 0 ? "Pediste" : "Otra vuelta"}</span>
+        <span className="rondawho">{n === 0 ? t("encargos.pediste") : t("encargos.otraVuelta")}</span>
         <p>{ronda.texto}</p>
       </div>
       {pasos.length ? (
         <div className="rondapasos">
           <button type="button" className="btn ghost small" aria-expanded={abierto} onClick={() => setAbierto(!abierto)}>
             {viva ? <LoaderCircle size={14} className="spin" aria-hidden="true" /> : <ListChecks size={14} aria-hidden="true" />}
-            <span>{viva ? "Trabajando" : "Pasos"} · {herramientas} acción{herramientas === 1 ? "" : "es"}</span>
+            <span>{viva ? t("encargo.estado.en-curso") : t("encargos.pasos")} · {t("encargos.acciones", { n: herramientas })}</span>
             {viva && ronda.inicio ? <Cronometro desde={ronda.inicio} /> : ronda.duracion ? <span className="muted">{duracion(ronda.duracion)}</span> : null}
           </button>
           {abierto ? <ol className="pasos">{pasos.map((ev, i) => <Paso key={i} ev={ev} />)}</ol> : null}
         </div>
-      ) : viva ? <p className="muted small"><LoaderCircle size={14} className="spin" aria-hidden="true" /> Arrancando {nombreAgente(ronda.agente || agente)}…</p> : null}
+      ) : viva ? <p className="muted small"><LoaderCircle size={14} className="spin" aria-hidden="true" /> {t("encargos.arrancando", { agente: nombreAgente(ronda.agente || agente) })}</p> : null}
       {ronda.resultado ? (
         <div className="resultado">
-          <p className="rondawho">{nombreAgente(ronda.agente || agente)} responde</p>
+          <p className="rondawho">{t("encargos.responde", { agente: nombreAgente(ronda.agente || agente) })}</p>
           <div className="prose" dangerouslySetInnerHTML={{ __html: md(ronda.resultado.replace(/^\s*[-*]?\s*\**DECISI[ÓO]N:?\**:?.*$/gim, "").trim()) }} />
         </div>
       ) : null}
       {ronda.error ? <p className="callout">{ronda.error}</p> : null}
-      {ronda.denegadas && ronda.denegadas.length ? <p className="muted small">Intentó algo sin permiso: {ronda.denegadas.join(" · ")}</p> : null}
+      {ronda.denegadas && ronda.denegadas.length ? <p className="muted small">{t("encargos.sinPermiso", { lista: ronda.denegadas.join(" · ") })}</p> : null}
     </section>
   );
 }
@@ -84,7 +85,7 @@ function Decision({ e, texto, i, onDone }) {
   const [abierto, setAbierto] = useState(false);
   const [f, setF] = useState({ titulo: texto.length > 90 ? texto.slice(0, 87) + "…" : texto, aprendimos: texto, accion: "", ambito: e.objetivo.tipo === "post" ? (d.posts.find((p) => p.id === e.objetivo.id) || { redes: ["repo"] }).redes[0] : e.objetivo.tipo === "general" ? "repo" : e.objetivo.tipo });
   const [err, setErr] = useState(null);
-  if (ya) return <li className="decision done"><Check size={14} aria-hidden="true" /><span>{texto}</span><span className="tag">Registrada</span></li>;
+  if (ya) return <li className="decision done"><Check size={14} aria-hidden="true" /><span>{texto}</span><span className="tag">{t("encargos.registrada")}</span></li>;
   const guardar = async () => {
     try { await post("/api/registro", { ...f, quePaso: `Encargo desde el panel: «${e.texto.slice(0, 140)}»`, origen: `encargo ${e.id}`, encargo: e.id, decision: i }); onDone(); }
     catch (x) { setErr(x.message); }
@@ -96,14 +97,14 @@ function Decision({ e, texto, i, onDone }) {
         <span>{texto}</span>
         {abierto ? (
           <div className="miniform">
-            <label className="field"><span className="fieldlabel">Ámbito</span><input value={f.ambito} onChange={(x) => setF({ ...f, ambito: x.target.value })} /></label>
-            <label className="field"><span className="fieldlabel">Título</span><input value={f.titulo} onChange={(x) => setF({ ...f, titulo: x.target.value })} /></label>
-            <label className="field"><span className="fieldlabel">Qué aprendimos</span><textarea rows={2} value={f.aprendimos} onChange={(x) => setF({ ...f, aprendimos: x.target.value })} /></label>
-            <label className="field"><span className="fieldlabel">Acción</span><input value={f.accion} placeholder="Cambio en una plantilla, en la guía… o nada" onChange={(x) => setF({ ...f, accion: x.target.value })} /></label>
+            <label className="field"><span className="fieldlabel">{t("registro.ambito")}</span><input value={f.ambito} onChange={(x) => setF({ ...f, ambito: x.target.value })} /></label>
+            <label className="field"><span className="fieldlabel">{t("registro.titulo")}</span><input value={f.titulo} onChange={(x) => setF({ ...f, titulo: x.target.value })} /></label>
+            <label className="field"><span className="fieldlabel">{t("registro.queAprendimos")}</span><textarea rows={2} value={f.aprendimos} onChange={(x) => setF({ ...f, aprendimos: x.target.value })} /></label>
+            <label className="field"><span className="fieldlabel">{t("registro.accion")}</span><input value={f.accion} placeholder={t("encargos.accionEjemplo")} onChange={(x) => setF({ ...f, accion: x.target.value })} /></label>
             {err ? <p className="formerror">{err}</p> : null}
-            <div className="row gap-s"><button type="button" className="btn small primary" onClick={guardar}>Registrar en aprendizajes</button><button type="button" className="btn ghost small" onClick={() => setAbierto(false)}>Cancelar</button></div>
+            <div className="row gap-s"><button type="button" className="btn small primary" onClick={guardar}>{t("encargos.registrarAprendizajes")}</button><button type="button" className="btn ghost small" onClick={() => setAbierto(false)}>{t("comun.cancelar")}</button></div>
           </div>
-        ) : <button type="button" className="btn small" onClick={() => setAbierto(true)}>Registrar</button>}
+        ) : <button type="button" className="btn small" onClick={() => setAbierto(true)}>{t("encargos.registrar")}</button>}
       </div>
     </li>
   );
@@ -113,7 +114,7 @@ function Archivos({ archivos }) {
   const medios = archivos.filter(esMedio);
   const resto = archivos.filter((p) => !esMedio(p));
   const [ver, setVer] = useState(null);
-  if (!archivos.length) return <p className="muted small">Todavía no ha tocado ningún archivo.</p>;
+  if (!archivos.length) return <p className="muted small">{t("encargos.ningunArchivo")}</p>;
   return (
     <div className="stack">
       {medios.length ? (
@@ -155,35 +156,35 @@ function Detalle({ id, onClose }) {
   }, [vivo, id]);
   useEffect(() => { if (vivo && fin.current) fin.current.scrollIntoView({ block: "nearest" }); }, [j && j.eventos.length]);
 
-  if (!j) return <Drawer open onClose={onClose} title="Encargo" width={980}><p className="muted">Cargando…</p></Drawer>;
+  if (!j) return <Drawer open onClose={onClose} title={t("encargos.encargo")} width={980}><p className="muted">{t("comun.cargando")}</p></Drawer>;
   const e = j.encargo;
   const info = infoObjetivo(d, e.objetivo);
   const accion = async (url, body) => {
     setErr(null);
     try { await post(url, body); await cargar(); enc.recargar(); } catch (x) { setErr(x.message); }
   };
-  const nombre = e.objetivo.tipo === "general" ? "General" : info.titulo;
+  const nombre = e.objetivo.tipo === "general" ? t("objetivo.general") : info.titulo;
 
   return (
-    <Drawer open onClose={onClose} width={1040} label={`Encargo ${e.texto.slice(0, 40)}`}
+    <Drawer open onClose={onClose} width={1040} label={t("encargos.label", { texto: e.texto.slice(0, 40) })}
       kicker={<><EstadoEncargo estado={e.estado} /><span className="muted">{TIPOS_OBJETIVO[e.objetivo.tipo]}</span>{info.href ? <a href={info.href}>{nombre}<ArrowRight size={12} aria-hidden="true" /></a> : <span>{nombre}</span>}</>}
       title={e.texto.split("\n")[0].slice(0, 90)}
-      actions={j.terminal ? <CopyButton text={j.terminal} label="Seguir en la terminal" /> : null}>
+      actions={j.terminal ? <CopyButton text={j.terminal} label={t("encargos.seguirTerminal")} /> : null}>
       <div className="detailgrid wide" data-encargo={e.id}>
         <div className="detailmain">
           {e.rondas.map((ronda, n) => <Ronda key={n} ronda={ronda} n={n} eventos={j.eventos} viva={ronda.estado === "en-curso"} agente={e.agente} />)}
-          {e.estado === "cola" ? <p className="callout">En cola. Arranca en cuanto termine el encargo que hay en marcha.</p> : null}
+          {e.estado === "cola" ? <p className="callout">{t("encargos.enCola")}</p> : null}
           <div ref={fin} />
           {e.copia ? <CopiaAislada encargo={e} onCambio={() => { cargar(); enc.recargar(); }} /> : null}
 
           {["revisar", "error", "hecho"].includes(e.estado) ? (
             <section className="detailsection">
-              <h3><Repeat size={14} aria-hidden="true" /> Otra vuelta</h3>
-              <p className="muted small">{nombreAgente(e.agente)} retoma la misma sesión: recuerda lo que hizo y lo que leyó.</p>
-              <textarea rows={3} value={vuelta} onChange={(x) => setVuelta(x.target.value)} placeholder="Qué cambiar del resultado. Ejemplo: la slide 2 tiene demasiado texto, déjala en una frase."
+              <h3><Repeat size={14} aria-hidden="true" /> {t("encargos.otraVuelta")}</h3>
+              <p className="muted small">{t("encargos.retoma", { agente: nombreAgente(e.agente) })}</p>
+              <textarea rows={3} value={vuelta} onChange={(x) => setVuelta(x.target.value)} placeholder={t("encargos.vueltaEjemplo")}
                 onKeyDown={(x) => { if (x.key === "Enter" && (x.metaKey || x.ctrlKey) && vuelta.trim()) accion(`/api/encargos/${e.id}/otra-vuelta`, { texto: vuelta }).then(() => setVuelta("")); }} />
               <div className="row gap-s">
-                <button type="button" className="btn primary small" disabled={!vuelta.trim()} onClick={() => accion(`/api/encargos/${e.id}/otra-vuelta`, { texto: vuelta }).then(() => setVuelta(""))}><Sparkles size={14} aria-hidden="true" /><span>Lanzar otra vuelta</span></button>
+                <button type="button" className="btn primary small" disabled={!vuelta.trim()} onClick={() => accion(`/api/encargos/${e.id}/otra-vuelta`, { texto: vuelta }).then(() => setVuelta(""))}><Sparkles size={14} aria-hidden="true" /><span>{t("encargos.lanzarVuelta")}</span></button>
               </div>
             </section>
           ) : null}
@@ -191,42 +192,42 @@ function Detalle({ id, onClose }) {
 
         <div className="detailside">
           <section className="detailsection">
-            <h3>Qué hago ahora</h3>
+            <h3>{t("encargos.queHago")}</h3>
             <div className="stack">
-              {e.estado === "borrador" ? <button type="button" className="btn primary" onClick={() => accion(`/api/encargos/${e.id}/lanzar`)}><Play size={14} aria-hidden="true" /><span>Lanzar</span></button> : null}
-              {e.estado === "en-curso" ? <button type="button" className="btn" onClick={() => accion(`/api/encargos/${e.id}/detener`)}><Square size={14} aria-hidden="true" /><span>Detener</span></button> : null}
-              {e.estado === "cola" ? <button type="button" className="btn" onClick={() => accion(`/api/encargos/${e.id}/detener`)}><Square size={14} aria-hidden="true" /><span>Sacar de la cola</span></button> : null}
-              {["revisar", "error"].includes(e.estado) ? <button type="button" className="btn primary" onClick={() => accion(`/api/encargos/${e.id}/estado`, { estado: "hecho" })}><Check size={14} aria-hidden="true" /><span>Dar por bueno</span></button> : null}
-              {["revisar", "error", "borrador"].includes(e.estado) ? <button type="button" className="btn ghost" onClick={() => accion(`/api/encargos/${e.id}/estado`, { estado: "descartado" })}><Trash2 size={14} aria-hidden="true" /><span>Descartar</span></button> : null}
-              {["hecho", "descartado"].includes(e.estado) ? <button type="button" className="btn ghost" onClick={() => accion(`/api/encargos/${e.id}/estado`, { estado: "revisar" })}><span>Volver a revisar</span></button> : null}
+              {e.estado === "borrador" ? <button type="button" className="btn primary" onClick={() => accion(`/api/encargos/${e.id}/lanzar`)}><Play size={14} aria-hidden="true" /><span>{t("composer.lanzar")}</span></button> : null}
+              {e.estado === "en-curso" ? <button type="button" className="btn" onClick={() => accion(`/api/encargos/${e.id}/detener`)}><Square size={14} aria-hidden="true" /><span>{t("encargos.detener")}</span></button> : null}
+              {e.estado === "cola" ? <button type="button" className="btn" onClick={() => accion(`/api/encargos/${e.id}/detener`)}><Square size={14} aria-hidden="true" /><span>{t("encargos.sacarCola")}</span></button> : null}
+              {["revisar", "error"].includes(e.estado) ? <button type="button" className="btn primary" onClick={() => accion(`/api/encargos/${e.id}/estado`, { estado: "hecho" })}><Check size={14} aria-hidden="true" /><span>{t("encargos.darPorBueno")}</span></button> : null}
+              {["revisar", "error", "borrador"].includes(e.estado) ? <button type="button" className="btn ghost" onClick={() => accion(`/api/encargos/${e.id}/estado`, { estado: "descartado" })}><Trash2 size={14} aria-hidden="true" /><span>{t("encargos.descartar")}</span></button> : null}
+              {["hecho", "descartado"].includes(e.estado) ? <button type="button" className="btn ghost" onClick={() => accion(`/api/encargos/${e.id}/estado`, { estado: "revisar" })}><span>{t("encargos.volverRevisar")}</span></button> : null}
               {err ? <p className="formerror">{err}</p> : null}
-              {e.estado === "revisar" ? <p className="muted small">Dar por bueno no hace commit ni publica: solo cierra el encargo.</p> : null}
+              {e.estado === "revisar" ? <p className="muted small">{t("encargos.darPorBuenoNota")}</p> : null}
             </div>
           </section>
 
           {e.decisiones && e.decisiones.length ? (
             <section className="detailsection">
-              <h3>Decisiones que propone</h3>
-              <ul className="decisiones">{e.decisiones.map((t, i) => <Decision key={t} e={e} texto={t} i={i} onDone={() => { cargar(); }} />)}</ul>
+              <h3>{t("encargos.decisiones")}</h3>
+              <ul className="decisiones">{e.decisiones.map((dec, i) => <Decision key={dec} e={e} texto={dec} i={i} onDone={() => { cargar(); }} />)}</ul>
             </section>
           ) : null}
 
           <section className="detailsection">
-            <h3>Archivos tocados <span className="count">{e.archivos.length}</span></h3>
+            <h3>{t("encargos.archivosTocados")} <span className="count">{e.archivos.length}</span></h3>
             <Archivos archivos={e.archivos} />
           </section>
 
           <section className="detailsection">
-            <h3>Datos</h3>
+            <h3>{t("encargos.datos")}</h3>
             <Fields rows={[
-              ["Plantilla", e.plantilla ? <a href={hrefOf("plantillas", { ver: e.plantilla })}>{e.plantilla}</a> : null],
-              ["Referencias", e.referencias.length ? `${e.referencias.length}` : null],
-              ["Modelo", e.modelo || "Por defecto"],
-              ["Coste", e.rondas.some((r) => r.coste) ? `${e.rondas.reduce((s, r) => s + (r.coste || 0), 0).toFixed(2)} USD` : null],
-              ["Creado", hace(e.creado)],
-              ["Sesión", e.sesion ? <span className="mono small">{e.sesion.slice(0, 8)}</span> : null],
+              [t("objetivo.plantilla"), e.plantilla ? <a href={hrefOf("plantillas", { ver: e.plantilla })}>{e.plantilla}</a> : null],
+              [t("nav.referencias"), e.referencias.length ? `${e.referencias.length}` : null],
+              [t("composer.modelo"), e.modelo || t("composer.porDefecto")],
+              [t("encargos.coste"), e.rondas.some((r) => r.coste) ? `${e.rondas.reduce((s, r) => s + (r.coste || 0), 0).toFixed(2)} USD` : null],
+              [t("postDetalle.creado"), hace(e.creado)],
+              [t("encargos.sesion"), e.sesion ? <span className="mono small">{e.sesion.slice(0, 8)}</span> : null],
             ]} />
-            <button type="button" className="btn ghost small" onClick={() => setVerCtx(!verCtx)} aria-expanded={verCtx}><Eye size={14} aria-hidden="true" /><span>{verCtx ? "Ocultar" : "Ver"} el contexto enviado</span></button>
+            <button type="button" className="btn ghost small" onClick={() => setVerCtx(!verCtx)} aria-expanded={verCtx}><Eye size={14} aria-hidden="true" /><span>{verCtx ? t("encargos.ocultarCtx") : t("encargos.verCtx")}</span></button>
             {verCtx ? <pre className="raw contextpre">{j.contexto}</pre> : null}
           </section>
         </div>
@@ -236,10 +237,10 @@ function Detalle({ id, onClose }) {
 }
 
 const COLUMNAS = [
-  { id: "pendiente", label: "Sin lanzar o en cola", estados: ["borrador", "cola"] },
-  { id: "curso", label: "Trabajando", estados: ["en-curso"] },
-  { id: "revisar", label: "Para revisar", estados: ["revisar", "error"] },
-  { id: "hecho", label: "Hecho", estados: ["hecho"] },
+  { id: "pendiente", get label() { return t("encargos.col.pendiente"); }, estados: ["borrador", "cola"] },
+  { id: "curso", get label() { return t("encargo.estado.en-curso"); }, estados: ["en-curso"] },
+  { id: "revisar", get label() { return t("encargo.estado.revisar"); }, estados: ["revisar", "error"] },
+  { id: "hecho", get label() { return t("encargo.estado.hecho"); }, estados: ["hecho"] },
 ];
 
 export default function Encargos() {
@@ -248,17 +249,17 @@ export default function Encargos() {
   const enc = useEncargos();
   const verDescartados = r.params.descartados === "1";
   const notas = d.feedback || [];
-  const cols = verDescartados ? [...COLUMNAS, { id: "descartado", label: "Descartados", estados: ["descartado"] }] : COLUMNAS;
+  const cols = verDescartados ? [...COLUMNAS, { id: "descartado", label: t("encargos.col.descartados"), estados: ["descartado"] }] : COLUMNAS;
   return (
     <>
-      <PageHeader title="Encargos" sub="Lo que le pides a tu agente (Claude, Codex, Cursor, OpenCode…) desde el panel. Trabaja en local, en este repo, uno detrás de otro."
-        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><Sparkles size={14} aria-hidden="true" /><span>Nuevo encargo</span></button>}>
-        <Switch checked={verDescartados} onChange={(v) => r.set({ descartados: v ? "1" : null })}>Mostrar descartados</Switch>
+      <PageHeader title={t("nav.encargos")} sub={t("encargos.sub")}
+        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><Sparkles size={14} aria-hidden="true" /><span>{t("encargos.nuevo")}</span></button>}>
+        <Switch checked={verDescartados} onChange={(v) => r.set({ descartados: v ? "1" : null })}>{t("posts.mostrarDescartados")}</Switch>
       </PageHeader>
       <div className="pad-x">
         {!enc.lista.length ? (
-          <Empty icon={Sparkles} title="Aún no hay encargos">
-            Abre un post, una plantilla o un carrusel y pulsa «Pedir cambio». También puedes empezar uno general con «Nuevo encargo».
+          <Empty icon={Sparkles} title={t("encargos.vacio")}>
+            {t("encargos.vacioAyuda")}
           </Empty>
         ) : (
           <div className="board">
@@ -268,7 +269,7 @@ export default function Encargos() {
                 <div key={c.id} className="boardcol" data-component={`encargos-${c.id}`}>
                   <div className="boardcolhead"><strong className="small">{c.label}</strong><span className="count">{l.length}</span></div>
                   <div className="boardcards">
-                    {l.length ? l.slice(0, c.id === "hecho" ? 30 : 100).map((e) => <EncargoCard key={e.id} e={e} href={r.withParams({ ver: e.id })} />) : <p className="muted small pad-s">Nada</p>}
+                    {l.length ? l.slice(0, c.id === "hecho" ? 30 : 100).map((e) => <EncargoCard key={e.id} e={e} href={r.withParams({ ver: e.id })} />) : <p className="muted small pad-s">{t("resumen.nada")}</p>}
                   </div>
                 </div>
               );
@@ -278,14 +279,14 @@ export default function Encargos() {
 
         {notas.length ? (
           <section className="section">
-            <div className="sectionhead"><h2><MessageSquareText size={16} aria-hidden="true" /> Notas de Agentation <span className="count">{notas.length}</span></h2></div>
-            <p className="muted small">Las notas que marcas con la barra de abajo a la derecha. Conviértelas en encargo para que Claude las resuelva.</p>
+            <div className="sectionhead"><h2><MessageSquareText size={16} aria-hidden="true" /> {t("encargos.notasAgentation")} <span className="count">{notas.length}</span></h2></div>
+            <p className="muted small">{t("encargos.notasAyuda")}</p>
             <div className="notelist">
               {notas.slice(0, 12).map((n) => (
                 <div key={n} className="noteitem">
                   <span className="mono small">{n.replace(/\.md$/, "").replace(/T(\d\d)-(\d\d).*/, " $1:$2")}</span>
-                  <a className="btn small" href={hrefOf("biblioteca", { doc: `.moss/feedback/${n}` })}>Leer</a>
-                  <button type="button" className="btn small primary" onClick={() => r.set({ pedir: "general", nota: n })}><Sparkles size={14} aria-hidden="true" /><span>Convertir en encargo</span></button>
+                  <a className="btn small" href={hrefOf("biblioteca", { doc: `.moss/feedback/${n}` })}>{t("encargos.leer")}</a>
+                  <button type="button" className="btn small primary" onClick={() => r.set({ pedir: "general", nota: n })}><Sparkles size={14} aria-hidden="true" /><span>{t("encargos.convertir")}</span></button>
                 </div>
               ))}
             </div>

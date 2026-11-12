@@ -1,6 +1,7 @@
 // Llamadas que escriben en el repo o lanzan a Claude. La cabecera x-panel la exige el servidor (protección CSRF).
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { marked } from "marked";
+import { fmtFecha, t } from "./i18n.js";
 
 export async function post(url, body = {}) {
   const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "x-panel": "1" }, body: JSON.stringify(body) });
@@ -11,14 +12,15 @@ export async function post(url, body = {}) {
 
 export const ACTIVOS = ["cola", "en-curso"];
 
+// Etiquetas en el idioma activo (getters: se leen al pintar, no al cargar el módulo).
 export const ESTADOS_ENCARGO = {
-  borrador: "Sin lanzar",
-  cola: "En cola",
-  "en-curso": "Trabajando",
-  revisar: "Para revisar",
-  hecho: "Hecho",
-  descartado: "Descartado",
-  error: "Falló",
+  get borrador() { return t("encargo.estado.borrador"); },
+  get cola() { return t("encargo.estado.cola"); },
+  get "en-curso"() { return t("encargo.estado.en-curso"); },
+  get revisar() { return t("encargo.estado.revisar"); },
+  get hecho() { return t("encargo.estado.hecho"); },
+  get descartado() { return t("encargo.estado.descartado"); },
+  get error() { return t("encargo.estado.error"); },
 };
 
 export const EncargosContext = createContext({ lista: [], ocupado: null, recargar: () => {} });
@@ -51,14 +53,14 @@ export const md = (s) => marked.parse(String(s || "").replace(/</g, "&lt;"), { g
 export const duracion = (ms) => {
   if (!ms && ms !== 0) return null;
   const s = Math.round(ms / 1000);
-  return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s`;
+  return s < 60 ? t("tiempo.segundos", { s }) : t("tiempo.minSeg", { m: Math.floor(s / 60), s: String(s % 60).padStart(2, "0") });
 };
 
 export const hace = (iso) => {
   if (!iso) return "";
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (s < 60) return "ahora";
-  if (s < 3600) return `hace ${Math.round(s / 60)} min`;
-  if (s < 86400) return `hace ${Math.round(s / 3600)} h`;
-  return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  if (s < 60) return t("tiempo.ahora");
+  if (s < 3600) return t("tiempo.haceMin", { m: Math.round(s / 60) });
+  if (s < 86400) return t("tiempo.haceH", { h: Math.round(s / 3600) });
+  return fmtFecha(iso, { day: "numeric", month: "short" });
 };

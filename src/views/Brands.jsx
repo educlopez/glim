@@ -6,6 +6,7 @@ import { Drawer } from "../components/Drawer.jsx";
 import { PedirCambio } from "../components/Composer.jsx";
 import { hrefOf, useRouteCtx } from "../lib/route.js";
 import { repo } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 
 const COLORES = ["color", "secundario", "acento", "color_fuerte", "tinte", "suelo", "suelo_alt", "superficie", "borde", "tinta", "oscuro"];
 const isHex = (v) => typeof v === "string" && /^#[0-9a-f]{3,8}$/i.test(v);
@@ -14,7 +15,7 @@ function Logo({ m }) {
   const j = m.data;
   return (
     <div className="brandlogo" style={{ background: isHex(j.suelo) ? j.suelo : undefined }}>
-      {m.logo ? <img src={repo(m.logo)} alt={`Logo de ${j.nombre}`} /> : <span style={{ color: isHex(j.tinta) ? j.tinta : undefined }}>{j.wordmark || j.nombre}</span>}
+      {m.logo ? <img src={repo(m.logo)} alt={t("marcas.logoDe", { nombre: j.nombre })} /> : <span style={{ color: isHex(j.tinta) ? j.tinta : undefined }}>{j.wordmark || j.nombre}</span>}
     </div>
   );
 }
@@ -51,8 +52,8 @@ export default function Brands() {
   const abierta = r.params.ver && d.marcas.find((m) => m.id === r.params.ver);
   return (
     <>
-      <PageHeader title="Marcas" sub="Kit por proyecto en plantillas/marcas/. Léelo antes de cualquier visual de ese proyecto."
-        actions={<a className="btn ghost small" href={hrefOf("biblioteca", { doc: "plantillas/marcas/README.md" })}><BookOpen size={14} aria-hidden="true" /><span>Cómo se usan</span></a>} />
+      <PageHeader title={t("nav.marcas")} sub={t("marcas.sub")}
+        actions={<a className="btn ghost small" href={hrefOf("biblioteca", { doc: "plantillas/marcas/README.md" })}><BookOpen size={14} aria-hidden="true" /><span>{t("marcas.comoSeUsan")}</span></a>} />
       <div className="cardgrid brands">
         {d.marcas.map((m) => {
           const j = m.data;

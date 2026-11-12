@@ -8,6 +8,7 @@ import { PostCard } from "../components/PostCard.jsx";
 import { Drawer } from "../components/Drawer.jsx";
 import { PedirCambio } from "../components/Composer.jsx";
 import { haceDias } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 import { hrefOf, useRouteCtx } from "../lib/route.js";
 
 const LIMITE = 120;
@@ -19,10 +20,10 @@ function Detail({ m, onClose }) {
     <Drawer open onClose={onClose} width={820} title={m.name} kicker={<span className="muted mono small">{m.path.split("/").slice(0, -1).join("/")}</span>} actions={<PedirCambio objetivo={{ tipo: "medio", id: m.path }} />}>
       <div className="stackl" data-path={m.path}>
         <Player path={m.path} kind={m.kind} />
-        <Fields rows={[["Ruta", <span className="row gap-s wrap"><code>{m.path}</code><CopyButton text={m.path} /></span>], ["Modificado", haceDias(m.mtime)]]} />
-        <h3>Usado en</h3>
+        <Fields rows={[[t("medios.ruta"), <span className="row gap-s wrap"><code>{m.path}</code><CopyButton text={m.path} /></span>], [t("medios.modificado"), haceDias(m.mtime)]]} />
+        <h3>{t("medios.usadoEn")}</h3>
         {usos.length ? <div className="stack">{usos.map((p) => <PostCard key={p.id} post={p} variant="compact" href={hrefOf("posts", { ver: p.id })} />)}</div>
-          : <p className="muted">Ningún borrador cita este archivo.</p>}
+          : <p className="muted">{t("medios.ningunBorrador")}</p>}
       </div>
     </Drawer>
   );
@@ -47,18 +48,18 @@ export default function MediaView() {
 
   return (
     <>
-      <PageHeader title="Medios" sub="Todo lo renderizado en media/ (solo local, no se versiona). Ordenado del más reciente al más antiguo.">
-        <Segmented label="Tipo" value={kind} onChange={(v) => r.set({ tipo: v === "video" ? null : v })}
-          options={[{ id: "video", label: "Vídeos", icon: Film, count: n("video") }, { id: "image", label: "Imágenes", icon: Image, count: n("image") + n("pdf") }, { id: "audio", label: "Audio", icon: Music, count: n("audio") }, { id: "todo", label: "Todo", icon: LayoutGrid }]} />
+      <PageHeader title={t("nav.medios")} sub={t("medios.sub")}>
+        <Segmented label={t("postDetalle.tipo")} value={kind} onChange={(v) => r.set({ tipo: v === "video" ? null : v })}
+          options={[{ id: "video", label: t("medios.videos"), icon: Film, count: n("video") }, { id: "image", label: t("medios.imagenes"), icon: Image, count: n("image") + n("pdf") }, { id: "audio", label: t("medios.audio"), icon: Music, count: n("audio") }, { id: "todo", label: t("medios.todo"), icon: LayoutGrid }]} />
         <label className="selectbox">
-          <span className="sr">Carpeta</span>
+          <span className="sr">{t("postDetalle.carpeta")}</span>
           <select value={carpeta} onChange={(e) => r.set({ carpeta: e.target.value || null })}>
-            <option value="">Todas las carpetas</option>
+            <option value="">{t("medios.todasCarpetas")}</option>
             {grupos.map((g) => <option key={g.dir} value={g.dir}>{g.dir.replace(/^media\/?/, "") || "media"} ({g.items.length})</option>)}
           </select>
         </label>
-        <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder="Buscar por nombre" />
-        <Switch checked={frames} onChange={(v) => r.set({ frames: v ? "1" : null })}>Fotogramas de control</Switch>
+        <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder={t("medios.buscar")} />
+        <Switch checked={frames} onChange={(v) => r.set({ frames: v ? "1" : null })}>{t("medios.fotogramas")}</Switch>
       </PageHeader>
       {items.length ? (
         <>
@@ -70,9 +71,9 @@ export default function MediaView() {
               </a>
             ))}
           </div>
-          {items.length > LIMITE ? <p className="muted small pad">Se muestran {LIMITE} de {items.length}. Filtra por carpeta para ver el resto.</p> : null}
+          {items.length > LIMITE ? <p className="muted small pad">{t("medios.seMuestran", { limite: LIMITE, total: items.length })}</p> : null}
         </>
-      ) : <Empty icon={SearchX} title="Nada con este filtro"><button type="button" className="link" onClick={() => r.go("medios", {})}>Quitar filtros</button></Empty>}
+      ) : <Empty icon={SearchX} title={t("medios.nada")}><button type="button" className="link" onClick={() => r.go("medios", {})}>{t("medios.quitarFiltros")}</button></Empty>}
       {abierto ? <Detail m={abierto} onClose={() => r.set({ ver: null })} /> : null}
     </>
   );

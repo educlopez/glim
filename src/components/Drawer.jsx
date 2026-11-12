@@ -1,6 +1,7 @@
 // Panel lateral de detalle. No es modal a propósito: la barra de Agentation tiene que seguir siendo clicable.
 import { useEffect, useRef } from "react";
 import { X as Close } from "lucide-react";
+import { t } from "../lib/i18n.js";
 
 export function Drawer({ open, onClose, title, kicker, actions, children, width = 680, label }) {
   const ref = useRef(null);
@@ -23,7 +24,7 @@ export function Drawer({ open, onClose, title, kicker, actions, children, width 
   return (
     <>
       <div className="scrim" onClick={onClose} aria-hidden="true" />
-      <aside className="drawer" style={{ "--drawer-w": `${width}px` }} role="dialog" aria-label={label || (typeof title === "string" ? title : "Detalle")} tabIndex={-1} ref={ref} data-component="drawer">
+      <aside className="drawer" style={{ "--drawer-w": `${width}px` }} role="dialog" aria-label={label || (typeof title === "string" ? title : t("drawer.detalle"))} tabIndex={-1} ref={ref} data-component="drawer">
         <header className="drawerhead">
           <div className="drawertitle">
             {kicker ? <div className="drawerkicker">{kicker}</div> : null}
@@ -31,7 +32,7 @@ export function Drawer({ open, onClose, title, kicker, actions, children, width 
           </div>
           <div className="draweractions">
             {actions}
-            <button type="button" className="iconbtn" onClick={onClose} aria-label="Cerrar el panel"><Close size={18} aria-hidden="true" /></button>
+            <button type="button" className="iconbtn" onClick={onClose} aria-label={t("drawer.cerrar")}><Close size={18} aria-hidden="true" /></button>
           </div>
         </header>
         <div className="drawerbody">{children}</div>

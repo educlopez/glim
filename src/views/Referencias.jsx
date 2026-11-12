@@ -12,14 +12,16 @@ import { useRouteCtx, hrefOf } from "../lib/route.js";
 import { post, hace } from "../lib/api.js";
 import { sonar } from "../lib/sonidos.js";
 import { repo } from "../lib/format.js";
-import { COLORES, familia, familias, duplicadas, consulta, proporcion, empaquetar, normUrl } from "../lib/refs.js";
+import { COLORES, familia, familias, duplicadas, consulta, proporcion, empaquetar, normUrl, motivoDuplicada } from "../lib/refs.js";
+import { fmtNumero, t } from "../lib/i18n.js";
 import { PageHeader, Segmented, Toggles, SearchBox, Empty, Fields } from "../components/ui.jsx";
 import { Drawer } from "../components/Drawer.jsx";
 import { Thumb, Player, HoverVideo } from "../components/Media.jsx";
 
-const FUENTES = [{ id: "todas", label: "Todas" }, { id: "propia", label: "Mías" }, { id: "posts.design", label: "posts.design" }, { id: "estudios", label: "Estudios" }];
-const DISENOS = [{ id: "mosaico", label: "Mosaico", icon: Columns3 }, { id: "rejilla", label: "Rejilla", icon: LayoutGrid }, { id: "lista", label: "Lista", icon: List }];
-const ORDENES = [{ id: "recientes", label: "Recientes" }, { id: "valoradas", label: "Mejor valoradas" }, { id: "titulo", label: "Título" }];
+// Etiquetas con getter: se leen al pintar, en el idioma activo.
+const FUENTES = [{ id: "todas", get label() { return t("refs.fuente.todas"); } }, { id: "propia", get label() { return t("refs.fuente.propia"); } }, { id: "posts.design", label: "posts.design" }, { id: "estudios", get label() { return t("refs.fuente.estudios"); } }];
+const DISENOS = [{ id: "mosaico", get label() { return t("refs.diseno.mosaico"); }, icon: Columns3 }, { id: "rejilla", get label() { return t("posts.rejilla"); }, icon: LayoutGrid }, { id: "lista", get label() { return t("refs.diseno.lista"); }, icon: List }];
+const ORDENES = [{ id: "recientes", get label() { return t("refs.orden.recientes"); } }, { id: "valoradas", get label() { return t("refs.orden.valoradas"); } }, { id: "titulo", get label() { return t("registro.titulo"); } }];
 const MAX_MB = 60;
 // Plataformas con lector propio (server/lectores.js): al pegar su enlace se traen solos el vídeo o las imágenes.
 const CON_LECTOR = /(^|\.)(x\.com|twitter\.com|instagram\.com|threads\.(net|com)|linkedin\.com|tiktok\.com|youtube\.com|youtu\.be|vimeo\.com|pinterest\.[a-z.]+|pin\.it|dribbble\.com|behance\.net|are\.na|savee\.(it|com)|cosmos\.so)$/;
@@ -29,20 +31,20 @@ const escribiendo = (e) => { const t = e.target; return t && (t.isContentEditabl
 
 function leerArchivo(f) {
   return new Promise((resolve, reject) => {
-    if (f.size > MAX_MB * 1e6) return reject(new Error(`Pesa más de ${MAX_MB} MB`));
+    if (f.size > MAX_MB * 1e6) return reject(new Error(t("refs.pesaMas", { mb: MAX_MB })));
     const fr = new FileReader();
     fr.onload = () => resolve({ name: f.name, data: fr.result });
-    fr.onerror = () => reject(new Error("No se pudo leer el archivo"));
+    fr.onerror = () => reject(new Error(t("refs.noLeerArchivo")));
     fr.readAsDataURL(f);
   });
 }
 
 function Estrellas({ valor = 0, onChange, size = 13 }) {
-  if (!onChange) return valor ? <span className="estrellas" aria-label={`${valor} de 5`}>{[1, 2, 3, 4, 5].map((n) => <Star key={n} size={size} aria-hidden="true" fill={n <= valor ? "currentColor" : "none"} className={n <= valor ? "on" : ""} />)}</span> : null;
+  if (!onChange) return valor ? <span className="estrellas" aria-label={t("refs.deCinco", { n: valor })}>{[1, 2, 3, 4, 5].map((n) => <Star key={n} size={size} aria-hidden="true" fill={n <= valor ? "currentColor" : "none"} className={n <= valor ? "on" : ""} />)}</span> : null;
   return (
-    <div className="estrellas editable" role="radiogroup" aria-label="Valoración">
+    <div className="estrellas editable" role="radiogroup" aria-label={t("refs.valoracion")}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" role="radio" aria-checked={valor === n} aria-label={`${n} de 5`} className={n <= valor ? "on" : ""}
+        <button key={n} type="button" role="radio" aria-checked={valor === n} aria-label={t("refs.deCinco", { n })} className={n <= valor ? "on" : ""}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(valor === n ? 0 : n); }}>
           <Star size={size} aria-hidden="true" fill={n <= valor ? "currentColor" : "none"} />
         </button>
@@ -57,7 +59,7 @@ function Paleta({ r, onColor, grande }) {
   return (
     <span className={`paleta${grande ? " grande" : ""}`}>
       {c.map((h) => onColor
-        ? <button key={h} type="button" style={{ background: h }} title={`${h} · ${familia(h)}`} aria-label={`Filtrar por ${familia(h)}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); onColor(familia(h)); }} />
+        ? <button key={h} type="button" style={{ background: h }} title={`${h} · ${t(`refs.color.${familia(h)}`)}`} aria-label={t("refs.filtrarPor", { color: t(`refs.color.${familia(h)}`) })} onClick={(e) => { e.preventDefault(); e.stopPropagation(); onColor(familia(h)); }} />
         : <span key={h} style={{ background: h }} title={h} />)}
     </span>
   );
@@ -97,7 +99,7 @@ function Nueva({ onClose, onSaved }) {
       const j = await post("/api/referencias/leer", { url: u.trim() });
       const l = j.leido;
       setLector({ estado: "ok", leido: l, elegidos: new Set(l.archivos) });
-      setF((x) => ({ ...x, titulo: x.titulo && x.titulo !== (meta && meta.titulo) ? x.titulo : (l.autor && l.plataforma !== l.autor ? `${l.autor} en ${l.plataforma}` : l.titulo) || x.titulo }));
+      setF((x) => ({ ...x, titulo: x.titulo && x.titulo !== (meta && meta.titulo) ? x.titulo : (l.autor && l.plataforma !== l.autor ? t("refs.autorEn", { autor: l.autor, plataforma: l.plataforma }) : l.titulo) || x.titulo }));
     } catch (x) { setLector({ estado: "error", error: x.message }); }
   };
   const elegidos = lector && lector.estado === "ok" ? lector.leido.archivos.filter((a) => lector.elegidos.has(a)) : [];
@@ -119,30 +121,30 @@ function Nueva({ onClose, onSaved }) {
   const previa = archivo ? (archivo.file.type.startsWith("video") ? <video src={archivo.url} muted autoPlay loop playsInline /> : <img src={archivo.url} alt="" />)
     : elegidos.length ? (/\.(mp4|webm|mov)$/i.test(elegidos[0]) ? <video src={repo(elegidos[0])} muted autoPlay loop playsInline /> : <img src={repo(elegidos[0])} alt="" />)
     : meta && meta.imagen ? <img src={meta.imagen} alt="" referrerPolicy="no-referrer" />
-    : <><Upload size={18} aria-hidden="true" /><span className="small">Arrastra, pega (⌘V) o elige una imagen o vídeo. Con un enlace, la vista previa sale sola.</span></>;
+    : <><Upload size={18} aria-hidden="true" /><span className="small">{t("refs.dropAyuda")}</span></>;
   return (
     <form className="newref" onSubmit={guardar}
       onPaste={(e) => { const it = [...e.clipboardData.items].find((i) => i.kind === "file"); if (it) { e.preventDefault(); elegir(it.getAsFile()); } }}
       onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const u = e.dataTransfer.getData("text/uri-list"); if (u && !e.dataTransfer.files.length) { setF((x) => ({ ...x, url: u })); pedirMeta(u); } else elegir(e.dataTransfer.files[0]); }}>
-      <div className="newrefdrop" onClick={() => input.current.click()} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current.click()} aria-label="Subir imagen o vídeo">
+      <div className="newrefdrop" onClick={() => input.current.click()} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current.click()} aria-label={t("refs.subir")}>
         {previa}
         <input ref={input} type="file" accept="image/*,video/*" hidden onChange={(e) => elegir(e.target.files[0])} />
       </div>
       <div className="stack">
         <label className="field">
-          <span className="fieldlabel"><Link2 size={13} aria-hidden="true" /> Enlace {leyendo ? <Loader2 size={12} className="spin" aria-label="Leyendo la página" /> : null}</span>
-          <input type="url" value={f.url} placeholder="https://x.com/… o cualquier web" onChange={(e) => setF({ ...f, url: e.target.value })}
-            onBlur={(e) => pedirMeta(e.target.value)} onPaste={(e) => { const t = e.clipboardData.getData("text"); setTimeout(() => pedirMeta(t), 0); }} />
+          <span className="fieldlabel"><Link2 size={13} aria-hidden="true" /> {t("lienzos.enlace")} {leyendo ? <Loader2 size={12} className="spin" aria-label={t("refs.leyendoPagina")} /> : null}</span>
+          <input type="url" value={f.url} placeholder={t("refs.urlPlaceholder")} onChange={(e) => setF({ ...f, url: e.target.value })}
+            onBlur={(e) => pedirMeta(e.target.value)} onPaste={(e) => { const txt = e.clipboardData.getData("text"); setTimeout(() => pedirMeta(txt), 0); }} />
         </label>
-        {ya ? <p className="aviso n-medio small" role="status"><Copy size={12} aria-hidden="true" /> Ya la tienes: <a href={r.withParams({ ver: ya.id, nueva: null })}>{ya.titulo}</a></p> : null}
-        {meta && meta.error ? <p className="muted small">No se pudo leer la página ({meta.error}). Puedes guardarla igual.</p> : null}
+        {ya ? <p className="aviso n-medio small" role="status"><Copy size={12} aria-hidden="true" /> {t("refs.yaLaTienes")} <a href={r.withParams({ ver: ya.id, nueva: null })}>{ya.titulo}</a></p> : null}
+        {meta && meta.error ? <p className="muted small">{t("refs.noLeerPagina", { error: meta.error })}</p> : null}
         {meta && meta.descripcion ? <p className="muted small clamp2">{meta.descripcion}</p> : null}
-        {lector && lector.estado === "leyendo" ? <p className="lectorestado small"><Loader2 size={13} className="spin" aria-hidden="true" /> Leyendo con el lector de {hostDe(f.url)}… (un vídeo puede tardar un minuto)</p> : null}
-        {lector && lector.estado === "error" ? <p className="muted small">El lector no pudo traer medios ({lector.error}). Se guarda solo el enlace.</p> : null}
+        {lector && lector.estado === "leyendo" ? <p className="lectorestado small"><Loader2 size={13} className="spin" aria-hidden="true" /> {t("refs.leyendoLector", { host: hostDe(f.url) })}</p> : null}
+        {lector && lector.estado === "error" ? <p className="muted small">{t("refs.lectorError", { error: lector.error })}</p> : null}
         {lector && lector.estado === "ok" ? (
           lector.leido.archivos.length ? (
             <div className="leidos">
-              <span className="small muted"><Download size={12} aria-hidden="true" /> {lector.leido.plataforma} · {lector.leido.archivos.length} archivo{lector.leido.archivos.length === 1 ? "" : "s"} vía {lector.leido.via}. Toca para quitar los que no quieras.</span>
+              <span className="small muted"><Download size={12} aria-hidden="true" /> {lector.leido.plataforma} · {t("refs.archivosVia", { n: lector.leido.archivos.length, via: lector.leido.via })}</span>
               <div className="leidosgrid">
                 {lector.leido.archivos.map((a) => (
                   <button key={a} type="button" className="leido" aria-pressed={lector.elegidos.has(a)} onClick={() => alternar(a)}>
@@ -151,23 +153,23 @@ function Nueva({ onClose, onSaved }) {
                   </button>
                 ))}
               </div>
-              {elegidos.length > 1 ? <label className="row gap-s small"><input type="checkbox" checked={separar} onChange={(e) => setSeparar(e.target.checked)} /> Una referencia por archivo (si no, una con galería)</label> : null}
+              {elegidos.length > 1 ? <label className="row gap-s small"><input type="checkbox" checked={separar} onChange={(e) => setSeparar(e.target.checked)} /> {t("refs.separar")}</label> : null}
             </div>
-          ) : <p className="muted small">El lector no encontró vídeo ni imágenes en ese enlace.</p>
+          ) : <p className="muted small">{t("refs.lectorVacio")}</p>
         ) : null}
         {f.url.trim() && !archivo && !elegidos.length && !(lector && lector.estado === "leyendo") ? (
           <div className="row gap-s small">
-            <label className="row gap-s"><input type="checkbox" checked={copia} onChange={(e) => setCopia(e.target.checked)} /> Guardar una copia de la página</label>
-            {!lector ? <button type="button" className="btn ghost small" onClick={() => traerMedios(f.url)}><ScanSearch size={13} aria-hidden="true" /><span>Traer imágenes y vídeo</span></button> : null}
+            <label className="row gap-s"><input type="checkbox" checked={copia} onChange={(e) => setCopia(e.target.checked)} /> {t("refs.guardarCopia")}</label>
+            {!lector ? <button type="button" className="btn ghost small" onClick={() => traerMedios(f.url)}><ScanSearch size={13} aria-hidden="true" /><span>{t("refs.traerMedios")}</span></button> : null}
           </div>
         ) : null}
-        <label className="field"><span className="fieldlabel">Título</span><input value={f.titulo} placeholder="Qué es, en pocas palabras" onChange={(e) => setF({ ...f, titulo: e.target.value })} /></label>
-        <label className="field"><span className="fieldlabel">Qué te gusta de esto</span><textarea rows={2} value={f.notas} placeholder="Ejemplo: el ritmo de cortes y cómo entra la cifra" onChange={(e) => setF({ ...f, notas: e.target.value })} /></label>
-        <label className="field"><span className="fieldlabel">Etiquetas</span><input value={f.etiquetas} placeholder="motion, carrusel, hito (separadas por comas)" onChange={(e) => setF({ ...f, etiquetas: e.target.value })} /></label>
+        <label className="field"><span className="fieldlabel">{t("registro.titulo")}</span><input value={f.titulo} placeholder={t("refs.tituloPlaceholder")} onChange={(e) => setF({ ...f, titulo: e.target.value })} /></label>
+        <label className="field"><span className="fieldlabel">{t("refs.queGusta")}</span><textarea rows={2} value={f.notas} placeholder={t("refs.notasPlaceholder")} onChange={(e) => setF({ ...f, notas: e.target.value })} /></label>
+        <label className="field"><span className="fieldlabel">{t("refs.etiquetas")}</span><input value={f.etiquetas} placeholder={t("refs.etiquetasPlaceholder")} onChange={(e) => setF({ ...f, etiquetas: e.target.value })} /></label>
         {err ? <p className="formerror" role="alert">{err}</p> : null}
         <div className="row gap-s">
-          <button type="submit" className="btn primary" disabled={enviando || (lector && lector.estado === "leyendo") || (!f.url.trim() && !archivo)}><Plus size={14} aria-hidden="true" /><span>{enviando ? "Guardando…" : "Guardar referencia"}</span></button>
-          <button type="button" className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn primary" disabled={enviando || (lector && lector.estado === "leyendo") || (!f.url.trim() && !archivo)}><Plus size={14} aria-hidden="true" /><span>{enviando ? t("lienzos.guardando") : t("refs.guardar")}</span></button>
+          <button type="button" className="btn ghost" onClick={onClose}>{t("comun.cancelar")}</button>
         </div>
       </div>
     </form>
@@ -179,7 +181,7 @@ function Preview({ r, big }) {
   if (big && src) return <Player path={src} kind={r.tipo === "video" ? "video" : "image"} />;
   if (r.tipo === "video" && src) return r.thumb ? <HoverVideo path={r.previa || src} poster={r.thumb} badge={r.analisis && r.analisis.duracion ? `${Math.round(r.analisis.duracion)} s` : null} /> : <HoverVideo path={src} />;
   if (r.thumb || src) return <Thumb path={r.thumb || src} kind="image" />;
-  return <div className="webcard"><Link2 size={18} aria-hidden="true" /><span>{r.dominio || "Enlace"}</span></div>;
+  return <div className="webcard"><Link2 size={18} aria-hidden="true" /><span>{r.dominio || t("lienzos.enlace")}</span></div>;
 }
 
 function Tarjeta({ x, modo, dup, onFoco, onColor }) {
@@ -190,7 +192,7 @@ function Tarjeta({ x, modo, dup, onFoco, onColor }) {
       onMouseEnter={() => onFoco(x.id)} onFocus={() => onFoco(x.id)}>
       <div className={`cardmedia${modo === "rejilla" ? " r-wide" : ""}`} style={{ aspectRatio: modo === "mosaico" ? String(proporcion(x)) : undefined, backgroundColor: fondo || undefined }}>
         <Preview r={x} />
-        {dup ? <span className="dupmark" title={`Posible duplicada (${dup.length})`}><Copy size={12} aria-hidden="true" /><span className="sr">Posible duplicada</span></span> : null}
+        {dup ? <span className="dupmark" title={t("refs.posibleDupN", { n: dup.length })}><Copy size={12} aria-hidden="true" /><span className="sr">{t("refs.posibleDup")}</span></span> : null}
       </div>
       <div className="cardbody">
         <span className="cardtitle"><span>{x.titulo}</span><Estrellas valor={x.valoracion} size={11} /></span>
@@ -198,7 +200,7 @@ function Tarjeta({ x, modo, dup, onFoco, onColor }) {
         <span className="cardmeta">
           <Paleta r={x} onColor={onColor} />
           {x.fuente !== "propia" ? <span className="tag">{x.fuente}</span> : null}
-          {(x.etiquetas || []).slice(0, modo === "lista" ? 6 : 3).map((t) => <span key={t} className="tag">{t}</span>)}
+          {(x.etiquetas || []).slice(0, modo === "lista" ? 6 : 3).map((et) => <span key={et} className="tag">{et}</span>)}
           {x.dominio ? <span className="tag">{x.dominio}</span> : null}
           {modo === "lista" ? <span className="muted small">{x.creado}</span> : null}
         </span>
@@ -251,29 +253,29 @@ function VistaRapida({ lista, indice, onIndice, onClose, onAbrir, onValorar, onC
   const src = r.archivo && r.existe !== false ? r.archivo : null;
   const fondo = r.analisis && r.analisis.fondo;
   return (
-    <div className="quicklook" role="dialog" aria-modal="true" aria-label={`Vista rápida: ${r.titulo}`} ref={ref} tabIndex={-1}
+    <div className="quicklook" role="dialog" aria-modal="true" aria-label={t("refs.vistaRapida", { titulo: r.titulo })} ref={ref} tabIndex={-1}
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <button type="button" className="qlnav prev" onClick={() => onIndice(Math.max(0, indice - 1))} disabled={indice === 0} aria-label="Anterior"><ChevronLeft size={20} aria-hidden="true" /></button>
+      <button type="button" className="qlnav prev" onClick={() => onIndice(Math.max(0, indice - 1))} disabled={indice === 0} aria-label={t("refs.anterior")}><ChevronLeft size={20} aria-hidden="true" /></button>
       <div className={`qlmedia${gris ? " gris" : ""}`} style={{ "--ql-fondo": fondo || "transparent" }} onClick={(e) => e.target === e.currentTarget && onClose()}>
         {r.tipo === "video" && src ? <video key={r.id} src={repo(src)} poster={r.thumb ? repo(r.thumb) : undefined} autoPlay muted loop controls playsInline />
           : r.thumb || src ? <img key={r.id} src={repo(r.thumb || src)} alt={r.titulo} />
-          : <div className="webcard"><Link2 size={22} aria-hidden="true" /><span>{r.dominio || "Enlace"}</span></div>}
+          : <div className="webcard"><Link2 size={22} aria-hidden="true" /><span>{r.dominio || t("lienzos.enlace")}</span></div>}
       </div>
-      <button type="button" className="qlnav next" onClick={() => onIndice(Math.min(lista.length - 1, indice + 1))} disabled={indice >= lista.length - 1} aria-label="Siguiente"><ChevronRight size={20} aria-hidden="true" /></button>
+      <button type="button" className="qlnav next" onClick={() => onIndice(Math.min(lista.length - 1, indice + 1))} disabled={indice >= lista.length - 1} aria-label={t("refs.siguiente")}><ChevronRight size={20} aria-hidden="true" /></button>
       <div className="qlbar">
         <div className="qltitle">
           <strong>{r.titulo}</strong>
-          <span className="muted small">{indice + 1} de {lista.length} · {r.fuente === "propia" ? "tuya" : r.fuente}{r.handle ? ` · @${r.handle}` : ""}{r.analisis && r.analisis.w ? ` · ${r.analisis.w}×${r.analisis.h}` : ""}</span>
+          <span className="muted small">{t("refs.posicion", { i: indice + 1, total: lista.length })} · {r.fuente === "propia" ? t("refs.tuyaMin") : r.fuente}{r.handle ? ` · @${r.handle}` : ""}{r.analisis && r.analisis.w ? ` · ${r.analisis.w}×${r.analisis.h}` : ""}</span>
         </div>
         <Paleta r={r} onColor={(c) => { onColor(c); onClose(); }} grande />
         <Estrellas valor={r.valoracion} onChange={(n) => onValorar(r, n)} size={15} />
         <div className="row gap-s">
-          <button type="button" className={`iconbtn${gris ? " on" : ""}`} onClick={() => setGris((g) => !g)} aria-pressed={gris} title="Ver en grises (G)"><Contrast size={15} aria-hidden="true" /><span className="sr">Ver en grises</span></button>
-          {r.url ? <a className="btn ghost small" href={r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>Abrir</span></a> : null}
-          <button type="button" className="btn small" onClick={() => onAbrir(r.id)}>Ficha</button>
-          <button type="button" className="iconbtn" onClick={onClose} aria-label="Cerrar"><Close size={15} aria-hidden="true" /></button>
+          <button type="button" className={`iconbtn${gris ? " on" : ""}`} onClick={() => setGris((g) => !g)} aria-pressed={gris} title={t("refs.grisesAtajo")}><Contrast size={15} aria-hidden="true" /><span className="sr">{t("refs.grises")}</span></button>
+          {r.url ? <a className="btn ghost small" href={r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("refs.abrir")}</span></a> : null}
+          <button type="button" className="btn small" onClick={() => onAbrir(r.id)}>{t("refs.ficha")}</button>
+          <button type="button" className="iconbtn" onClick={onClose} aria-label={t("comun.cerrar")}><Close size={15} aria-hidden="true" /></button>
         </div>
-        <p className="qlkeys small muted" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> pasar · <kbd>1</kbd>–<kbd>5</kbd> valorar · <kbd>G</kbd> grises · <kbd>Intro</kbd> ficha · <kbd>Esc</kbd> cerrar</p>
+        <p className="qlkeys small muted" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> {t("refs.qlPasar")} · <kbd>1</kbd>–<kbd>5</kbd> {t("refs.qlValorar")} · <kbd>G</kbd> {t("refs.qlGrises")} · <kbd>{t("refs.qlIntro")}</kbd> {t("refs.qlFicha")} · <kbd>Esc</kbd> {t("refs.qlCerrar")}</p>
       </div>
     </div>
   );
@@ -290,19 +292,19 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
   const parecidas = (dups || []).map((p) => ({ ...p, r: d.referencias.find((x) => x.id === p.id) })).filter((p) => p.r);
   const a = r.analisis;
   return (
-    <Drawer open onClose={onClose} width={900} title={r.titulo} kicker={<span className="muted">{r.fuente === "propia" ? "Tuya" : r.fuente}{r.handle ? ` · @${r.handle}` : ""} · {r.creado}</span>}
+    <Drawer open onClose={onClose} width={900} title={r.titulo} kicker={<span className="muted">{r.fuente === "propia" ? t("refs.tuya") : r.fuente}{r.handle ? ` · @${r.handle}` : ""} · {r.creado}</span>}
       actions={<>
-        {r.url ? <a className="btn ghost small" href={r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>Abrir</span></a> : null}
-        <button type="button" className="btn small primary" onClick={() => ro.set({ pedir: "general", ref: r.id })}><Sparkles size={14} aria-hidden="true" /><span>Usar en un encargo</span></button>
+        {r.url ? <a className="btn ghost small" href={r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("refs.abrir")}</span></a> : null}
+        <button type="button" className="btn small primary" onClick={() => ro.set({ pedir: "general", ref: r.id })}><Sparkles size={14} aria-hidden="true" /><span>{t("lienzos.usarEncargo")}</span></button>
       </>}>
       <div className="detailgrid" data-referencia={r.id} data-path={r.archivo || undefined}>
         <div className="detailmain">
           <div className="refbig"><Preview r={r} big /></div>
           {(r.galeria || []).length ? (
-            <div className="galeria" aria-label="Galería">
+            <div className="galeria" aria-label={t("refs.galeria")}>
               {[r.archivo, ...r.galeria].filter(Boolean).map((g, i) => (
                 <a key={g} href={repo(g)} target="_blank" rel="noreferrer" className="galeriaitem">
-                  {/\.(mp4|webm|mov)$/i.test(g) ? <video src={repo(g)} muted playsInline preload="metadata" /> : <img src={repo(g)} alt={`${i + 1} de ${r.galeria.length + 1}`} loading="lazy" />}
+                  {/\.(mp4|webm|mov)$/i.test(g) ? <video src={repo(g)} muted playsInline preload="metadata" /> : <img src={repo(g)} alt={t("refs.posicion", { i: i + 1, total: r.galeria.length + 1 })} loading="lazy" />}
                 </a>
               ))}
             </div>
@@ -313,10 +315,10 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
           {r.notas && !propia ? <p className="lead">{r.notas}</p> : null}
           {a && a.colores && a.colores.length ? (
             <section className="detailsection">
-              <h3>Paleta</h3>
+              <h3>{t("refs.paleta")}</h3>
               <div className="paletagrande">
                 {a.colores.map((h) => (
-                  <button key={h} type="button" className="muestra" onClick={() => { onColor(familia(h)); onClose(); }} title={`Ver referencias en ${familia(h)}`}>
+                  <button key={h} type="button" className="muestra" onClick={() => { onColor(familia(h)); onClose(); }} title={t("refs.verEnColor", { color: t(`refs.color.${familia(h)}`) })}>
                     <span style={{ background: h }} aria-hidden="true" />
                     <code className="small">{h}</code>
                   </button>
@@ -327,12 +329,12 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
         </div>
         <div className="detailside">
           <section className="detailsection stack">
-            <h3>Valoración</h3>
+            <h3>{t("refs.valoracion")}</h3>
             <Estrellas valor={r.valoracion} onChange={(n) => onValorar(r, n)} size={16} />
           </section>
           {parecidas.length ? (
             <section className="detailsection stack">
-              <h3>Parecidas <span className="muted small">({parecidas.length})</span></h3>
+              <h3>{t("refs.parecidas")} <span className="muted small">({parecidas.length})</span></h3>
               <ul className="parecidas">
                 {parecidas.map((p) => (
                   <li key={p.id}>
@@ -341,12 +343,12 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
                     </a>
                     <span className="stack0">
                       <a href={ro.withParams({ ver: p.id })} className="small">{p.r.titulo}</a>
-                      <span className="muted small">{p.motivo}{p.r.fuente !== "propia" ? ` · ${p.r.fuente}` : ""}</span>
+                      <span className="muted small">{motivoDuplicada(p.motivo)}{p.r.fuente !== "propia" ? ` · ${p.r.fuente}` : ""}</span>
                     </span>
                     {propia && p.r.fuente === "propia" ? (
-                      <button type="button" className="btn ghost small" title="Se queda esta, con las etiquetas y notas de las dos"
+                      <button type="button" className="btn ghost small" title={t("refs.juntarAyuda")}
                         onClick={() => accion(async () => { await post("/api/referencias/fusionar", { queda: r.id, sale: p.id }); sonar("exito"); })}>
-                        <Merge size={13} aria-hidden="true" /><span>Juntar aquí</span>
+                        <Merge size={13} aria-hidden="true" /><span>{t("refs.juntar")}</span>
                       </button>
                     ) : null}
                   </li>
@@ -356,34 +358,34 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
           ) : null}
           {propia ? (
             <section className="detailsection stack">
-              <h3>Tus notas</h3>
-              <label className="field"><span className="fieldlabel">Título</span><input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} /></label>
-              <label className="field"><span className="fieldlabel">Qué te gusta</span><textarea rows={4} value={f.notas} onChange={(e) => setF({ ...f, notas: e.target.value })} /></label>
-              <label className="field"><span className="fieldlabel">Etiquetas</span><input value={f.etiquetas} onChange={(e) => setF({ ...f, etiquetas: e.target.value })} /></label>
+              <h3>{t("refs.tusNotas")}</h3>
+              <label className="field"><span className="fieldlabel">{t("registro.titulo")}</span><input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} /></label>
+              <label className="field"><span className="fieldlabel">{t("refs.queGustaCorto")}</span><textarea rows={4} value={f.notas} onChange={(e) => setF({ ...f, notas: e.target.value })} /></label>
+              <label className="field"><span className="fieldlabel">{t("refs.etiquetas")}</span><input value={f.etiquetas} onChange={(e) => setF({ ...f, etiquetas: e.target.value })} /></label>
               <div className="row gap-s">
-                <button type="button" className="btn small primary" onClick={() => accion(async () => { await post(`/api/referencias/${r.id}`, f); setOk(true); setTimeout(() => setOk(false), 1500); })}>{ok ? "Guardado" : "Guardar"}</button>
-                <button type="button" className="btn ghost small" onClick={() => accion(async () => { await post(`/api/referencias/${r.id}/quitar`); sonar("papelera"); onClose(); })}><Trash2 size={14} aria-hidden="true" /><span>Quitar de la lista</span></button>
+                <button type="button" className="btn small primary" onClick={() => accion(async () => { await post(`/api/referencias/${r.id}`, f); setOk(true); setTimeout(() => setOk(false), 1500); })}>{ok ? t("lienzos.guardado") : t("comun.guardar")}</button>
+                <button type="button" className="btn ghost small" onClick={() => accion(async () => { await post(`/api/referencias/${r.id}/quitar`); sonar("papelera"); onClose(); })}><Trash2 size={14} aria-hidden="true" /><span>{t("refs.quitarLista")}</span></button>
               </div>
-              <p className="muted small">Quitar no borra el archivo de media/referencias/.</p>
+              <p className="muted small">{t("refs.quitarNota")}</p>
             </section>
           ) : (
             <section className="detailsection stack">
-              <h3>Guardarla como tuya</h3>
-              <p className="muted small">Para anotar qué te gusta y etiquetarla.</p>
-              <textarea rows={3} value={f.notas} placeholder="Qué te gusta de esta pieza" onChange={(e) => setF({ ...f, notas: e.target.value })} />
-              <button type="button" className="btn small primary" onClick={() => accion(async () => { const j = await post(`/api/referencias/${encodeURIComponent(r.id)}/fijar`, { notas: f.notas }); ro.set({ ver: j.referencia.id, fuente: "propia" }); })}><Pin size={14} aria-hidden="true" /><span>Guardar en mis referencias</span></button>
+              <h3>{t("refs.comoTuya")}</h3>
+              <p className="muted small">{t("refs.comoTuyaAyuda")}</p>
+              <textarea rows={3} value={f.notas} placeholder={t("refs.queGustaPieza")} onChange={(e) => setF({ ...f, notas: e.target.value })} />
+              <button type="button" className="btn small primary" onClick={() => accion(async () => { const j = await post(`/api/referencias/${encodeURIComponent(r.id)}/fijar`, { notas: f.notas }); ro.set({ ver: j.referencia.id, fuente: "propia" }); })}><Pin size={14} aria-hidden="true" /><span>{t("refs.guardarMias")}</span></button>
             </section>
           )}
           {err ? <p className="formerror">{err}</p> : null}
           <section className="detailsection">
-            <h3>Datos</h3>
+            <h3>{t("encargos.datos")}</h3>
             <Fields rows={[
-              ["Tipo", r.tipo],
-              ["Tamaño", a && a.w ? `${a.w}×${a.h}${a.duracion ? ` · ${a.duracion} s` : ""}` : null],
-              ["Colores", familias(r).length ? familias(r).join(", ") : null],
-              ["Etiquetas", (r.etiquetas || []).length ? r.etiquetas.join(", ") : null],
-              ["Archivo", r.archivo ? <code className="small">{r.archivo}</code> : null],
-              ["Grupo", r.grupo],
+              [t("postDetalle.tipo"), ["imagen", "video", "web", "post"].includes(r.tipo) ? t(`refs.tipo.${r.tipo}`) : r.tipo],
+              [t("refs.tamano"), a && a.w ? `${a.w}×${a.h}${a.duracion ? ` · ${a.duracion} s` : ""}` : null],
+              [t("refs.colores"), familias(r).length ? familias(r).map((c) => t(`refs.color.${c}`)).join(", ") : null],
+              [t("refs.etiquetas"), (r.etiquetas || []).length ? r.etiquetas.join(", ") : null],
+              [t("postDetalle.archivo"), r.archivo ? <code className="small">{r.archivo}</code> : null],
+              [t("refs.grupo"), r.grupo],
             ]} />
           </section>
         </div>
@@ -406,7 +408,7 @@ function Copias({ r, onChanged }) {
   const ocupado = estado === "guardando" || r.copiando;
   return (
     <section className="detailsection stack">
-      <h3>Copias de la página <span className="muted small">({copias.length})</span></h3>
+      <h3>{t("refs.copias")} <span className="muted small">({copias.length})</span></h3>
       {copias.length ? (
         <ul className="copias">
           {copias.map((c) => (
@@ -414,18 +416,18 @@ function Copias({ r, onChanged }) {
               <a href={repo(c.captura || c.portada)} target="_blank" rel="noreferrer" className="copiathumb"><img src={repo(c.portada)} alt="" loading="lazy" /></a>
               <span className="stack0">
                 <span className="small">{c.fecha} · {hace(c.cuando)}</span>
-                <span className="muted small">{c.alto ? `${c.alto.toLocaleString("es-ES")} px de alto · ` : ""}{Math.round((c.bytes || 0) / 1e5) / 10} MB</span>
+                <span className="muted small">{c.alto ? t("refs.pxAlto", { alto: fmtNumero(c.alto) }) : ""}{Math.round((c.bytes || 0) / 1e5) / 10} MB</span>
               </span>
               <span className="row gap-s">
-                {c.captura ? <a className="btn ghost small" href={repo(c.captura)} target="_blank" rel="noreferrer">Captura</a> : null}
-                <button type="button" className="btn ghost small" onClick={() => abrir(c)}>Abrir copia</button>
+                {c.captura ? <a className="btn ghost small" href={repo(c.captura)} target="_blank" rel="noreferrer">{t("refs.captura")}</a> : null}
+                <button type="button" className="btn ghost small" onClick={() => abrir(c)}>{t("refs.abrirCopia")}</button>
               </span>
             </li>
           ))}
         </ul>
-      ) : <p className="muted small">La página tal como está hoy, por si cambia o desaparece: copia completa, captura entera y texto.</p>}
+      ) : <p className="muted small">{t("refs.copiasAyuda")}</p>}
       <button type="button" className="btn small" disabled={ocupado} onClick={guardar}>
-        {ocupado ? <Loader2 size={13} className="spin" aria-hidden="true" /> : <Archive size={13} aria-hidden="true" />}<span>{ocupado ? "Guardando copia…" : copias.length ? "Guardar otra copia" : "Guardar copia de la página"}</span>
+        {ocupado ? <Loader2 size={13} className="spin" aria-hidden="true" /> : <Archive size={13} aria-hidden="true" />}<span>{ocupado ? t("refs.guardandoCopia") : copias.length ? t("refs.otraCopia") : t("refs.guardarCopiaPagina")}</span>
       </button>
       {err ? <p className="formerror small">{err}</p> : null}
     </section>
@@ -442,28 +444,28 @@ function Vistas({ vistas, activa, hayFiltro, params, ids, dupCount, onAplicar })
   };
   if (!vistas.length && !hayFiltro && !dupCount) return null;
   return (
-    <div className="vistasref" role="group" aria-label="Vistas guardadas">
+    <div className="vistasref" role="group" aria-label={t("refs.vistasGuardadas")}>
       {vistas.map((v) => (
         <span key={v.id} className={`vistachip${activa === v.id ? " on" : ""}`}>
           <button type="button" onClick={() => onAplicar(v)} aria-pressed={activa === v.id}><Bookmark size={12} aria-hidden="true" /><span>{v.nombre}</span></button>
-          <button type="button" className="quitar" aria-label={`Quitar la vista ${v.nombre}`} onClick={async () => { await post(`/api/referencias/vistas/${v.id}/quitar`); sonar("papelera"); recargar(); }}><Close size={11} aria-hidden="true" /></button>
+          <button type="button" className="quitar" aria-label={t("refs.quitarVista", { nombre: v.nombre })} onClick={async () => { await post(`/api/referencias/vistas/${v.id}/quitar`); sonar("papelera"); recargar(); }}><Close size={11} aria-hidden="true" /></button>
         </span>
       ))}
-      {dupCount ? <button type="button" className="vistachip suave" onClick={() => r.set({ q: "es:duplicada" })}><Copy size={12} aria-hidden="true" /><span>{dupCount} posibles duplicadas</span></button> : null}
+      {dupCount ? <button type="button" className="vistachip suave" onClick={() => r.set({ q: "es:duplicada" })}><Copy size={12} aria-hidden="true" /><span>{t("refs.posiblesDup", { n: dupCount })}</span></button> : null}
       <span className="flex1" />
       {hayFiltro ? (
         nombre === null ? (
           <>
-            <button type="button" className="btn ghost small" onClick={() => setNombre("")}><Bookmark size={13} aria-hidden="true" /><span>Guardar vista</span></button>
-            <button type="button" className="btn ghost small" disabled={!ids.length} onClick={() => r.set({ pedir: "general", ref: ids.slice(0, 12).join(",") })} title="Adjunta las 12 primeras de esta vista a un encargo nuevo">
-              <Sparkles size={13} aria-hidden="true" /><span>Usar en un encargo ({Math.min(12, ids.length)})</span>
+            <button type="button" className="btn ghost small" onClick={() => setNombre("")}><Bookmark size={13} aria-hidden="true" /><span>{t("refs.guardarVista")}</span></button>
+            <button type="button" className="btn ghost small" disabled={!ids.length} onClick={() => r.set({ pedir: "general", ref: ids.slice(0, 12).join(",") })} title={t("refs.adjunta12")}>
+              <Sparkles size={13} aria-hidden="true" /><span>{t("refs.usarEncargoN", { n: Math.min(12, ids.length) })}</span>
             </button>
           </>
         ) : (
           <form className="row gap-s" onSubmit={guardar}>
-            <input autoFocus className="small" value={nombre} placeholder="Nombre de la vista" aria-label="Nombre de la vista" maxLength={40} onChange={(e) => setNombre(e.target.value)} onKeyDown={(e) => e.key === "Escape" && setNombre(null)} />
-            <button type="submit" className="btn small primary" disabled={!nombre.trim()}>Guardar</button>
-            <button type="button" className="btn ghost small" onClick={() => setNombre(null)}>Cancelar</button>
+            <input autoFocus className="small" value={nombre} placeholder={t("refs.nombreVista")} aria-label={t("refs.nombreVista")} maxLength={40} onChange={(e) => setNombre(e.target.value)} onKeyDown={(e) => e.key === "Escape" && setNombre(null)} />
+            <button type="submit" className="btn small primary" disabled={!nombre.trim()}>{t("comun.guardar")}</button>
+            <button type="button" className="btn ghost small" onClick={() => setNombre(null)}>{t("comun.cancelar")}</button>
             {err ? <span className="formerror small">{err}</span> : null}
           </form>
         )
@@ -544,26 +546,26 @@ export default function Referencias() {
 
   return (
     <div className="refsvista">
-      <PageHeader title="Referencias"
-        sub={`${propias.length} tuyas · ${d.referencias.length - propias.length} de posts.design · internas, nunca se nombran en público${sinAnalizar ? ` · analizando colores de ${sinAnalizar}…` : ""}`}
-        actions={<button type="button" className="btn primary" onClick={() => r.set({ nueva: nueva ? null : "1" })} aria-expanded={nueva}>{nueva ? <Close size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}<span>{nueva ? "Cerrar" : "Añadir referencia"}</span></button>}>
-        <Segmented label="Fuente" value={fuente} onChange={(v) => r.set({ fuente: v === "todas" ? null : v })}
+      <PageHeader title={t("nav.referencias")}
+        sub={`${t("refs.sub", { tuyas: propias.length, externas: d.referencias.length - propias.length })}${sinAnalizar ? t("refs.analizando", { n: sinAnalizar }) : ""}`}
+        actions={<button type="button" className="btn primary" onClick={() => r.set({ nueva: nueva ? null : "1" })} aria-expanded={nueva}>{nueva ? <Close size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}<span>{nueva ? t("comun.cerrar") : t("refs.anadir")}</span></button>}>
+        <Segmented label={t("postDetalle.fuente")} value={fuente} onChange={(v) => r.set({ fuente: v === "todas" ? null : v })}
           options={FUENTES.map((f) => ({ ...f, count: f.id === "todas" ? d.referencias.length : f.id === "estudios" ? d.estudios.length : d.referencias.filter((x) => x.fuente === f.id).length }))} />
-        {fuente !== "estudios" ? <SearchBox value={q} onChange={setQ} placeholder="Buscar · #etiqueta color:azul tipo:video nota:4" /> : null}
+        {fuente !== "estudios" ? <SearchBox value={q} onChange={setQ} placeholder={t("refs.buscarPlaceholder")} /> : null}
         {fuente !== "estudios" ? (
           <>
-            <div className="colores" role="group" aria-label="Color">
+            <div className="colores" role="group" aria-label={t("refs.color")}>
               {COLORES.map((c) => (
                 <button key={c.id} type="button" className="colorbtn" style={{ "--c": c.hex }} aria-pressed={color === c.id} title={c.label} onClick={() => filtrarColor(c.id)}>
                   <span className="sr">{c.label}</span>
                 </button>
               ))}
             </div>
-            <Segmented label="Orden" value={orden} onChange={(v) => r.set({ orden: v === "recientes" ? null : v })} options={ORDENES} />
-            <Segmented label="Diseño" value={diseno} onChange={(v) => r.set({ diseno: v === "mosaico" ? null : v })} options={DISENOS} />
+            <Segmented label={t("refs.orden")} value={orden} onChange={(v) => r.set({ orden: v === "recientes" ? null : v })} options={ORDENES} />
+            <Segmented label={t("refs.diseno")} value={diseno} onChange={(v) => r.set({ diseno: v === "mosaico" ? null : v })} options={DISENOS} />
           </>
         ) : null}
-        {todasTags.length && fuente !== "estudios" ? <Toggles label="Etiquetas" value={tags} onChange={(v) => r.set({ tags: v.length ? v.join(",") : null })} options={todasTags.map((t) => ({ id: t, label: t }))} /> : null}
+        {todasTags.length && fuente !== "estudios" ? <Toggles label={t("refs.etiquetas")} value={tags} onChange={(v) => r.set({ tags: v.length ? v.join(",") : null })} options={todasTags.map((t) => ({ id: t, label: t }))} /> : null}
       </PageHeader>
       <div className="pad-x">
         {nueva ? <Nueva onClose={() => r.set({ nueva: null })} onSaved={(ref) => { recargar(); r.set({ nueva: null, fuente: "propia", ver: ref.id }); }} /> : null}
@@ -578,7 +580,7 @@ export default function Referencias() {
               <a key={s.path} className="card" href={hrefOf("biblioteca", { doc: s.path })} data-path={s.path}>
                 <div className="cardbody">
                   <span className="cardtitle"><span>{s.titulo}</span><BookOpen size={14} aria-hidden="true" /></span>
-                  <span className="cardtext">{s.palabras.toLocaleString("es-ES")} palabras · {s.path.split("/").pop()}</span>
+                  <span className="cardtext">{t("refs.palabras", { n: fmtNumero(s.palabras) })} · {s.path.split("/").pop()}</span>
                 </div>
               </a>
             ))}
@@ -588,11 +590,11 @@ export default function Referencias() {
             {diseno === "mosaico" ? <Mosaico lista={lista} render={tarjeta} />
               : diseno === "lista" ? <div className="reflista">{lista.map(tarjeta)}</div>
               : <div className="cardgrid refs">{lista.map(tarjeta)}</div>}
-            <p className="atajosref small muted"><Keyboard size={13} aria-hidden="true" /> <kbd>Espacio</kbd> vista rápida · <kbd>/</kbd> buscar · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> diseño</p>
+            <p className="atajosref small muted"><Keyboard size={13} aria-hidden="true" /> <kbd>{t("refs.espacio")}</kbd> {t("refs.atajoVistaRapida")} · <kbd>/</kbd> {t("refs.atajoBuscar")} · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> {t("refs.atajoDiseno")}</p>
           </>
         ) : (
-          <Empty icon={Images} title={propias.length || fuente !== "propia" ? "Nada coincide" : "Aún no has guardado referencias"}>
-            Pulsa «Añadir referencia»: pega un enlace o arrastra una captura o un vídeo.
+          <Empty icon={Images} title={propias.length || fuente !== "propia" ? t("comun.nadaCoincide") : t("refs.vacio")}>
+            {t("refs.vacioAyuda")}
           </Empty>
         )}
       </div>

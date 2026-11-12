@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FileText, Music, Play, ImageOff } from "lucide-react";
 import { repo } from "../lib/format.js";
+import { t } from "../lib/i18n.js";
 
 function useVisible(margin = "300px") {
   const ref = useRef(null);
@@ -22,7 +23,7 @@ export function Thumb({ path, kind, fit = "cover", alt = "", badge }) {
   const [broken, setBroken] = useState(false);
   return (
     <div ref={ref} className={`thumb fit-${fit}`}>
-      {broken ? <div className="thumbmissing"><ImageOff size={18} aria-hidden="true" /><span>No está en este equipo</span></div>
+      {broken ? <div className="thumbmissing"><ImageOff size={18} aria-hidden="true" /><span>{t("media.noEnEquipo")}</span></div>
         : kind === "video" ? (visible ? <video src={`${repo(path)}#t=0.6`} preload="metadata" muted playsInline onError={() => setBroken(true)} aria-label={alt} /> : null)
         : kind === "image" ? (visible ? <img src={repo(path)} alt={alt} loading="lazy" onError={() => setBroken(true)} /> : null)
         : kind === "audio" ? <div className="thumbicon"><Music size={22} aria-hidden="true" /></div>
@@ -63,17 +64,17 @@ export function HoverVideo({ path, alt = "", poster, badge }) {
 export function Player({ path, kind }) {
   if (kind === "video") return <video className="player" src={repo(path)} controls preload="metadata" playsInline />;
   if (kind === "audio") return <audio src={repo(path)} controls preload="metadata" />;
-  if (kind === "pdf") return <a className="btn" href={repo(path)} target="_blank" rel="noreferrer">Abrir el PDF</a>;
+  if (kind === "pdf") return <a className="btn" href={repo(path)} target="_blank" rel="noreferrer">{t("media.abrirPdf")}</a>;
   return <a href={repo(path)} target="_blank" rel="noreferrer"><img className="player" src={repo(path)} alt="" /></a>;
 }
 
 // Carrusel en tira horizontal con scroll-snap, como se ve en la red.
 export function SlideStrip({ slides, size = "m" }) {
   return (
-    <div className={`slidestrip s-${size}`} tabIndex={0} aria-label={`${slides.length} slides`}>
+    <div className={`slidestrip s-${size}`} tabIndex={0} aria-label={t("media.slides", { n: slides.length })}>
       {slides.map((s, i) => (
         <a key={s} href={repo(s)} target="_blank" rel="noreferrer" className="slide">
-          <img src={repo(s)} alt={`Slide ${i + 1}`} loading="lazy" />
+          <img src={repo(s)} alt={t("media.slide", { i: i + 1 })} loading="lazy" />
           <span className="slidenum">{i + 1}/{slides.length}</span>
         </a>
       ))}

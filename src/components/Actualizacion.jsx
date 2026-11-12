@@ -13,6 +13,7 @@ import { post, hace, md } from "../lib/api.js";
 import { useData } from "../lib/data.js";
 import { sonar } from "../lib/sonidos.js";
 import * as eventos from "../lib/eventos.js";
+import { t } from "../lib/i18n.js";
 
 const VISTA = "panel:novedadesVista";
 const leerVista = () => { try { return localStorage.getItem(VISTA); } catch { return null; } };
@@ -33,7 +34,7 @@ function Hoja({ titulo, sub, onClose, children, pie, ancho = 560, cerrable = tru
       <div className="hoja" role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} ref={ref} style={{ "--hoja-w": `${ancho}px` }}>
         <header className="hojahead">
           <div className="stack0"><h2>{titulo}</h2>{sub ? <p className="muted small">{sub}</p> : null}</div>
-          {cerrable ? <button type="button" className="iconbtn" onClick={onClose} aria-label="Cerrar"><Close size={16} aria-hidden="true" /></button> : null}
+          {cerrable ? <button type="button" className="iconbtn" onClick={onClose} aria-label={t("comun.cerrar")}><Close size={16} aria-hidden="true" /></button> : null}
         </header>
         <div className="hojabody">{children}</div>
         {pie ? <footer className="hojapie">{pie}</footer> : null}
@@ -41,6 +42,10 @@ function Hoja({ titulo, sub, onClose, children, pie, ancho = 560, cerrable = tru
     </>
   );
 }
+
+// Estado de una publicación anterior: identificador del servidor; aquí solo cambia la etiqueta.
+const ESTADOS_PUB = ["en-curso", "esperando", "fusionada", "abierta", "bloqueada", "error", "nada", "cancelada"];
+const etiquetaPub = (e) => (ESTADOS_PUB.includes(e) ? t(`act.estadoPub.${e}`) : e);
 
 const ICONO_PASO = { pendiente: Circle, "en-curso": LoaderCircle, ok: CircleCheck, aviso: CircleAlert, error: CircleX, omitido: CircleMinus };
 function Pasos({ pasos }) {
@@ -100,25 +105,25 @@ export function Publicar({ onClose }) {
   const mostrarPasos = a && (vivo || (fin && a.inicio && Date.now() - new Date(a.inicio).getTime() < 3600e3));
   const c = e && e.cambios;
   return (
-    <Hoja titulo="Publicar cambios" onClose={onClose} ancho={620}
-      sub={c ? `${c.total} archivo${c.total === 1 ? "" : "s"} sin subir · rama ${c.rama}` : "Cargando…"}
+    <Hoja titulo={t("act.publicarCambios")} onClose={onClose} ancho={620}
+      sub={c ? t("act.sinSubir", { n: c.total, rama: c.rama }) : t("comun.cargando")}
       pie={
         vivo ? (a.estado === "esperando"
-          ? <><span className="small muted">Se fusiona en <Cuenta hasta={a.fusionaEn} /></span><span className="flex1" /><button type="button" className="btn" onClick={cancelar}>Cancelar fusión</button></>
-          : <span className="small muted"><LoaderCircle size={13} className="spin" aria-hidden="true" /> Trabajando… puedes cerrar esta hoja, sigue en segundo plano.</span>)
+          ? <><span className="small muted">{t("act.seFusionaEn")} <Cuenta hasta={a.fusionaEn} /></span><span className="flex1" /><button type="button" className="btn" onClick={cancelar}>{t("act.cancelarFusion")}</button></>
+          : <span className="small muted"><LoaderCircle size={13} className="spin" aria-hidden="true" /> {t("act.trabajandoFondo")}</span>)
         : <>
-            <span className="small muted">{p.revisar ? "Revisa la IA" : "Sin revisión"} · {p.fusionarSola ? `se fusiona sola${p.esperaMin ? ` tras ${p.esperaMin} min` : ""}` : "la PR queda abierta"}</span>
+            <span className="small muted">{p.revisar ? t("act.revisaIa") : t("act.sinRevision")} · {p.fusionarSola ? (p.esperaMin ? t("act.fusionaSolaTras", { min: p.esperaMin }) : t("act.fusionaSola")) : t("act.prAbierta")}</span>
             <span className="flex1" />
-            <button type="button" className="btn ghost" onClick={onClose}>Cerrar</button>
-            <button type="button" className="btn primary" disabled={!c || !c.total} onClick={empezar}><UploadCloud size={14} aria-hidden="true" /><span>Publicar</span></button>
+            <button type="button" className="btn ghost" onClick={onClose}>{t("comun.cerrar")}</button>
+            <button type="button" className="btn primary" disabled={!c || !c.total} onClick={empezar}><UploadCloud size={14} aria-hidden="true" /><span>{t("act.publicar")}</span></button>
           </>
       }>
       {mostrarPasos ? (
         <>
-          {a.commit ? <p className="pubtitulo"><strong>{a.commit.titulo}</strong>{a.version ? <span className="tag">panel {a.version}</span> : null}</p> : null}
+          {a.commit ? <p className="pubtitulo"><strong>{a.commit.titulo}</strong>{a.version ? <span className="tag">{t("act.panelVersion", { version: a.version })}</span> : null}</p> : null}
           <Pasos pasos={a.pasos} />
-          {a.estado === "fusionada" ? <p className="aviso n-bajo small"><CircleCheck size={13} aria-hidden="true" /> Fusionada en main{a.pr ? <> · <a href={a.pr.url} target="_blank" rel="noreferrer">PR #{a.pr.numero}</a></> : null}. Ya estás en main.</p> : null}
-          {a.estado === "bloqueada" || a.estado === "error" ? <p className="aviso n-alto small"><CircleX size={13} aria-hidden="true" /> {a.error}{a.pr ? <> · <a href={a.pr.url} target="_blank" rel="noreferrer">Abrir la PR</a></> : null}</p> : null}
+          {a.estado === "fusionada" ? <p className="aviso n-bajo small"><CircleCheck size={13} aria-hidden="true" /> {t("act.fusionada")}{a.pr ? <> · <a href={a.pr.url} target="_blank" rel="noreferrer">PR #{a.pr.numero}</a></> : null}{t("act.yaEnMain")}</p> : null}
+          {a.estado === "bloqueada" || a.estado === "error" ? <p className="aviso n-alto small"><CircleX size={13} aria-hidden="true" /> {a.error}{a.pr ? <> · <a href={a.pr.url} target="_blank" rel="noreferrer">{t("act.abrirPr")}</a></> : null}</p> : null}
           {a.revision && (a.revision.hallazgos || []).length ? (
             <ul className="hallazgos">{a.revision.hallazgos.map((h, i) => <li key={i} className="small"><span className={`tag ${h.gravedad === "bloquea" ? "is-alto" : ""}`}>{h.gravedad}</span> <code>{h.archivo}</code> {h.texto}</li>)}</ul>
           ) : null}
@@ -129,19 +134,19 @@ export function Publicar({ onClose }) {
             {c.zonas.map((z) => (
               <div key={z.zona} className="zona">
                 <button type="button" className="zonahead" aria-expanded={!!abiertas[z.zona]} onClick={() => setAbiertas((x) => ({ ...x, [z.zona]: !x[z.zona] }))}>
-                  <strong className="small">{z.zona}</strong><span className="muted small">{z.total} archivo{z.total === 1 ? "" : "s"}{z.nuevos ? ` · ${z.nuevos} nuevo${z.nuevos === 1 ? "" : "s"}` : ""}</span>
+                  <strong className="small">{z.zona}</strong><span className="muted small">{t("encargo.archivos", { n: z.total })}{z.nuevos ? ` · ${t("act.nuevos", { n: z.nuevos })}` : ""}</span>
                 </button>
-                {abiertas[z.zona] ? <ul className="zonaarchivos">{z.archivos.map((f) => <li key={f.ruta} className="mono small"><span className={`fst s-${f.estado === "??" ? "N" : f.estado[0]}`}>{f.estado === "??" ? "N" : f.estado[0]}</span>{f.ruta}</li>)}{z.total > z.archivos.length ? <li className="muted small">y {z.total - z.archivos.length} más</li> : null}</ul> : null}
+                {abiertas[z.zona] ? <ul className="zonaarchivos">{z.archivos.map((f) => <li key={f.ruta} className="mono small"><span className={`fst s-${f.estado === "??" ? "N" : f.estado[0]}`}>{f.estado === "??" ? "N" : f.estado[0]}</span>{f.ruta}</li>)}{z.total > z.archivos.length ? <li className="muted small">{t("act.yMas", { n: z.total - z.archivos.length })}</li> : null}</ul> : null}
               </div>
             ))}
-            <p className="muted small">Al publicar: comprueba seguridad y sintaxis, la IA redacta el commit{p.revisar ? " y revisa el diff contra las reglas del cerebro" : ""}, abre una PR a main{p.fusionarSola ? " y, si todo pasa, la fusiona" : ""}. Cada publicación es tu OK para esa subida.</p>
+            <p className="muted small">{t("act.alPublicar1")}{p.revisar ? t("act.alPublicarRevisa") : ""}{t("act.alPublicar2")}{p.fusionarSola ? t("act.alPublicarFusiona") : ""}{t("act.alPublicar3")}</p>
           </div>
-        ) : <p className="small updateok"><CircleCheck size={14} aria-hidden="true" /> No hay nada sin subir.</p>
-      ) : <p className="muted small">Mirando qué ha cambiado…</p>}
+        ) : <p className="small updateok"><CircleCheck size={14} aria-hidden="true" /> {t("act.nadaSinSubir")}</p>
+      ) : <p className="muted small">{t("act.mirando")}</p>}
       {e && e.historial && e.historial.length && !vivo ? (
         <details className="pubhist">
-          <summary className="small muted">Publicaciones anteriores</summary>
-          <ul>{e.historial.slice(0, 8).map((h) => <li key={h.id} className="small"><span className={`tag s-${h.estado}`}>{h.estado}</span> {h.titulo || "—"} {h.pr ? <a href={h.pr.url} target="_blank" rel="noreferrer">#{h.pr.numero}</a> : null} <span className="muted">{hace(h.inicio)}</span></li>)}</ul>
+          <summary className="small muted">{t("act.anteriores")}</summary>
+          <ul>{e.historial.slice(0, 8).map((h) => <li key={h.id} className="small"><span className={`tag s-${h.estado}`}>{etiquetaPub(h.estado)}</span> {h.titulo || "—"} {h.pr ? <a href={h.pr.url} target="_blank" rel="noreferrer">#{h.pr.numero}</a> : null} <span className="muted">{hace(h.inicio)}</span></li>)}</ul>
         </details>
       ) : null}
       {err ? <p className="formerror small">{err}</p> : null}
@@ -153,28 +158,28 @@ function HojaActualizar({ a, onClose }) {
   const [estado, setEstado] = useState(null);
   const [err, setErr] = useState(null);
   const aplicar = async () => {
-    setErr(null); setEstado(a.requiereApp ? "Descargando y reinstalando la app (1–2 min)…" : "Descargando…");
+    setErr(null); setEstado(a.requiereApp ? t("act.descargandoApp") : t("act.descargando"));
     try {
       const r = await post("/api/actualizacion/aplicar", { relanzar: !!window.panelApp });
       sonar("exito");
-      if (r.reinicio === "app") { setEstado("Reiniciando la app…"); if (!window.panelApp) setEstado("App reinstalada: ábrela de nuevo."); return; }
-      setEstado("Listo. Recargando…");
+      if (r.reinicio === "app") { setEstado(t("act.reiniciando")); if (!window.panelApp) setEstado(t("act.reinstalada")); return; }
+      setEstado(t("act.listoRecargando"));
       setTimeout(() => location.reload(), 600);
     } catch (x) { setErr(x.message); setEstado(null); }
   };
   return (
-    <Hoja titulo="Actualización disponible" onClose={onClose} cerrable={!estado}
-      sub={a.versionRemota && a.versionRemota !== a.versionLocal ? `Moss ${a.versionLocal} → ${a.versionRemota}` : `${a.atras} cambio${a.atras === 1 ? "" : "s"} nuevos en main`}
+    <Hoja titulo={t("act.disponible")} onClose={onClose} cerrable={!estado}
+      sub={a.versionRemota && a.versionRemota !== a.versionLocal ? `Moss ${a.versionLocal} → ${a.versionRemota}` : t("act.cambiosNuevos", { n: a.atras })}
       pie={<>
-        <span className="small muted">{a.requiereApp ? "Cambia el núcleo de la app: se reinstala y se reinicia sola." : "Se recarga la ventana; no hace falta reiniciar."}</span>
+        <span className="small muted">{a.requiereApp ? t("act.cambiaNucleo") : t("act.seRecarga")}</span>
         <span className="flex1" />
-        {!estado ? <button type="button" className="btn ghost" onClick={onClose}>Más tarde</button> : null}
-        <button type="button" className="btn primary" disabled={!!estado || !!a.bloqueo} onClick={aplicar}>{estado ? <LoaderCircle size={14} className="spin" aria-hidden="true" /> : <CloudDownload size={14} aria-hidden="true" />}<span>{estado || "Actualizar ahora"}</span></button>
+        {!estado ? <button type="button" className="btn ghost" onClick={onClose}>{t("act.masTarde")}</button> : null}
+        <button type="button" className="btn primary" disabled={!!estado || !!a.bloqueo} onClick={aplicar}>{estado ? <LoaderCircle size={14} className="spin" aria-hidden="true" /> : <CloudDownload size={14} aria-hidden="true" />}<span>{estado || t("act.actualizarAhora")}</span></button>
       </>}>
-      {a.bloqueo === "cambios-locales" ? <p className="aviso n-medio small"><CircleAlert size={13} aria-hidden="true" /> Tienes cambios sin subir. Publícalos primero para no perderlos.</p> : null}
-      {a.bloqueo === "otra-rama" ? <p className="aviso n-bajo small"><GitBranch size={13} aria-hidden="true" /> Estás en la rama {a.rama}. Al actualizar se vuelve a main.</p> : null}
+      {a.bloqueo === "cambios-locales" ? <p className="aviso n-medio small"><CircleAlert size={13} aria-hidden="true" /> {t("act.cambiosLocales")}</p> : null}
+      {a.bloqueo === "otra-rama" ? <p className="aviso n-bajo small"><GitBranch size={13} aria-hidden="true" /> {t("act.otraRama", { rama: a.rama })}</p> : null}
       <ul className="commits">{a.commits.map((c) => <li key={c.sha} className="small"><span className="mono muted">{c.sha}</span> {c.titulo}</li>)}</ul>
-      <p className="muted small">Al terminar verás las novedades de la versión nueva.</p>
+      <p className="muted small">{t("act.alTerminar")}</p>
       {err ? <p className="formerror small">{err}</p> : null}
     </Hoja>
   );
@@ -187,8 +192,8 @@ export function Novedades({ desde, onClose }) {
   const lista = n.novedades.filter((x) => !desde || cmp(x.version, desde) > 0);
   const cerrar = () => { ponerVista(n.version); onClose(); };
   return (
-    <Hoja titulo="Novedades" sub={`Moss ${n.version}`} onClose={cerrar} ancho={600}
-      pie={<><span className="flex1" /><button type="button" className="btn primary" onClick={cerrar}>Seguir</button></>}>
+    <Hoja titulo={t("act.novedades")} sub={`Moss ${n.version}`} onClose={cerrar} ancho={600}
+      pie={<><span className="flex1" /><button type="button" className="btn primary" onClick={cerrar}>{t("act.seguir")}</button></>}>
       {(lista.length ? lista : n.novedades.slice(0, 1)).map((x) => (
         <article key={x.version} className="novedad">
           <header><span className="tag">{x.version}</span><span className="muted small">{x.fecha}</span></header>
@@ -249,27 +254,27 @@ export function Actualizacion({ onReload }) {
     <>
       <div className="updatebox" data-component="actualizacion">
         <div className="updatehead">
-          <button type="button" className="appver small" onClick={() => { setDesde(null); setHoja("novedades"); }} title="Ver novedades">Moss <span className="mono">{a.versionLocal}</span></button>
-          {a.rama !== "main" ? <span className="ramachip mono small" title={`Rama ${a.rama}`}><GitBranch size={11} aria-hidden="true" />{a.rama}</span> : null}
-          <button type="button" className="iconbtn tiny" onClick={comprobar} disabled={comprobando} aria-label="Buscar actualizaciones">
+          <button type="button" className="appver small" onClick={() => { setDesde(null); setHoja("novedades"); }} title={t("act.verNovedades")}>Moss <span className="mono">{a.versionLocal}</span></button>
+          {a.rama !== "main" ? <span className="ramachip mono small" title={t("act.rama", { rama: a.rama })}><GitBranch size={11} aria-hidden="true" />{a.rama}</span> : null}
+          <button type="button" className="iconbtn tiny" onClick={comprobar} disabled={comprobando} aria-label={t("act.buscar")}>
             <RefreshCw size={13} aria-hidden="true" className={comprobando ? "spin" : ""} />
           </button>
         </div>
         {a.disponible ? (
           <button type="button" className="updatecta" onClick={() => setHoja("actualizar")}>
             <CloudDownload size={14} aria-hidden="true" />
-            <span className="stack0"><strong className="small">Actualización disponible</strong><span className="small muted">{a.versionRemota && a.versionRemota !== a.versionLocal ? `Versión ${a.versionRemota}` : `${a.atras} cambio${a.atras === 1 ? "" : "s"}`}</span></span>
+            <span className="stack0"><strong className="small">{t("act.disponible")}</strong><span className="small muted">{a.versionRemota && a.versionRemota !== a.versionLocal ? t("act.version", { version: a.versionRemota }) : t("act.cambios", { n: a.atras })}</span></span>
           </button>
-        ) : <p className="small updateok"><CircleCheck size={13} aria-hidden="true" /> Al día{a.ultimoFetch ? ` · ${hace(a.ultimoFetch)}` : ""}</p>}
+        ) : <p className="small updateok"><CircleCheck size={13} aria-hidden="true" /> {t("act.alDia")}{a.ultimoFetch ? ` · ${hace(a.ultimoFetch)}` : ""}</p>}
         {publicando ? (
           <button type="button" className="updatecta suave" onClick={() => setHoja("publicar")}>
             <LoaderCircle size={14} className="spin" aria-hidden="true" />
-            <span className="stack0"><strong className="small">{act.estado === "esperando" ? "Fusión en espera" : "Publicando…"}</strong><span className="small muted">{(act.pasos.find((p) => p.estado === "en-curso") || {}).nombre || ""}</span></span>
+            <span className="stack0"><strong className="small">{act.estado === "esperando" ? t("act.fusionEspera") : t("act.publicando")}</strong><span className="small muted">{(act.pasos.find((p) => p.estado === "en-curso") || {}).nombre || ""}</span></span>
           </button>
         ) : total ? (
-          <button type="button" className="btn small" onClick={() => setHoja("publicar")}><UploadCloud size={14} aria-hidden="true" /><span>Publicar cambios ({total})</span></button>
+          <button type="button" className="btn small" onClick={() => setHoja("publicar")}><UploadCloud size={14} aria-hidden="true" /><span>{t("act.publicarCambiosN", { n: total })}</span></button>
         ) : act && act.estado === "bloqueada" && act.pr ? (
-          <a className="btn small ghost" href={act.pr.url} target="_blank" rel="noreferrer"><GitPullRequest size={14} aria-hidden="true" /><span>PR #{act.pr.numero} por revisar</span></a>
+          <a className="btn small ghost" href={act.pr.url} target="_blank" rel="noreferrer"><GitPullRequest size={14} aria-hidden="true" /><span>{t("act.prPorRevisar", { numero: act.pr.numero })}</span></a>
         ) : null}
       </div>
       {hoja === "actualizar" ? <HojaActualizar a={a} onClose={() => setHoja(null)} onReload={onReload} /> : null}

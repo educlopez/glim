@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { t } from "./i18n.js";
 
 export const DataContext = createContext(null);
 export const useData = () => useContext(DataContext);
@@ -26,13 +27,13 @@ export function useOverview() {
 }
 
 export const ESTADOS = [
-  { id: "idea", label: "Idea" },
-  { id: "pendiente-ok", label: "Pendiente de OK" },
-  { id: "programado", label: "Programado" },
-  { id: "publicado", label: "Publicado" },
-  { id: "descartado", label: "Descartado" },
+  { id: "idea", get label() { return t("estado.idea"); } },
+  { id: "pendiente-ok", get label() { return t("estado.pendiente-ok"); } },
+  { id: "programado", get label() { return t("estado.programado"); } },
+  { id: "publicado", get label() { return t("estado.publicado"); } },
+  { id: "descartado", get label() { return t("estado.descartado"); } },
 ];
-export const estadoLabel = (id) => (ESTADOS.find((e) => e.id === id) || { label: id || "Sin estado" }).label;
+export const estadoLabel = (id) => (ESTADOS.find((e) => e.id === id) || { label: id || t("estado.sinEstado") }).label;
 
 // Redes y cadencia salen del cerebro (moss.config.json → redes, cadencia). `export let`: las vistas ven el valor nuevo.
 export let REDES = ["X", "Threads", "LinkedIn"];
