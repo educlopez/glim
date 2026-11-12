@@ -9,6 +9,10 @@ updates:
       dependencias:
         patterns: ["*"]
         update-types: [minor, patch]
+    # Las versiones mayores (React 19, zod 4…) se migran a mano, con su PR y sus pruebas.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

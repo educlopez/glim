@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   analyze:
+    # Code scanning solo está disponible gratis en repos públicos.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
