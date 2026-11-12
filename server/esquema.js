@@ -55,6 +55,8 @@ export const Esquema = z.object({
     reglas: z.array(z.string().max(400)).default([]),
     // Comandos de shell extra que el agente puede lanzar sin preguntar (además de los básicos de Moss).
     comandos: z.array(z.string().regex(/^[\w .@/:-]+$/)).default([]),
+    // Carpetas que git ignora y que las copias aisladas de los encargos comparten con el repo (medios, node_modules).
+    compartidas: z.array(ruta).default([]),
   }).default({}),
   publicar: z.object({
     rama: z.string().default("main"),

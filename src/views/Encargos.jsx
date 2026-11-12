@@ -13,6 +13,7 @@ import { PageHeader, Empty, Fields, CopyButton, Switch } from "../components/ui.
 import { Drawer } from "../components/Drawer.jsx";
 import { Thumb, Player } from "../components/Media.jsx";
 import { EncargoCard, EstadoEncargo } from "../components/EncargoCard.jsx";
+import { CopiaAislada } from "../components/CopiaAislada.jsx";
 
 const ICONOS = { leer: FileText, editar: FilePen, crear: FilePlus, terminal: Terminal, buscar: Search, skill: Sparkles, agente: Bot, web: Globe, plan: ListChecks, herramienta: Wrench };
 const esMedio = (p) => /^media\/.+\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i.test(p);
@@ -173,6 +174,7 @@ function Detalle({ id, onClose }) {
           {e.rondas.map((ronda, n) => <Ronda key={n} ronda={ronda} n={n} eventos={j.eventos} viva={ronda.estado === "en-curso"} agente={e.agente} />)}
           {e.estado === "cola" ? <p className="callout">En cola. Arranca en cuanto termine el encargo que hay en marcha.</p> : null}
           <div ref={fin} />
+          {e.copia ? <CopiaAislada encargo={e} onCambio={() => { cargar(); enc.recargar(); }} /> : null}
 
           {["revisar", "error", "hecho"].includes(e.estado) ? (
             <section className="detailsection">

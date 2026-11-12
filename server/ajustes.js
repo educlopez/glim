@@ -42,6 +42,8 @@ const ESQUEMA = {
   // Agente que hace los encargos (agentes.js) y modelo de cada uno (vacío: el que tenga por defecto su CLI).
   agente: { ...uno("claude", "codex", "cursor", "opencode", "gemini", "propio") },
   modelos: { claude: { tipo: "texto", d: "", max: 80 }, codex: { tipo: "texto", d: "", max: 80 }, cursor: { tipo: "texto", d: "", max: 80 }, opencode: { tipo: "texto", d: "", max: 80 }, gemini: { tipo: "texto", d: "", max: 80 } },
+  // Encargos en una copia aislada (git worktree) y cuántos a la vez. Sin copia, uno solo y sobre el repo.
+  encargos: { aislamiento: { ...uno("repo", "copia") }, paralelos: { ...uno(2, 1, 3, 4) } },
   comandoPropio: { tipo: "texto", d: "", max: 300 }, // p. ej. aider --yes-always --message {prompt}
   // Integraciones
   // Actualizaciones de la app (vivo.js): la app sigue main; cada cuánto mira y si se instala sola.

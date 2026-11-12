@@ -228,6 +228,14 @@
                 "pattern": "^[\\w .@/:-]+$"
               },
               "default": []
+            },
+            "compartidas": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
             }
           },
           "additionalProperties": false,

@@ -120,7 +120,7 @@ function permitido(req) {
 
 const RUTAS = [
   ["GET", /^\/api\/cerebro$/, () => cerebro.resumen()],
-  ["GET", /^\/api\/encargos$/, () => ({ encargos: encargos.resumenLista(), ocupado: encargos.ocupado(), publicados: buffer.estado().autoPublicados || [] })],
+  ["GET", /^\/api\/encargos$/, () => ({ encargos: encargos.resumenLista(), ocupado: encargos.ocupado(), enMarcha: encargos.enMarcha(), publicados: buffer.estado().autoPublicados || [] })],
   ["GET", /^\/api\/encargos\/([a-z0-9-]+)$/, (_, [id]) => {
     const e = encargos.leer(id);
     if (!e) throw Object.assign(new Error("No existe"), { code: 404 });
@@ -132,6 +132,8 @@ const RUTAS = [
   ["POST", /^\/api\/encargos\/([a-z0-9-]+)\/otra-vuelta$/, (b, [id]) => ({ encargo: encargos.otraVuelta(id, b.texto) })],
   ["POST", /^\/api\/encargos\/([a-z0-9-]+)\/estado$/, (b, [id]) => ({ encargo: encargos.marcar(id, b.estado) })],
   ["POST", /^\/api\/encargos\/([a-z0-9-]+)\/detener$/, (_, [id]) => ({ ok: encargos.detener(id) })],
+  ["GET", /^\/api\/encargos\/([a-z0-9-]+)\/copia$/, (_, [id]) => encargos.cambiosCopia(id)],
+  ["POST", /^\/api\/encargos\/([a-z0-9-]+)\/aplicar$/, (_, [id]) => ({ encargo: encargos.aplicarCopia(id) })],
   ["POST", /^\/api\/referencias$/, async (b) => ({ referencia: await refs.anadir(b) })],
   ["POST", /^\/api\/referencias\/leer$/, async (b) => ({ leido: await lectores.leer(String(b.url || "").trim()) })],
   ["POST", /^\/api\/referencias\/(ref-[a-z0-9-]+)\/copia$/, async (_, [id]) => ({ copia: await refs.guardarCopia(id) })],

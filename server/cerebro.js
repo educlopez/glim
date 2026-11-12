@@ -53,6 +53,8 @@ export const cfg = c.cfg;
 // Estado local de Moss para este cerebro (ignorado por git).
 export const ESTADO = path.join(ROOT, ".moss");
 fs.mkdirSync(ESTADO, { recursive: true });
+// .moss/ se ignora a sí misma: el cerebro no necesita tocar su .gitignore.
+if (!fs.existsSync(path.join(ESTADO, ".gitignore"))) fs.writeFileSync(path.join(ESTADO, ".gitignore"), "*\n");
 
 export const rutas = cfg.rutas;
 export const tiene = (clave) => !!rutas[clave] && fs.existsSync(path.join(ROOT, rutas[clave]));

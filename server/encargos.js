@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
+import * as aislada from "./aislada.js";
 import { ROOT, hoyLocal, mtime } from "./repo.js";
 import { posts } from "./posts.js";
 import { media, plantillas, carruseles, marcas, ogs } from "./catalog.js";
@@ -230,8 +231,33 @@ export function marcar(id, estado) {
   if (!e) throw new Error("No existe");
   if (!["hecho", "descartado", "revisar"].includes(estado)) throw new Error("Estado no válido");
   if (ACTIVOS.includes(e.estado)) throw new Error("Detenlo antes");
+  // Con copia aislada: «hecho» exige aplicar antes los cambios; «descartado» borra la copia.
+  if (e.copia && !e.copia.aplicada) {
+    if (estado === "hecho") throw new Error("Aplica antes sus cambios al repo (o descártalos)");
+    if (estado === "descartado") { aislada.borrar(e.id); e.copia.descartada = ahora(); }
+  }
   e.estado = estado;
   return guardar(e);
+}
+
+// ---- Copia aislada (git worktree): ver, aplicar o descartar lo que hizo el agente ----
+export function cambiosCopia(id) {
+  const e = leer(id);
+  if (!e || !e.copia) throw new Error("Este encargo no trabaja en una copia aislada");
+  return aislada.cambios(e.id, e.copia.base);
+}
+
+export function aplicarCopia(id) {
+  const e = leer(id);
+  if (!e || !e.copia) throw new Error("Este encargo no trabaja en una copia aislada");
+  if (ACTIVOS.includes(e.estado)) throw new Error("Espera a que termine");
+  const r = aislada.aplicar(e.id, e.copia.base);
+  e.copia.aplicada = ahora();
+  e.copia.archivos = r.archivos;
+  e.estado = "hecho";
+  guardar(e);
+  evento(e.id, { ronda: e.rondas.length - 1, tipo: "sistema", texto: `Cambios aplicados al repo (${r.archivos.length} archivos)` });
+  return e;
 }
 
 export function registrada(id, i) {
@@ -243,12 +269,13 @@ export function registrada(id, i) {
 
 // ---- Ejecutar ----
 
-let corriendo = null; // { id, proc }
+const corriendo = new Map(); // id → proc
 
-function porcelana() {
+function porcelana(cwd = ROOT) {
   try {
-    const out = execFileSync("git", ["status", "--porcelain", "-uall"], { cwd: ROOT, encoding: "utf8", maxBuffer: 20e6 });
-    return Object.fromEntries(out.split("\n").filter(Boolean).map((l) => l.slice(3).replace(/^"|"$/g, "")).map((p) => [p.includes(" -> ") ? p.split(" -> ")[1] : p, mtime(p.includes(" -> ") ? p.split(" -> ")[1] : p)]));
+    const out = execFileSync("git", ["status", "--porcelain", "-uall"], { cwd, encoding: "utf8", maxBuffer: 20e6 });
+    const mt = (p) => { try { return fs.statSync(path.join(cwd, p)).mtimeMs; } catch { return 0; } };
+    return Object.fromEntries(out.split("\n").filter(Boolean).map((l) => l.slice(3).replace(/^"|"$/g, "")).map((p) => [p.includes(" -> ") ? p.split(" -> ")[1] : p, mt(p.includes(" -> ") ? p.split(" -> ")[1] : p)]));
   } catch { return {}; }
 }
 
@@ -258,7 +285,7 @@ export function claudeBin() {
   return [path.join(home, ".local/bin/claude"), "/opt/homebrew/bin/claude", "/usr/local/bin/claude"].find((p) => fs.existsSync(p)) || "claude";
 }
 
-function cabeza() { try { return execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim(); } catch { return null; } }
+function cabeza(cwd = ROOT) { try { return execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" }).trim(); } catch { return null; } }
 
 function ejecutar(e) {
   const n = e.rondas.length - 1;
@@ -274,11 +301,18 @@ function ejecutar(e) {
   ronda.agente = agenteId;
   e.estado = "en-curso";
   e.agente = agenteId;
+  // Copia aislada: el encargo trabaja en su propio git worktree (Ajustes → Encargos). Se crea en la primera ronda y
+  // las siguientes la reutilizan; el repo no cambia hasta que se aplican sus cambios.
+  let cwd = ROOT;
+  if (e.copia && !e.copia.aplicada && !e.copia.descartada) cwd = aislada.ruta(e.id);
+  else if (aj.encargos.aislamiento === "copia") {
+    try { e.copia = aislada.crear(e.id); cwd = aislada.ruta(e.id); } catch (x) { guardar(e); return fallarAntes(e, n, `No se pudo crear la copia aislada: ${x.message}`); }
+  }
   guardar(e);
   evento(e.id, { ronda: n, tipo: "sistema", texto: n === 0 ? `${nombre} arranca con el contexto del encargo` : `${nombre} retoma la sesión con tu nueva indicación` });
 
-  const antes = porcelana();
-  const head0 = cabeza();
+  const antes = porcelana(cwd);
+  const head0 = cabeza(cwd);
   const t0 = Date.now();
   const modelo = e.modelo || (aj.modelos && aj.modelos[agenteId]) || null;
   const sesion = e.sesion && n > 0 ? e.sesion : null;
@@ -288,13 +322,13 @@ function ejecutar(e) {
   const conSistema = `${SISTEMA}\n\n${texto}`;
   try {
     bin = ad.id === "claude" ? claudeBin() : null;
-    lanzamiento = ad.args({ sistema: SISTEMA, sesion, modelo, permitidas: PERMITIDAS, prohibidas: PROHIBIDAS, prompt: conSistema, comando: aj.comandoPropio });
+    lanzamiento = ad.args({ sistema: SISTEMA, sesion, modelo, permitidas: PERMITIDAS, prohibidas: PROHIBIDAS, prompt: conSistema, comando: aj.comandoPropio, cwd });
   } catch (x) { return fallarAntes(e, n, x.message); }
   const arrancar = (b) => {
     const cmd = lanzamiento.cmd || b;
     // detached: el agente y sus hijos (MCP, comandos) van en su propio grupo, para poder matar el árbol entero.
-    const proc = spawn(cmd, lanzamiento.args, { cwd: ROOT, stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, NO_COLOR: "1" }, detached: true });
-    corriendo = { id: e.id, proc };
+    const proc = spawn(cmd, lanzamiento.args, { cwd, stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, NO_COLOR: "1" }, detached: true });
+    corriendo.set(e.id, proc);
     if (lanzamiento.stdin) proc.stdin.end(lanzamiento.sistemaEnPrompt ? conSistema : texto); else proc.stdin.end();
     seguir(proc);
   };
@@ -307,6 +341,9 @@ function ejecutar(e) {
   const procesar = (ev) => {
     if (ev.tipo === "sesion") { const cur = leer(e.id); cur.sesion = ev.id; guardar(cur); return; }
     if (ev.tipo === "resultado") { resultado = ev; return; }
+    // En una copia aislada las rutas llegan como .moss/copias/<id>/…: se dejan relativas al repo.
+    const pre = path.relative(ROOT, cwd) + "/";
+    if (ev.archivo && cwd !== ROOT && ev.archivo.startsWith(pre)) ev.archivo = ev.archivo.slice(pre.length);
     if (ev.tipo === "herramienta" && ev.archivo) tocados.add(ev.archivo);
     const { archivo, ...resto } = ev;
     evento(e.id, { ronda: n, ...resto });
@@ -338,19 +375,19 @@ function ejecutar(e) {
     proc.on("close", (code, signal) => cerrar(code, signal));
   }
   function cerrar(code, signal) {
-    corriendo = null;
+    corriendo.delete(e.id);
     if (!resultado && ad.fin && !signal) resultado = ad.fin(acc, code);
     const cur = leer(e.id);
     const r = cur.rondas[n];
     r.fin = ahora();
     r.duracion = Date.now() - t0;
     // Archivos tocados: lo que el agente dijo que editó, lo que cambió en git y los renders nuevos de media/.
-    const despues = porcelana();
+    const despues = porcelana(cwd);
     for (const [p, mt] of Object.entries(despues)) if (!(p in antes) || antes[p] !== mt) tocados.add(p);
     for (const g of media()) if (!g.frames) for (const it of g.items) if (it.mtime >= t0) tocados.add(it.path);
     cur.archivos = [...tocados].filter((p) => p && !p.startsWith(".moss/")).sort();
     // Guarda común a todos los agentes: no pueden hacer commits (solo Claude los tiene prohibidos por lista).
-    const head1 = cabeza();
+    const head1 = cabeza(cwd);
     if (head0 && head1 && head0 !== head1) { r.commits = true; evento(e.id, { ronda: n, tipo: "fallo", texto: `${nombre} ha hecho commits (HEAD ${head0.slice(0, 7)} → ${head1.slice(0, 7)}). Revísalos antes de publicar.` }); }
     if (resultado && (!signal)) {
       r.resultado = resultado.texto || "";
@@ -369,6 +406,7 @@ function ejecutar(e) {
       evento(e.id, { ronda: n, tipo: signal ? "sistema" : "fallo", texto: r.error });
     }
     cur.estado = r.estado === "error" ? "error" : "revisar";
+    if (cur.copia) { try { cur.copia.resumen = aislada.cambios(cur.id, cur.copia.base, { diff: false }).resumen; } catch {} }
     guardar(cur);
     siguiente();
   }
@@ -384,7 +422,7 @@ function fallarAntes(e, n, msg) {
   cur.estado = "error";
   guardar(cur);
   evento(e.id, { ronda: n, tipo: "fallo", texto: msg });
-  corriendo = null;
+  corriendo.delete(e.id);
   setTimeout(siguiente, 100).unref();
 }
 
@@ -398,7 +436,7 @@ function matarArbol(proc) {
 }
 
 export function detener(id) {
-  if (corriendo && corriendo.id === id) { matarArbol(corriendo.proc); return true; }
+  if (corriendo.has(id)) { matarArbol(corriendo.get(id)); return true; }
   const e = leer(id);
   if (e && e.estado === "cola") {
     e.estado = e.rondas.length > 1 ? "revisar" : "borrador";
@@ -426,21 +464,36 @@ if (GEN === 1) {
     }
   } catch {}
 }
+// Cuántos a la vez: uno sobre el repo; con copias aisladas, los que digan los ajustes (cada uno en su worktree).
+function huecos() {
+  const aj = ajustes().encargos;
+  return aj.aislamiento === "copia" ? Number(aj.paralelos) || 1 : 1;
+}
 function siguiente() {
-  if (corriendo || globalThis.__panelEncargosGen !== GEN) return;
-  if (lista().some((x) => x.estado === "en-curso" && Date.now() - new Date(x.actualizado).getTime() < 2 * 3600e3)) return;
-  const e = lista().filter((x) => x.estado === "cola").sort((a, b) => a.actualizado.localeCompare(b.actualizado))[0];
-  if (e) ejecutar(e);
+  if (globalThis.__panelEncargosGen !== GEN) return;
+  const enDisco = lista().filter((x) => x.estado === "en-curso" && Date.now() - new Date(x.actualizado).getTime() < 2 * 3600e3);
+  let libres = huecos() - Math.max(corriendo.size, enDisco.length);
+  const cola = lista().filter((x) => x.estado === "cola").sort((a, b) => a.actualizado.localeCompare(b.actualizado));
+  for (const e of cola) {
+    if (libres <= 0) break;
+    // Sobre el repo (sin copia) solo corre uno, y nunca a la vez que otro que también use el repo.
+    const usaRepo = !(e.copia && !e.copia.aplicada) && ajustes().encargos.aislamiento !== "copia";
+    if (usaRepo && (corriendo.size || enDisco.length)) break;
+    libres--;
+    ejecutar(e);
+  }
 }
 
-export const ocupado = () => (corriendo ? corriendo.id : null);
+// Un encargo en marcha (el primero), para quien necesita saber si se puede publicar o actualizar.
+export const ocupado = () => (corriendo.size ? corriendo.keys().next().value : null);
+export const enMarcha = () => [...corriendo.keys()];
 
 // Al arrancar el panel: lo que estaba en marcha se cortó con el reinicio. Lo que esperaba en cola, sigue.
 for (const e of lista()) {
   if (e.estado === "en-curso") {
     const r = e.rondas[e.rondas.length - 1];
     r.estado = "error";
-    r.error = "El panel se reinició mientras Claude trabajaba. Puedes pedir otra vuelta o seguir en la terminal.";
+    r.error = "El panel se reinició mientras el agente trabajaba. Puedes pedir otra vuelta o seguir en la terminal.";
     e.estado = "error";
     guardar(e);
   }
@@ -458,4 +511,4 @@ export function resumenLista() {
   });
 }
 
-export const comandoTerminal = (e) => (e.sesion ? `cd ${JSON.stringify(ROOT)} && claude --resume ${e.sesion}` : null);
+export const comandoTerminal = (e) => (e.sesion ? `cd ${JSON.stringify(e.copia && !e.copia.aplicada && !e.copia.descartada ? aislada.ruta(e.id) : ROOT)} && claude --resume ${e.sesion}` : null);

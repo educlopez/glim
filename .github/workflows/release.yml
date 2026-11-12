@@ -40,7 +40,11 @@ jobs:
         run: |
           npx vite build
           node electron/preparar.mjs
-          npx electron-builder --mac --publish always
+          # Con certificado (CSC_LINK) firma; con APPLE_ID además notariza. Sin ellos, build ad-hoc sin firma de
+          # Apple: la app avisa de versiones nuevas pero no se instala sola.
+          if [ -n "$CSC_LINK" ]; then FIRMA=""; else FIRMA="-c.mac.identity=- -c.mac.hardenedRuntime=false"; unset CSC_LINK CSC_KEY_PASSWORD; fi
+          if [ -n "$APPLE_ID" ] && [ -n "$CSC_LINK" ]; then NOTARIZA=true; else NOTARIZA=false; fi
+          npx electron-builder --mac --publish always -c.mac.notarize=$NOTARIZA $FIRMA
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
@@ -48,4 +52,3 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Sin certificado, no busca uno en el llavero del runner.

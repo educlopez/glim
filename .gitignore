@@ -13,3 +13,4 @@ electron/icon.iconset/
 electron/iconos/
 server/__pycache__/
 test/fixtures/cerebro/.moss/
+.claude/

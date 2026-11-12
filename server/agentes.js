@@ -69,10 +69,10 @@ const claude = {
 const codex = {
   id: "codex", nombre: "Codex", bins: ["codex"], web: "https://github.com/openai/codex",
   sesionLogin: "codex login", permisos: "Sandbox workspace-write: solo escribe en el repo y sin red.",
-  args({ sesion, modelo }) {
+  args({ sesion, modelo, cwd }) {
     const comun = ["--json", "--ignore-user-config", "--skip-git-repo-check", ...(modelo ? ["-m", modelo] : [])];
     if (sesion) return { args: ["exec", "resume", sesion, ...comun, "-c", 'sandbox_mode="workspace-write"', "-"], stdin: true, sistemaEnPrompt: true };
-    return { args: ["exec", ...comun, "-s", "workspace-write", "-C", ROOT, "-"], stdin: true, sistemaEnPrompt: true };
+    return { args: ["exec", ...comun, "-s", "workspace-write", "-C", cwd || ROOT, "-"], stdin: true, sistemaEnPrompt: true };
   },
   parse(m, acc) {
     if (m.type === "thread.started" && m.thread_id) return [{ tipo: "sesion", id: m.thread_id }];
@@ -97,8 +97,8 @@ const codex = {
 const cursor = {
   id: "cursor", nombre: "Cursor", bins: ["cursor-agent", "agent"], web: "https://cursor.com/cli",
   sesionLogin: "cursor-agent login", permisos: "Sin --force: los comandos que pidan aprobación se rechazan; sandbox activado.",
-  args({ sesion, modelo, prompt }) {
-    const a = ["-p", "--output-format", "stream-json", "--trust", "--sandbox", "enabled", "--workspace", ROOT, ...(modelo ? ["--model", modelo] : []), ...(sesion ? ["--resume", sesion] : [])];
+  args({ sesion, modelo, prompt, cwd }) {
+    const a = ["-p", "--output-format", "stream-json", "--trust", "--sandbox", "enabled", "--workspace", cwd || ROOT, ...(modelo ? ["--model", modelo] : []), ...(sesion ? ["--resume", sesion] : [])];
     return { args: [...a, prompt], stdin: false, sistemaEnPrompt: true };
   },
   parse(m, acc) {
@@ -118,8 +118,8 @@ const cursor = {
 const opencode = {
   id: "opencode", nombre: "OpenCode", bins: ["opencode"], web: "https://opencode.ai",
   sesionLogin: "opencode auth login", permisos: "Permisos de su configuración (opencode.json); sin --auto.",
-  args({ sesion, modelo, prompt }) {
-    return { args: ["run", "--format", "json", "--dir", ROOT, ...(modelo ? ["-m", modelo] : []), ...(sesion ? ["--session", sesion] : []), prompt], stdin: false, sistemaEnPrompt: true };
+  args({ sesion, modelo, prompt, cwd }) {
+    return { args: ["run", "--format", "json", "--dir", cwd || ROOT, ...(modelo ? ["-m", modelo] : []), ...(sesion ? ["--session", sesion] : []), prompt], stdin: false, sistemaEnPrompt: true };
   },
   parse(m, acc) {
     const out = [];
@@ -138,7 +138,7 @@ const opencode = {
 const gemini = {
   id: "gemini", nombre: "Gemini CLI", bins: ["gemini"], web: "https://github.com/google-gemini/gemini-cli", experimental: true,
   sesionLogin: "gemini", permisos: "--approval-mode auto_edit: edita sin preguntar, los comandos piden aprobación.",
-  args({ sesion, modelo, prompt }) {
+  args({ sesion, modelo, prompt, cwd }) {
     return { args: ["-p", prompt, "--output-format", "stream-json", "--approval-mode", "auto_edit", ...(modelo ? ["-m", modelo] : []), ...(sesion ? ["--resume", sesion] : [])], stdin: false, sistemaEnPrompt: true };
   },
   parse(m, acc) {

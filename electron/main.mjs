@@ -164,6 +164,8 @@ function blindar(base) {
   const externo = (url) => { if (/^(https?:|mailto:)/.test(url)) shell.openExternal(url); };
   app.on("web-contents-created", (_e, wc) => {
     wc.on("will-attach-webview", (ev) => ev.preventDefault());
+    // Avisos y errores de la interfaz (CSP, excepciones) al registro, para depurar sin abrir las DevTools.
+    wc.on("console-message", (ev) => { if (ev.level === "warning" || ev.level === "error") registro.warn(`[ventana] ${ev.message}`.slice(0, 600)); });
     // Las ventanas de lectores y copias (server/navegador.js) cargan webs de terceros a propósito, en su propia
     // sesión: solo se blindan la navegación y las ventanas emergentes de las ventanas de la app.
     if (wc.session !== session.defaultSession) return;
@@ -389,7 +391,7 @@ else {
     if (aj.mostrarAlAbrir !== false) crearVentana();
     await vigilar();
     setInterval(vigilar, 2500);
-    if (app.isPackaged && !servidor.desarrollo) buscarVersionNueva({ app, shell, Notification }).catch((e) => registro.warn("actualizador", e));
+    if (app.isPackaged && !servidor.desarrollo) buscarVersionNueva({ app, shell, Notification, registro }).catch((e) => registro.warn("actualizador", e));
   });
   // En Mac, cerrar la ventana no cierra la app: los encargos siguen y el aviso llega igual.
   app.on("window-all-closed", () => {});

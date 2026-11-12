@@ -199,7 +199,7 @@ export default function App() {
                 {data && data.feedback.length ? <p className="small">{data.feedback.length} nota{data.feedback.length === 1 ? "" : "s"} guardada{data.feedback.length === 1 ? "" : "s"}</p> : null}
                 {saved ? <p className="small ok" role="status">Guardada en {saved.split("/").pop()}</p> : null}
               </div> : null}
-              <Actualizacion onReload={reload} />
+              {data ? <Actualizacion onReload={reload} /> : null}
             </div>
           </aside>
           <main className={`main ${["biblioteca", "ajustes"].includes(route.path) || (route.path === "lienzos" && route.params.l) ? "flush" : ""}`}>
