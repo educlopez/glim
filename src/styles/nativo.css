@@ -81,12 +81,24 @@ h2 { font-size: 15px; font-weight: 600; }
 .composer { background: var(--raised); border: 0; border-radius: 14px; box-shadow: var(--shadow-3); }
 .composerfoot { background: var(--raised); }
 
-/* Barras de desplazamiento finas, como en macOS */
-* { scrollbar-width: thin; scrollbar-color: rgb(127 127 127 / 0.35) transparent; }
-::-webkit-scrollbar { width: 11px; height: 11px; }
-::-webkit-scrollbar-thumb { background: rgb(127 127 127 / 0.35); border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background-color: rgb(127 127 127 / 0.55); }
+/* Barras de desplazamiento como las de macOS en modo automático: finas, sin carril y solo visibles con el puntero
+   encima de la zona que se desplaza. Sin scrollbar-width ni scrollbar-color: en Chromium anulan los ::-webkit-scrollbar. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: transparent; border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; }
+:hover::-webkit-scrollbar-thumb { background-color: rgb(127 127 127 / 0.32); }
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: rgb(127 127 127 / 0.6); }
+
+/* Barra lateral como en Rex: la fila de los semáforos, el menú del cerebro y el pie quedan fijos; solo se desplaza la
+   lista. Así el nombre del cerebro nunca pasa por debajo de los botones de la ventana. Un fundido corto en los bordes
+   indica que hay más. */
+.side { overflow: hidden; }
+.side > .nav {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  margin: calc(var(--s3) * -1) calc(var(--s2) * -1) 0; padding: var(--s3) var(--s2) var(--s4);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--s4), #000 calc(100% - var(--s4)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--s4), #000 calc(100% - var(--s4)), transparent 100%);
+}
 
 .prose pre, .raw { background: rgb(0 0 0 / 0.82); }
 @media (prefers-color-scheme: dark) {
@@ -346,3 +358,52 @@ html.is-app:has(.scrim, .quicklook, [role="dialog"]) .side::before { -webkit-app
 .cerebromenu .gira { animation: spin 0.9s linear infinite; }
 @keyframes menuin { from { opacity: 0; transform: scale(0.97) translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .cerebromenu { animation: none; } .cerebromenu .gira { animation: none; } }
+
+/* ---- Barra de herramientas y botones al estilo de macOS 26 ----
+   Cabecera de página como la barra de una ventana nativa: compacta (título de 15 px, a la altura de los semáforos),
+   sin línea fija debajo: el desenfoque y un fundido solo se notan cuando el contenido pasa por debajo (el «borde de
+   scroll» de las apps del sistema). Los botones de la barra son cápsulas de cristal; el principal, cápsula del acento. */
+html.is-app .pagehead {
+  isolation: isolate; min-height: 0; padding: 12px var(--s6) 10px; margin-bottom: var(--s4);
+  background: transparent; border-bottom: 0; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html.is-app .pagehead::before {
+  content: ""; position: absolute; inset: 0 0 -14px; z-index: -1; pointer-events: none;
+  background: color-mix(in srgb, var(--content-bg) 70%, transparent);
+  backdrop-filter: blur(14px) saturate(170%); -webkit-backdrop-filter: blur(14px) saturate(170%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent);
+}
+html.is-app[data-estilo="cristal"] .pagehead { background: transparent; }
+html.is-app .pagehead h1 { font-size: 15px; font-weight: 650; line-height: 20px; letter-spacing: -0.01em; }
+html.is-app .pagehead-title { min-width: 0; }
+html.is-app .pagehead-title p { margin-top: 1px; overflow: hidden; font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+html.is-app .pagehead-row { flex-wrap: nowrap; gap: var(--s3); }
+html.is-app .pagehead-actions { flex: none; gap: 6px; flex-wrap: nowrap; }
+html.is-app .pagehead-filters { margin-top: 10px; }
+html.is-app[data-densidad="compacta"] .pagehead { padding-top: 8px; padding-bottom: 8px; }
+
+/* Botones: todos cápsula (como los segmentados y el buscador), sin encoger al pulsar: se oscurecen, como en macOS. */
+.btn { border-radius: 999px; padding: 0 13px; transition: background-color 120ms ease-out, color 120ms ease-out; }
+.btn.small { height: 24px; padding: 0 10px; font-size: 12px; }
+.btn:active { transform: none; background: color-mix(in srgb, var(--control) 100%, var(--ink) 12%); }
+.btn.primary { padding: 0 14px; box-shadow: inset 0 0.5px 0 rgb(255 255 255 / 0.22), 0 0.5px 1.5px rgb(0 0 0 / 0.22); }
+.btn.small.primary { padding: 0 11px; }
+.btn.primary:active { background: color-mix(in srgb, var(--accent-strong) 78%, black); }
+.btn.ghost:active { background: var(--control); }
+.btn.danger { border-radius: 999px; }
+.iconbtn { border-radius: 999px; }
+
+/* En la barra, los botones secundarios son cristal: se leen como controles de la ventana, no del contenido. */
+html.is-app .pagehead-actions .btn:not(.primary):not(.danger),
+html.is-app .pagehead-actions .iconbtn {
+  background: color-mix(in srgb, var(--surface) 72%, transparent); color: var(--ink);
+  box-shadow: 0 0 0 0.5px var(--line), 0 1px 3px rgb(0 0 0 / 0.06);
+  backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+html.is-app .pagehead-actions .btn:not(.primary):not(.danger):hover,
+html.is-app .pagehead-actions .iconbtn:hover { background: color-mix(in srgb, var(--surface) 92%, var(--ink) 4%); }
+@media (prefers-reduced-transparency: reduce) {
+  html.is-app .pagehead::before, html.is-app .pagehead-actions .btn, html.is-app .pagehead-actions .iconbtn { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  html.is-app .pagehead::before { background: var(--content-bg); }
+}

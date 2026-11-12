@@ -266,7 +266,7 @@ export default function Encargos() {
                 <div key={c.id} className="boardcol" data-component={`encargos-${c.id}`}>
                   <div className="boardcolhead"><strong className="small">{c.label}</strong><span className="count">{l.length}</span></div>
                   <div className="boardcards">
-                    {l.length ? l.slice(0, c.id === "hecho" ? 30 : 100).map((e) => <EncargoCard key={e.id} e={e} href={r.withParams({ ver: e.id })} />) : <p className="muted small pad-s">{t("resumen.nada")}</p>}
+                    {l.length ? l.slice(0, c.id === "hecho" ? 30 : 100).map((e) => <EncargoCard key={e.id} e={e} href={r.withParams({ ver: e.id })} sinEstado />) : <p className="muted small pad-s">{t("resumen.nada")}</p>}
                   </div>
                 </div>
               );

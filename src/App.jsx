@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Agentation } from "agentation";
-import { LayoutDashboard, CalendarDays, PenLine, LayoutTemplate, GalleryHorizontal, Share2, Palette, Film, BookOpen, ShieldAlert, MessageSquareText, Images, History, LoaderCircle, Layers, Settings, Spline, ListTodo } from "lucide-react";
+import { LayoutDashboard, CalendarDays, PenLine, LayoutTemplate, GalleryHorizontal, Share2, Palette, Film, BookOpen, ShieldAlert, Images, History, LoaderCircle, Layers, Settings, Spline, ListTodo } from "lucide-react";
 import { DataContext, useOverview } from "./lib/data.js";
 import { useRoute, hrefOf, RouteContext } from "./lib/route.js";
 import { EncargosContext, useEncargosPoll } from "./lib/api.js";
@@ -80,7 +80,6 @@ export default function App() {
   const { data, error, reload } = useOverview();
   const enc = useEncargosPoll(reload);
   const [endpoint, setEndpoint] = useState(undefined);
-  const [saved, setSaved] = useState(null);
   const lastPath = useRef(route.path);
   // Idioma de la interfaz: ajuste del panel → idioma del cerebro → navegador. Mientras carga, el último que se usó.
   const navegador = typeof navigator !== "undefined" ? navigator.languages || [navigator.language] : [];
@@ -140,7 +139,6 @@ export default function App() {
     const r = await fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json", "x-panel": "1" }, body: JSON.stringify({ output, page: window.location.href }) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || t("app.noSeGuardo"));
-    setSaved(j.file);
     reload();
   }, [reload]);
 
@@ -196,14 +194,6 @@ export default function App() {
                   <span><strong>{t("app.agenteTrabajando")}</strong><span className="muted">{trabajando.texto.slice(0, 60)}</span></span>
                 </a>
               ) : null}
-              {import.meta.env.DEV ? <div className="feedbackbox">
-                <p className="small"><MessageSquareText size={14} aria-hidden="true" /> <strong>{t("app.feedback")}</strong></p>
-                <p className="muted small">
-                  {t("app.feedbackUsa")} {endpoint ? t("app.feedbackMcp") : t("app.feedbackLocal")}
-                </p>
-                {data && data.feedback.length ? <p className="small">{t("app.notasGuardadas", { n: data.feedback.length })}</p> : null}
-                {saved ? <p className="small ok" role="status">{t("app.guardadaEn", { archivo: saved.split("/").pop() })}</p> : null}
-              </div> : null}
               {data ? <Actualizacion onReload={reload} /> : null}
             </div>
           </aside>

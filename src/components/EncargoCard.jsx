@@ -1,11 +1,12 @@
 
-import { LoaderCircle, FileStack, Repeat, LayoutTemplate } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { ESTADOS_ENCARGO, hace, duracion } from "../lib/api.js";
 import { TIPOS_OBJETIVO, infoObjetivo } from "../lib/objetivos.js";
 import { Thumb } from "./Media.jsx";
 import { t } from "../lib/i18n.js";
 
+// Estado: un punto de color y el nombre en gris. El color dice el estado; el texto no compite con el título.
 export function EstadoEncargo({ estado }) {
   return (
     <span className={`estado enc-${estado}`}>
@@ -15,31 +16,31 @@ export function EstadoEncargo({ estado }) {
   );
 }
 
-export function EncargoCard({ e, href }) {
+// Tarjeta de encargo: qué se tocó (título), qué se pidió (texto) y una línea de datos. Sin franja de color, sin
+// hueco de miniatura cuando no la hay y sin iconos en los datos. En el tablero el estado ya lo dice la columna.
+export function EncargoCard({ e, href, sinEstado = false }) {
   const d = useData();
   const info = infoObjetivo(d, e.objetivo);
   const titulo = e.objetivo.tipo === "general" ? t("objetivo.general") : info.titulo || e.objetivo.titulo;
+  const tipo = TIPOS_OBJETIVO[e.objetivo.tipo] || e.objetivo.tipo;
+  const datos = [
+    tipo !== titulo ? tipo : null,
+    hace(e.actualizado),
+    e.rondas > 1 ? t("encargo.vueltas", { n: e.rondas }) : null,
+    e.archivos.length ? t("encargo.archivos", { n: e.archivos.length }) : null,
+    e.plantilla || null,
+    e.ultima && e.ultima.duracion ? duracion(e.ultima.duracion) : null,
+  ].filter(Boolean);
   return (
     <a className={`enccard enc-${e.estado}`} href={href} data-encargo={e.id} data-path={e.objetivo.path || undefined}>
       <div className="enccard-head">
-        <span className="encobj">
-          <span className="encobjthumb">{info.thumb ? <Thumb path={info.thumb.path} kind={info.thumb.kind} /> : null}</span>
-          <span className="encobjtext">
-            <span className="small muted">{TIPOS_OBJETIVO[e.objetivo.tipo] || e.objetivo.tipo}</span>
-            <span className="encobjtitle">{titulo}</span>
-          </span>
-        </span>
-        <EstadoEncargo estado={e.estado} />
+        {info.thumb ? <span className="encobjthumb"><Thumb path={info.thumb.path} kind={info.thumb.kind} /></span> : null}
+        <span className="encobjtitle">{titulo}</span>
+        {sinEstado ? null : <EstadoEncargo estado={e.estado} />}
       </div>
       <p className="enccard-text">{(e.ultima && e.ultima.texto) || e.texto}</p>
       {e.estado === "en-curso" ? <div className="encprogress" aria-hidden="true"><span /></div> : null}
-      <div className="enccard-foot small muted">
-        <span>{hace(e.actualizado)}</span>
-        {e.rondas > 1 ? <span><Repeat size={12} aria-hidden="true" /> {t("encargo.vueltas", { n: e.rondas })}</span> : null}
-        {e.archivos.length ? <span><FileStack size={12} aria-hidden="true" /> {t("encargo.archivos", { n: e.archivos.length })}</span> : null}
-        {e.plantilla ? <span><LayoutTemplate size={12} aria-hidden="true" /> {e.plantilla}</span> : null}
-        {e.ultima && e.ultima.duracion ? <span>{duracion(e.ultima.duracion)}</span> : null}
-      </div>
+      <p className="enccard-foot small muted">{datos.map((x, i) => <span key={i}>{i ? " · " : ""}{x}</span>)}</p>
     </a>
   );
 }

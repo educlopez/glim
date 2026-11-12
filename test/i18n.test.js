@@ -40,9 +40,9 @@ describe("diccionarios", () => {
 
 describe("traducir", () => {
   it("interpola {variables} y deja intactas las que faltan", () => {
-    expect(traducir("es", "app.guardadaEn", { archivo: "nota.md" })).toBe("Guardada en nota.md");
-    expect(traducir("en", "app.guardadaEn", { archivo: "nota.md" })).toBe("Saved to nota.md");
-    expect(traducir("es", "app.guardadaEn")).toBe("Guardada en {archivo}");
+    expect(traducir("es", "act.otraRama", { rama: "dev" })).toBe("Estás en la rama dev. Al actualizar se vuelve a main.");
+    expect(traducir("en", "act.otraRama", { rama: "dev" })).toBe("You are on branch dev. Updating switches back to main.");
+    expect(traducir("es", "act.otraRama")).toBe("Estás en la rama {rama}. Al actualizar se vuelve a main.");
   });
 
   it("elige la forma de plural con n", () => {
