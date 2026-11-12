@@ -4,12 +4,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   Monitor, Sun, Moon, KeyRound, Plug, Unplug, RefreshCw, CircleCheck, CircleAlert, Sparkles, Search, ChevronLeft, ChevronRight,
-  LayoutPanelLeft, Bell, Command, Blocks, Server, FolderOpen, RotateCcw, Rows3, Rows4, Zap, Waves, Ban, Sprout,
+  LayoutPanelLeft, Bell, Command, Blocks, Server, FolderOpen, RotateCcw, Rows3, Rows4, Zap, Waves, Ban,
 } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx } from "../lib/route.js";
 import { post, hace } from "../lib/api.js";
-import { Segmented, Switch } from "../components/ui.jsx";
+import { GlimMark, Segmented, Switch } from "../components/ui.jsx";
 import { sonar } from "../lib/sonidos.js";
 import { Novedades, Publicar as PublicarHoja } from "../components/Actualizacion.jsx";
 import { t, useI18n } from "../lib/i18n.js";
@@ -187,9 +187,10 @@ const TINTAS = [
   ["naranja", "#ff7528"], ["mandarina", "#ff9f0a"], ["fresa", "#ff375f"], ["frambuesa", "#d6336c"],
   ["uva", "#bf5af2"], ["ciruela", "#7d4bd6"], ["arandano", "#3a75f0"], ["aqua", "#40b4e8"],
   ["teal", "#2fb5a8"], ["helecho", "#34c759"], ["musgo", "#7a9a3a"], ["moca", "#9a7350"], ["grafito", "#7c7c82"],
+  ["noche", "#23263a"],
 ];
 // Las etiquetas salen de src/locales/*.js (ajustes.tinta.<id>, ajustes.glifo.<id>).
-const GLIFOS = ["musgo", "brote", "estrella", "ventana", "monograma", "avatar"];
+const GLIFOS = ["destello", "musgo", "brote", "estrella", "ventana", "monograma", "avatar"];
 
 // Editor del icono: vista previa grande, tintas y glifos. Una sola versión, igual en claro y en oscuro.
 function IconoApp({ a, cambiar }) {
@@ -467,7 +468,7 @@ export default function Ajustes() {
           <input type="search" value={q} placeholder={t("ajustes.buscar")} onChange={(e) => setQ(e.target.value)} />
         </label>
         <button type="button" className={`ajserver ${seccion === "servidor" && !buscando ? "sel" : ""}`} onClick={() => { setQ(""); r.set({ seccion: "servidor" }); }}>
-          <span className="ajservericon" aria-hidden="true"><Sprout size={18} /></span>
+          <span className="ajservericon" aria-hidden="true"><GlimMark size={18} /></span>
           <span><strong>{(d.cerebro && d.cerebro.nombre) || "Glim"}</strong><span className="muted small">{d.claves.buffer ? t("ajustes.enMarchaBuffer") : t("ajustes.enMarcha")}</span></span>
         </button>
         <nav className="ajnav" aria-label={t("ajustes.secciones")}>

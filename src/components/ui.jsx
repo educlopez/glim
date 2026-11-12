@@ -138,3 +138,12 @@ export function Fields({ rows }) {
     </dl>
   );
 }
+
+// Marca de Glim en la interfaz: el mismo destello del icono de la app (cuatro puntas cóncavas, más alto que ancho).
+export function GlimMark({ size = 15 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M12 1.5C12.7 8.2 13.9 10.9 18.5 12C13.9 13.1 12.7 15.8 12 22.5C11.3 15.8 10.1 13.1 5.5 12C10.1 10.9 11.3 8.2 12 1.5Z" />
+    </svg>
+  );
+}

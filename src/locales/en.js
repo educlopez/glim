@@ -177,7 +177,7 @@ export default {
   "ajustes.globalPie": "Works from any app: shows the panel, or hides it if it is already in front.",
   "ajustes.iconoApp": "App icon",
   "ajustes.iconoAppSub": "Follows the macOS icon template: continuous corners, a colored background lit from above and a white glyph. Changes the Dock, the menu bar and the app icon in the Finder.",
-  "ajustes.iconoAyuda": "Made with Apple's Icon Composer. The moss leaf is Glim's own icon: macOS renders its dark, clear and tinted versions from System Settings → Appearance. A custom one always looks the same.",
+  "ajustes.iconoAyuda": "Made with Apple's Icon Composer. The glint on a night background is Glim's own icon: macOS renders its dark, clear and tinted versions from System Settings → Appearance. A custom one always looks the same.",
   "ajustes.iconoBarra": "Menu bar icon",
   "ajustes.iconoBarraAyuda": "With task status and what is waiting for review.",
   "ajustes.iconoEn": "Icon in {ap}",
@@ -270,6 +270,7 @@ export default {
   "ajustes.tinta.mandarina": "Tangerine",
   "ajustes.tinta.moca": "Mocha",
   "ajustes.tinta.musgo": "Moss",
+  "ajustes.tinta.noche": "Night",
   "ajustes.tinta.naranja": "Orange",
   "ajustes.tinta.teal": "Teal",
   "ajustes.tinta.uva": "Grape",
@@ -904,4 +905,5 @@ export default {
   "copia.estado.R": "moved",
   "ajustes.iconoVista": "App icon preview",
   "ajustes.glifo.musgo": "Leaf",
+  "ajustes.glifo.destello": "Glint",
 };

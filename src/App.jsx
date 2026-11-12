@@ -3,7 +3,7 @@ import { Agentation } from "agentation";
 import {
   LayoutDashboard, CalendarDays, PenLine, LayoutTemplate, GalleryHorizontal, Share2, Palette, Film, BookOpen, ShieldAlert, MessageSquareText,
   Sparkles, Images, History, LoaderCircle, Layers, Settings,
-  Spline, Sprout,
+  Spline,
 } from "lucide-react";
 import { DataContext, useOverview } from "./lib/data.js";
 import { useRoute, hrefOf, RouteContext } from "./lib/route.js";
@@ -12,6 +12,7 @@ import { I18nProvider, guardarIdioma, idiomaGuardado, resolverIdioma, setIdioma,
 import { PostDetail } from "./components/PostDetail.jsx";
 import { Composer } from "./components/Composer.jsx";
 import { Actualizacion } from "./components/Actualizacion.jsx";
+import { GlimMark } from "./components/ui.jsx";
 import Encargos from "./views/Encargos.jsx";
 import Referencias from "./views/Referencias.jsx";
 import Lienzos from "./views/Lienzos.jsx";
@@ -173,7 +174,7 @@ export default function App() {
         <div className="shell">
           <aside className="side">
             <a className="brand" href="#/">
-              <span className="brandmark" aria-hidden="true"><Sprout size={15} /></span>
+              <span className="brandmark" aria-hidden="true"><GlimMark size={15} /></span>
               <span>{(data && data.cerebro && data.cerebro.nombre) || "Glim"}</span>
             </a>
             <nav aria-label={t("app.secciones")} className="nav">

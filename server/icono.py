@@ -10,6 +10,7 @@ TINTAS = {
     "naranja": "#ff7528", "mandarina": "#ff9f0a", "fresa": "#ff375f", "frambuesa": "#d6336c",
     "uva": "#bf5af2", "ciruela": "#7d4bd6", "arandano": "#3a75f0", "aqua": "#40b4e8",
     "teal": "#2fb5a8", "helecho": "#34c759", "musgo": "#7a9a3a", "moca": "#9a7350", "grafito": "#7c7c82",
+    "noche": "#23263a",
 }
 
 S = 2048
@@ -55,8 +56,17 @@ def glifo_mascara(glifo, avatar=None):
     m = Image.new("L", (S, S), 0)
     d = ImageDraw.Draw(m)
     c = S / 2
-    if glifo == "musgo":
-        # La marca de Glim: una hoja gruesa en diagonal con el nervio central vaciado.
+    if glifo == "destello":
+        # La marca de Glim: un destello alargado, cuatro puntas cóncavas (más alto que ancho), como el brillo de
+        # una luz sobre una superficie. Sobre la tinta noche: una luz pequeña en lo oscuro.
+        pts = []
+        for i in range(1440):
+            t = 2 * math.pi * i / 1440
+            co, si = math.cos(t), math.sin(t)
+            pts.append((c + 260 * K * math.copysign(abs(co) ** 3.0, co), c + 400 * K * math.copysign(abs(si) ** 3.0, si)))
+        d.polygon(pts, fill=255)
+    elif glifo == "musgo":
+        # Hoja gruesa en diagonal con el nervio central vaciado (la marca de cuando la app se llamaba Moss).
         largo, ancho = 640 * K, 380 * K
         r = (largo * largo / 4 + ancho * ancho / 4) / ancho
         d0 = r - ancho / 2
@@ -129,7 +139,7 @@ def glifo_mascara(glifo, avatar=None):
         r = 320 * K
         d.ellipse((c - r, c - r, c + r, c + r), fill=255)
     # Tamaño óptico: cada glifo ocupa más o menos lo mismo (en torno al 55 % de la forma) y queda centrado.
-    escala = {"musgo": 0.78, "brote": 0.72, "estrella": 0.78, "ventana": 0.70, "monograma": 0.68, "avatar": 0.9}.get(glifo, 0.8)
+    escala = {"destello": 0.86, "musgo": 0.78, "brote": 0.72, "estrella": 0.78, "ventana": 0.70, "monograma": 0.68, "avatar": 0.9}.get(glifo, 0.8)
     caja = m.getbbox()
     if caja:
         recorte = m.crop(caja)
@@ -145,7 +155,7 @@ def glifo_mascara(glifo, avatar=None):
 def icono(tinta, glifo, apariencia=None, avatar=None):
     # Estilo plano: fondo de color vivo con un degradado suave (luz desde arriba), glifo blanco macizo con una
     # sombra corta del color del fondo, y un filo claro muy fino arriba. Sin versión oscura.
-    base = hexrgb(TINTAS.get(tinta, TINTAS["musgo"]))
+    base = hexrgb(TINTAS.get(tinta, TINTAS["noche"]))
     blanco, negro = (255, 255, 255), (0, 0, 0)
     forma = mascara_forma()
     lienzo = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -187,7 +197,7 @@ def icono(tinta, glifo, apariencia=None, avatar=None):
 
 def barra(glifo, salida):
     # Imagen plantilla para la barra de menús: negro y alfa; macOS la tiñe sola en claro y oscuro.
-    g = glifo if glifo != "avatar" else "musgo"
+    g = glifo if glifo != "avatar" else "destello"
     m = glifo_mascara(g)
     caja = m.getbbox()
     m = m.crop(caja)
@@ -219,7 +229,7 @@ def documento_icon(tinta, glifo, destino, avatar=None):
         capa = Image.new("RGBA", (1024, 1024), (255, 255, 255, 255))
     capa.putalpha(gm)
     capa.save(os.path.join(destino, "Assets", "glifo.png"))
-    r, g, b = hexrgb(TINTAS.get(tinta, TINTAS["musgo"]))
+    r, g, b = hexrgb(TINTAS.get(tinta, TINTAS["noche"]))
     doc = {
         "fill": {"automatic-gradient": f"extended-srgb:{r / 255:.5f},{g / 255:.5f},{b / 255:.5f},1.00000"},
         "groups": [{
@@ -255,9 +265,9 @@ if __name__ == "__main__":
         print("ok")
         sys.exit(0)
     if o.get("documento"):
-        documento_icon(o.get("tinta", "musgo"), o.get("glifo", "musgo"), o["documento"], o.get("avatar"))
+        documento_icon(o.get("tinta", "noche"), o.get("glifo", "destello"), o["documento"], o.get("avatar"))
     if o.get("salida"):
-        icono(o.get("tinta", "musgo"), o.get("glifo", "musgo"), avatar=o.get("avatar")).save(o["salida"])
+        icono(o.get("tinta", "noche"), o.get("glifo", "destello"), avatar=o.get("avatar")).save(o["salida"])
     if o.get("barra"):
-        barra(o.get("glifo", "musgo"), o["barra"])
+        barra(o.get("glifo", "destello"), o["barra"])
     print("ok")

@@ -63,7 +63,7 @@ export async function aplicar() {
   const clave = `${g.png}|${g.barra}`;
   // El icono por defecto ya va en el paquete como documento de Icon Composer (Assets.car): se deja tal cual para que
   // macOS aplique sus versiones oscura, transparente y tintada. Uno personalizado se pone como imagen.
-  const porDefecto = i.tinta === "musgo" && i.glifo === "musgo";
+  const porDefecto = i.tinta === "noche" && i.glifo === "destello";
   if (clave !== aplicado) {
     aplicado = clave;
     if (e.app.dock && !porDefecto) e.app.dock.setIcon(e.nativeImage.createFromPath(g.png).resize({ width: 512, height: 512, quality: "best" }));
@@ -95,5 +95,5 @@ if (!$.NSWorkspace.sharedWorkspace.setIconForFileOptions(img, ${JSON.stringify(a
   if (!r.ok) console.warn("[panel] icono del bundle:", r.err.slice(0, 200));
 }
 
-export const TINTAS = ["naranja", "mandarina", "fresa", "frambuesa", "uva", "ciruela", "arandano", "aqua", "teal", "helecho", "musgo", "moca", "grafito"];
-export const GLIFOS = ["musgo", "brote", "estrella", "ventana", "monograma", "avatar"];
+export const TINTAS = ["naranja", "mandarina", "fresa", "frambuesa", "uva", "ciruela", "arandano", "aqua", "teal", "helecho", "musgo", "moca", "grafito", "noche"];
+export const GLIFOS = ["destello", "musgo", "brote", "estrella", "ventana", "monograma", "avatar"];
