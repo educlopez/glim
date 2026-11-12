@@ -1,0 +1,28 @@
+{
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.47843,0.60392,0.22745,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "glifo.png",
+          "name": "glifo"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "macOS"
+    ]
+  }
+}

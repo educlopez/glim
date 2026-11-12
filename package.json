@@ -88,7 +88,7 @@
       "grantFileProtocolExtraPrivileges": false
     },
     "mac": {
-      "icon": "electron/icon.icns",
+      "icon": "electron/Moss.icon",
       "category": "public.app-category.productivity",
       "darkModeSupport": true,
       "target": [

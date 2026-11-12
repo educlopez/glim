@@ -6,6 +6,12 @@ Moss no guarda nada propio: abre un **cerebro**, un repo de git con un `moss.con
 
 > Estado: uso diario de su autor, abierto para quien quiera probarlo. Solo macOS. La interfaz está en castellano.
 
+## Por qué Moss
+
+El musgo crece despacio sobre una piedra que no se mueve. La piedra es tu cerebro: un repo de archivos tuyos, estable, que no depende de ninguna app. Moss es la capa viva que crece encima: agentes que trabajan sobre él, referencias que se van juntando, decisiones que se quedan registradas. Como en el refrán, la piedra que no rueda cría musgo: lo que aprendes se acumula si todo vive en el mismo sitio.
+
+El icono es una hoja, hecho con Icon Composer de Apple: macOS genera sus versiones oscura, transparente y tintada.
+
 ## Qué hace
 
 - **Encargos a agentes.** «Pedir un cambio» sobre cualquier cosa del cerebro. El agente trabaja en segundo plano, en cola, y ves en directo qué lee, qué edita y qué ejecuta. «Otra vuelta» retoma la misma sesión. Un aviso del sistema cuando termina o falla.

@@ -177,7 +177,7 @@ export default {
   "ajustes.globalPie": "Works from any app: shows the panel, or hides it if it is already in front.",
   "ajustes.iconoApp": "App icon",
   "ajustes.iconoAppSub": "Follows the macOS icon template: continuous corners, a colored background lit from above and a white glyph. Changes the Dock, the menu bar and the app icon in the Finder.",
-  "ajustes.iconoAyuda": "A colored background and a white glyph. It stays the same in light and dark mode, like macOS app icons.",
+  "ajustes.iconoAyuda": "Made with Apple's Icon Composer. The leaf in moss is Moss's own icon: macOS renders its dark, clear and tinted versions from System Settings → Appearance. A custom one always looks the same.",
   "ajustes.iconoBarra": "Menu bar icon",
   "ajustes.iconoBarraAyuda": "With task status and what is waiting for review.",
   "ajustes.iconoEn": "Icon in {ap}",

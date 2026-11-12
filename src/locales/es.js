@@ -177,7 +177,7 @@ export default {
   "ajustes.globalPie": "Funciona desde cualquier app: muestra el panel, o lo oculta si ya está delante.",
   "ajustes.iconoApp": "Icono de la app",
   "ajustes.iconoAppSub": "Sigue la plantilla de iconos de macOS: forma de esquinas continuas, fondo de color con luz desde arriba y un glifo blanco. Cambia el Dock, la barra de menús y el icono de la app en el Finder.",
-  "ajustes.iconoAyuda": "Un fondo de color y un glifo blanco. Es el mismo en modo claro y oscuro, como los iconos de macOS.",
+  "ajustes.iconoAyuda": "Hecho con Icon Composer de Apple. La hoja en musgo es el icono de Moss: macOS genera sus versiones oscura, transparente y tintada según Ajustes del Sistema → Aspecto. Uno personalizado se ve siempre igual.",
   "ajustes.iconoBarra": "Icono en la barra de menús",
   "ajustes.iconoBarraAyuda": "Con el estado de los encargos y lo que espera revisión.",
   "ajustes.iconoEn": "Icono en {ap}",

@@ -24,18 +24,30 @@ const run = (cmd, args, timeout = 120000) => new Promise((resolve) => execFile(c
 const el = () => { const e = globalThis.panelElectron; return e && e.app ? e : null; };
 
 // Dibuja (o reutiliza) el PNG de 1024 y la plantilla de la barra para una combinación.
+// Icon Composer (Xcode 26+): su CLI renderiza el icono con el cristal de macOS 26. Sin él, icono.py lo dibuja plano.
+const ICTOOL = ["/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool", "/Applications/Icon Composer.app/Contents/Executables/ictool"].find((p) => fs.existsSync(p)) || null;
+
 export async function generar({ tinta, glifo }) {
   if (!TINTAS.includes(tinta) || !GLIFOS.includes(glifo)) throw new Error("Tinta o glifo no válidos");
   fs.mkdirSync(DIR, { recursive: true });
-  const png = path.join(DIR, `v2-${tinta}-${glifo}.png`);
+  const nombre = `${ICTOOL ? "v3" : "v2"}-${tinta}-${glifo}`;
+  const png = path.join(DIR, `${nombre}.png`);
   const barraDir = path.join(DIR, `barra-${glifo}`);
   const barra = path.join(barraDir, "trayTemplate.png");
   if (!fs.existsSync(png) || !fs.existsSync(barra)) {
     fs.mkdirSync(barraDir, { recursive: true });
-    const r = await run("python3", ["-I", PY, JSON.stringify({ tinta, glifo, avatar: AVATAR, iniciales: INICIALES, salida: png, barra })]);
+    const documento = ICTOOL ? path.join(DIR, `${nombre}.icon`) : null;
+    const r = await run("python3", ["-I", PY, JSON.stringify({ tinta, glifo, avatar: AVATAR, iniciales: INICIALES, salida: ICTOOL ? null : png, documento, barra })]);
     if (!r.ok) throw new Error(`No se pudo dibujar el icono: ${r.err.split("\n").slice(-2).join(" ")}`);
+    if (ICTOOL) {
+      const e = await run(ICTOOL, [documento, "--export-image", "--output-file", png, "--platform", "macOS", "--rendition", "Default", "--width", "1024", "--height", "1024", "--scale", "1"]);
+      if (!e.ok || !fs.existsSync(png)) {
+        const plano = await run("python3", ["-I", PY, JSON.stringify({ tinta, glifo, avatar: AVATAR, iniciales: INICIALES, salida: png })]);
+        if (!plano.ok) throw new Error("No se pudo dibujar el icono");
+      }
+    }
   }
-  return { png, barra, rel: path.relative(ROOT, png) };
+  return { png, barra, rel: path.relative(ROOT, png), cristal: !!ICTOOL };
 }
 
 let aplicado = null;
@@ -48,11 +60,14 @@ export async function aplicar() {
   const e = el();
   if (!e) return g;
   const clave = `${g.png}|${g.barra}`;
+  // El icono por defecto ya va en el paquete como documento de Icon Composer (Assets.car): se deja tal cual para que
+  // macOS aplique sus versiones oscura, transparente y tintada. Uno personalizado se pone como imagen.
+  const porDefecto = i.tinta === "musgo" && i.glifo === "musgo";
   if (clave !== aplicado) {
     aplicado = clave;
-    if (e.app.dock) e.app.dock.setIcon(e.nativeImage.createFromPath(g.png).resize({ width: 512, height: 512, quality: "best" }));
+    if (e.app.dock && !porDefecto) e.app.dock.setIcon(e.nativeImage.createFromPath(g.png).resize({ width: 512, height: 512, quality: "best" }));
     if (typeof e.ponerBarra === "function") e.ponerBarra(g.barra);
-    bundleCola = bundleCola.then(() => iconoBundle(g.png)).catch(() => {});
+    bundleCola = bundleCola.then(() => iconoBundle(porDefecto ? null : g.png)).catch(() => {});
   }
   return g;
 }
@@ -71,8 +86,9 @@ async function iconoBundle(png) {
   const app = bundle();
   if (!app || png === ultimoBundle) return;
   ultimoBundle = png;
+  // Sin imagen (png null) se quita el icono personalizado y vuelve el del paquete.
   const js = `ObjC.import("AppKit");
-const img = $.NSImage.alloc.initWithContentsOfFile(${JSON.stringify(png)});
+const img = ${png ? `$.NSImage.alloc.initWithContentsOfFile(${JSON.stringify(png)})` : "$()"};
 if (!$.NSWorkspace.sharedWorkspace.setIconForFileOptions(img, ${JSON.stringify(app)}, 0)) throw new Error("setIcon");`;
   const r = await run("/usr/bin/osascript", ["-l", "JavaScript", "-e", js], 30000);
   if (!r.ok) console.warn("[panel] icono del bundle:", r.err.slice(0, 200));

@@ -202,10 +202,44 @@ def barra(glifo, salida):
         im.save(salida.replace(".png", f"{sufijo}.png"))
 
 
+def documento_icon(tinta, glifo, destino, avatar=None):
+    # Documento de Icon Composer (.icon): fondo con degradado automático de la tinta y el glifo como capa de cristal.
+    # macOS 26 genera solo las versiones oscura, transparente y tintada a partir de las capas.
+    import os
+    os.makedirs(os.path.join(destino, "Assets"), exist_ok=True)
+    gm = glifo_mascara(glifo)
+    # En el lienzo de Icon Composer el glifo se ve más pequeño: se amplía un 18 % alrededor del centro.
+    lado = int(S * 1.18)
+    grande = gm.resize((lado, lado), Image.LANCZOS)
+    off = (lado - S) // 2
+    gm = grande.crop((off, off, off + S, off + S)).resize((1024, 1024), Image.LANCZOS)
+    if glifo == "avatar" and avatar:
+        capa = Image.open(avatar).convert("RGBA").resize((1024, 1024), Image.LANCZOS)
+    else:
+        capa = Image.new("RGBA", (1024, 1024), (255, 255, 255, 255))
+    capa.putalpha(gm)
+    capa.save(os.path.join(destino, "Assets", "glifo.png"))
+    r, g, b = hexrgb(TINTAS.get(tinta, TINTAS["musgo"]))
+    doc = {
+        "fill": {"automatic-gradient": f"extended-srgb:{r / 255:.5f},{g / 255:.5f},{b / 255:.5f},1.00000"},
+        "groups": [{
+            "layers": [{"image-name": "glifo.png", "name": "glifo"}],
+            "shadow": {"kind": "neutral", "opacity": 0.5},
+            "translucency": {"enabled": True, "value": 0.5},
+        }],
+        "supported-platforms": {"squares": ["macOS"]},
+    }
+    with open(os.path.join(destino, "icon.json"), "w") as f:
+        json.dump(doc, f, indent=2)
+
+
 if __name__ == "__main__":
     o = json.loads(sys.argv[1])
     INICIALES = str(o.get("iniciales") or "m")
-    icono(o.get("tinta", "musgo"), o.get("glifo", "musgo"), avatar=o.get("avatar")).save(o["salida"])
+    if o.get("documento"):
+        documento_icon(o.get("tinta", "musgo"), o.get("glifo", "musgo"), o["documento"], o.get("avatar"))
+    if o.get("salida"):
+        icono(o.get("tinta", "musgo"), o.get("glifo", "musgo"), avatar=o.get("avatar")).save(o["salida"])
     if o.get("barra"):
         barra(o.get("glifo", "musgo"), o["barra"])
     print("ok")
