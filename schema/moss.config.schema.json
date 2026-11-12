@@ -1,0 +1,322 @@
+{
+  "$ref": "#/definitions/MossConfig",
+  "definitions": {
+    "MossConfig": {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "nombre": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "persona": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "default": "tú"
+        },
+        "autor": {
+          "type": "object",
+          "properties": {
+            "nombre": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "usuario": {
+              "type": "string",
+              "maxLength": 40
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "zonaHoraria": {
+          "type": "string"
+        },
+        "idioma": {
+          "type": "string",
+          "default": "es"
+        },
+        "reglas": {
+          "type": "string",
+          "minLength": 1,
+          "default": "AGENTS.md"
+        },
+        "rutas": {
+          "type": "object",
+          "properties": {
+            "borradores": {
+              "type": "string",
+              "minLength": 1,
+              "default": "borradores"
+            },
+            "aprendizajes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "calendario": {
+              "type": "string",
+              "minLength": 1
+            },
+            "referencias": {
+              "type": "string",
+              "minLength": 1,
+              "default": ".moss/referencias.json"
+            },
+            "lienzos": {
+              "type": "string",
+              "minLength": 1,
+              "default": ".moss/lienzos.json"
+            },
+            "mediaReferencias": {
+              "type": "string",
+              "minLength": 1,
+              "default": "media/referencias"
+            },
+            "media": {
+              "type": "string",
+              "minLength": 1,
+              "default": "media"
+            },
+            "referentes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "skills": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kitPublicacion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "indiceRecursos": {
+              "type": "string",
+              "minLength": 1
+            },
+            "seriesCarrusel": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mediaCarruseles": {
+              "type": "string",
+              "minLength": 1
+            },
+            "marcas": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ogs": {
+              "type": "string",
+              "minLength": 1
+            },
+            "avatar": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "redes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "default": [
+            "X",
+            "LinkedIn"
+          ]
+        },
+        "cadencia": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            },
+            "minItems": 7,
+            "maxItems": 7
+          },
+          "default": {}
+        },
+        "titulos": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "propertyNames": {
+            "minLength": 1
+          },
+          "default": {}
+        },
+        "clavesPlantillas": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        },
+        "guias": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": {}
+        },
+        "biblioteca": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dir": {
+                "type": "string",
+                "minLength": 1
+              },
+              "grupo": {
+                "type": "string"
+              },
+              "profundidad": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6,
+                "default": 1
+              },
+              "excluir": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "dir",
+              "grupo"
+            ],
+            "additionalProperties": false
+          },
+          "default": []
+        },
+        "privadas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        },
+        "agentes": {
+          "type": "object",
+          "properties": {
+            "reglas": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "default": []
+            },
+            "comandos": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[\\w .@/:-]+$"
+              },
+              "default": []
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "publicar": {
+          "type": "object",
+          "properties": {
+            "rama": {
+              "type": "string",
+              "default": "main"
+            },
+            "prefijos": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "default": {}
+            },
+            "prefijoPorDefecto": {
+              "type": "string",
+              "default": "repo"
+            },
+            "prohibidas": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "default": []
+            },
+            "terminosVetados": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 2
+              },
+              "default": []
+            },
+            "contexto": {
+              "type": "string",
+              "maxLength": 2000,
+              "default": ""
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "integraciones": {
+          "type": "object",
+          "properties": {
+            "buffer": {
+              "type": "object",
+              "properties": {
+                "importarDesde": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "default": "2026-01-01"
+                }
+              },
+              "additionalProperties": false
+            },
+            "dub": {
+              "type": "object",
+              "properties": {
+                "comentario": {
+                  "type": "string",
+                  "default": "moss"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "llavero": {
+          "type": "string",
+          "pattern": "^[\\w.-]+$",
+          "default": "moss"
+        }
+      },
+      "required": [
+        "nombre"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "moss.config.json",
+  "description": "Configuración de un cerebro de Moss: rutas, reglas, zona horaria, publicación y módulos."
+}

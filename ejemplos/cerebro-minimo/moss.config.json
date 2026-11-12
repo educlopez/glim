@@ -1,0 +1,25 @@
+{
+  "$schema": "../../schema/moss.config.schema.json",
+  "nombre": "mi-cerebro",
+  "persona": "Ana",
+  "autor": { "nombre": "Ana Pérez", "usuario": "anaperez" },
+  "zonaHoraria": "Europe/Madrid",
+  "idioma": "es",
+  "reglas": "AGENTS.md",
+  "rutas": {
+    "borradores": "borradores",
+    "aprendizajes": "aprendizajes.md"
+  },
+  "privadas": ["privado/"],
+  "redes": ["X", "LinkedIn"],
+  "cadencia": {
+    "X": [1, 1, 1, 1, 1, 0, 0],
+    "LinkedIn": [0, 1, 0, 1, 0, 0, 0]
+  },
+  "publicar": {
+    "rama": "main",
+    "prefijos": { "borradores/": "borradores" },
+    "prefijoPorDefecto": "repo",
+    "terminosVetados": ["Cliente Secreto S.A."]
+  }
+}

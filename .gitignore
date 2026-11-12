@@ -1,0 +1,15 @@
+node_modules/
+dist/
+release/
+coverage/
+playwright-report/
+test-results/
+.DS_Store
+.env*
+# Generado al compilar la app
+electron/origen.json
+electron/icon.icns
+electron/icon.iconset/
+electron/iconos/
+server/__pycache__/
+test/fixtures/cerebro/.moss/

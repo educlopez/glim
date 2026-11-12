@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'">
+<title>Bienvenida a Moss</title>
+<style>
+  :root { color-scheme: light dark; --texto: #1d1d1f; --suave: #6e6e73; --borde: rgba(0,0,0,.1); --fondo: rgba(255,255,255,.55); --acento: #4b7a3a; }
+  @media (prefers-color-scheme: dark) { :root { --texto: #f5f5f7; --suave: #a1a1a6; --borde: rgba(255,255,255,.12); --fondo: rgba(40,40,42,.55); --acento: #8fc06e; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; color: var(--texto); background: transparent; -webkit-user-select: none; }
+  header { -webkit-app-region: drag; padding: 56px 32px 20px; }
+  h1 { margin: 0 0 6px; font: 600 22px/1.2 -apple-system, "SF Pro Display", sans-serif; letter-spacing: -.01em; }
+  p { margin: 0; color: var(--suave); }
+  main { padding: 0 32px 28px; display: grid; gap: 10px; }
+  .opcion { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--borde); border-radius: 10px; background: var(--fondo); }
+  .opcion strong { font-weight: 600; }
+  .fila { display: flex; gap: 8px; margin-top: 6px; }
+  button { -webkit-app-region: no-drag; font: inherit; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); cursor: default; }
+  button.primario { background: var(--acento); border-color: transparent; color: #fff; }
+  button:disabled { opacity: .5; }
+  input { -webkit-app-region: no-drag; flex: 1; font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--borde); background: transparent; color: var(--texto); }
+  input:focus-visible, button:focus-visible { outline: 3px solid color-mix(in srgb, var(--acento) 50%, transparent); outline-offset: 1px; }
+  #error { min-height: 1.4em; color: #c4352b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Abre tu cerebro</h1>
+  <p>Moss trabaja sobre un repo con un <code>moss.config.json</code>: tus borradores, reglas y referencias.</p>
+</header>
+<main>
+  <section class="opcion">
+    <strong>Una carpeta de este Mac</strong>
+    <span class="suave">Un repo que ya tienes clonado.</span>
+    <div class="fila"><button id="elegir" class="primario">Elegir carpeta…</button></div>
+  </section>
+  <section class="opcion">
+    <strong>Un repo de GitHub</strong>
+    <label for="slug">Usa tu sesión de <code>gh</code> si la hay; si no, lo clona por HTTPS.</label>
+    <div class="fila"><input id="slug" placeholder="usuario/repo" autocomplete="off" spellcheck="false"><button id="clonar">Clonar…</button></div>
+  </section>
+  <section class="opcion">
+    <strong>Un cerebro nuevo</strong>
+    <span>Crea la configuración, unas reglas básicas y la carpeta de borradores.</span>
+    <div class="fila"><button id="crear">Crear…</button></div>
+  </section>
+  <p id="error" role="alert"></p>
+</main>
+<script src="bienvenida.js"></script>
+</body>
+</html>

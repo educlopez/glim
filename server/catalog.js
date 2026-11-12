@@ -1,0 +1,105 @@
+// Inventario del repo: plantillas, carruseles, OG, marcas, medios, documentos y skills.
+import path from "node:path";
+import { read, readJson, ls, exists, mtime, walk, frontmatter, firstHeading, kindOf, DENY } from "./repo.js";
+import { cfg, rutas, ESTADO } from "./cerebro.js";
+import fs from "node:fs";
+
+export function media() {
+  const files = walk(rutas.media, (p) => ["image", "video", "audio", "pdf"].includes(kindOf(p)), 5).filter((p) => !p.startsWith(`${rutas.mediaReferencias}/`));
+  const groups = {};
+  for (const p of files) (groups[path.dirname(p)] ||= []).push({ path: p, name: path.basename(p), kind: kindOf(p), mtime: mtime(p) });
+  // Carpetas de fotogramas de control (frames/ o secuencias 0001.png): ocultas por defecto.
+  const isFrames = (dir, items) => /(^|\/)(frames|snapshots|\.raw)(\/|$)/.test(dir) || items.filter((m) => /^\d+\.(png|jpe?g)$/.test(m.name)).length > items.length * 0.7;
+  return Object.entries(groups)
+    .map(([dir, items]) => ({ dir, frames: isFrames(dir, items), items: items.sort((a, b) => a.name.localeCompare(b.name)) }))
+    .sort((a, b) => b.dir.localeCompare(a.dir));
+}
+
+// Cuando el id del índice no coincide con el nombre de sus renders, aquí va la palabra a buscar en media/.
+const CLAVE = cfg.clavesPlantillas;
+
+export function plantillas(mediaGroups) {
+  const idx = (rutas.indiceRecursos && readJson(rutas.indiceRecursos)) || {};
+  const all = mediaGroups.filter((g) => !g.frames).flatMap((g) => g.items).filter((m) => m.kind === "video" || m.kind === "image");
+  const list = (idx.plantillas || []).map((p) => {
+    const key = CLAVE[p.id] || p.id.replace(/^(video-lab-|video-|carrusel-)/, "");
+    const dir = String(p.ruta || "").split(" ")[0].replace(/\/$/, "");
+    const readme = [`${dir}/README.md`, `${path.dirname(dir)}/README.md`].find((r) => exists(r)) || null;
+    const previews = key.length > 3 ? all.filter((m) => m.path.includes(key)).sort((a, b) => (a.kind === b.kind ? b.mtime - a.mtime : a.kind === "video" ? -1 : 1)).slice(0, 6) : [];
+    return { ...p, dir, readme, existe: exists(dir), previews };
+  });
+  return { meta: { version: idx.version, actualizado: idx.actualizado_madrid, cadencia: idx.cadencia, mezcla: idx.mezcla }, list };
+}
+
+export function carruseles() {
+  const out = [];
+  if (!rutas.seriesCarrusel) return out;
+  const raiz = rutas.seriesCarrusel;
+  const render = `${raiz.split("/").slice(0, -1).join("/") || "."}/render.py`;
+  for (const serie of ls(raiz).filter((d) => d.isDirectory())) {
+    for (const f of ls(`${raiz}/${serie.name}`).filter((d) => d.name.endsWith(".json"))) {
+      const p = `${raiz}/${serie.name}/${f.name}`;
+      const c = readJson(p) || {};
+      const slug = c.slug || f.name.replace(/\.json$/, "");
+      const dir = `${rutas.mediaCarruseles || `${rutas.media}/carruseles`}/${slug}`;
+      const names = ls(dir).map((d) => d.name);
+      const slides = names.filter((n) => /^slide-\d+\.png$/.test(n)).sort().map((n) => `${dir}/${n}`);
+      const pdf = names.find((n) => n.endsWith(".pdf"));
+      out.push({
+        path: p, serie: serie.name, slug, theme: c.theme || "light", date: c.date || null, series: c.series || null,
+        tipos: [...new Set((c.slides || []).map((s) => s.type))], n: (c.slides || []).length, slides, pdf: pdf ? `${dir}/${pdf}` : null,
+        cmd: `python3 ${render} ${p}`,
+      });
+    }
+  }
+  return out.sort((a, b) => (b.date || b.slug).localeCompare(a.date || a.slug));
+}
+
+export function marcas() {
+  if (!rutas.marcas) return [];
+  const raiz = rutas.marcas;
+  return ls(raiz).filter((d) => d.name.endsWith(".json")).map((d) => {
+    const p = `${raiz}/${d.name}`;
+    const j = readJson(p) || {};
+    const logo = typeof j.logo === "string" ? j.logo.split(" ")[0] : null;
+    return { path: p, id: d.name.replace(/\.json$/, ""), data: j, logo: logo && exists(`${raiz}/${logo}`) ? `${raiz}/${logo}` : null };
+  });
+}
+
+export function ogs(mediaGroups) {
+  const renders = mediaGroups.flatMap((g) => g.items).filter((m) => m.kind === "video" && /-og-/.test(m.name));
+  if (!rutas.ogs) return [];
+  const raiz = rutas.ogs;
+  return ls(raiz).filter((d) => d.isDirectory() && exists(`${raiz}/${d.name}/index.html`)).map((d) => {
+    const key = d.name.split("-").slice(1).join("-");
+    const render = renders.filter((m) => m.name.includes(key)).sort((a, b) => b.mtime - a.mtime)[0] || null;
+    const gif = render ? render.path.replace(/\.mp4$/, ".gif") : null;
+    return { id: d.name, marca: d.name.split("-")[0], html: `${raiz}/${d.name}/index.html`, render: render && render.path, gif: gif && exists(gif) ? gif : null };
+  });
+}
+
+export function skills() {
+  if (!rutas.skills) return [];
+  return ls(rutas.skills).filter((d) => d.isDirectory() && exists(`${rutas.skills}/${d.name}/SKILL.md`)).map((d) => {
+    const p = `${rutas.skills}/${d.name}/SKILL.md`;
+    const { fm } = frontmatter(read(p));
+    return { path: p, id: d.name, description: (fm.description || "").replace(/^>-?\s*/, "") };
+  });
+}
+
+function docsIn(dir, group, depth = 0) {
+  return walk(dir, (p) => p.endsWith(".md"), depth).sort().map((p) => {
+    const t = read(p) || "";
+    return { path: p, group, title: firstHeading(t, path.basename(p, ".md")), words: t.split(/\s+/).length, mtime: mtime(p) };
+  });
+}
+
+export function docs() {
+  const root = [...new Set([cfg.reglas, "README.md"])].filter((p) => exists(p)).map((p) => ({ path: p, group: "Raíz", title: firstHeading(read(p), p), words: (read(p) || "").split(/\s+/).length, mtime: mtime(p) }));
+  return [
+    ...root,
+    ...cfg.biblioteca.flatMap((b) => docsIn(b.dir, b.grupo, b.profundidad - 1).filter((d) => !(b.excluir && new RegExp(b.excluir).test(d.path)))),
+  ].filter((d) => !DENY.some((r) => r.test(d.path)));
+}
+
+export const feedback = () => { try { return fs.readdirSync(`${ESTADO}/feedback`).filter((n) => n.endsWith(".md")).sort().reverse(); } catch { return []; } };

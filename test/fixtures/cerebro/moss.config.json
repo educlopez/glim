@@ -1,0 +1,9 @@
+{
+  "nombre": "Cerebro de prueba",
+  "persona": "Ana",
+  "zonaHoraria": "Europe/Madrid",
+  "rutas": { "aprendizajes": "aprendizajes.md" },
+  "redes": ["X", "LinkedIn"],
+  "privadas": ["privado"],
+  "publicar": { "terminosVetados": ["Globex"] }
+}

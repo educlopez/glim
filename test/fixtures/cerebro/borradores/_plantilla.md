@@ -1,0 +1,4 @@
+---
+red: X
+estado: idea
+---

@@ -1,0 +1,51 @@
+# Publica una versión: al subir una etiqueta v*, compila la app de Mac y sube el dmg y el zip a un borrador de
+# GitHub Release (lo publica una persona tras revisarlo).
+# Firma y notarización: con los secretos CSC_LINK, CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD y
+# APPLE_TEAM_ID la app sale firmada y notarizada. Sin ellos, electron-builder compila igual pero sin firmar.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # electron/preparar.mjs dibuja el icono con server/icono.py (Pillow).
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install pillow
+      - run: npm ci
+      - name: Comprobaciones
+        run: |
+          npm run lint
+          npm test
+      # Lo mismo que `npm run dist`, pero con --publish always (el script local usa --publish never).
+      - name: Compilar y subir al borrador
+        run: |
+          npx vite build
+          node electron/preparar.mjs
+          npx electron-builder --mac --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Sin certificado, no busca uno en el llavero del runner.

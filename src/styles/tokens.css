@@ -1,0 +1,144 @@
+/* Tokens del panel. Estética nativa de macOS: valores del tema merino de Rex (themes.json y
+   MaterialStyles-BlendTheme.json de la app) y de las apps de Apple (Ajustes, Recordatorios, Calendario).
+   Un acento de marca, el naranja de edu (#ff7528), solo en botones principales, enlaces, hoy y el foco.
+   Claro y oscuro según el sistema. Los nombres viejos (--bg, --ink…) siguen valiendo para todo app.css. */
+/* Geist Mono va con la app (@fontsource-variable/geist-mono, OFL-1.1), importada en main.jsx. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Superficies */
+  --window-tint: rgb(246 247 249 / 0.5);
+  --content-bg: #ffffff;
+  --bg: #ffffff;
+  --bg-sunk: rgb(0 0 0 / 0.035);
+  --surface: #ffffff;
+  --surface-hover: rgb(31 35 40 / 0.025);
+  --raised: rgb(250 251 252);
+  --card-bg: rgb(0 0 0 / 0.035);
+
+  /* Texto */
+  --ink: rgb(31 35 40);
+  --ink-2: rgb(105 109 113);
+  --ink-3: rgb(135 138 142);
+
+  /* Líneas y estados neutros */
+  --line: rgb(0 0 0 / 0.09);
+  --line-strong: rgb(0 0 0 / 0.16);
+  --line-soft: rgb(31 35 40 / 0.041);
+  --hover: rgb(31 35 40 / 0.041);
+  --selected: rgb(31 35 40 / 0.079);
+  --control: rgb(0 0 0 / 0.06);
+
+  /* Acento */
+  --accent: #ff7528;
+  --accent-ink: #b54300;
+  --accent-strong: #cf520d; /* relleno de botón principal: blanco encima con contraste suficiente */
+  --accent-tint: rgb(255 117 40 / 0.12);
+  --focus-ring: 0 0 0 1px var(--accent), 0 0 0 4px rgb(255 117 40 / 0.18);
+
+  /* Estados de un post: solo punto o borde fino */
+  --st-idea: #a3a29a;
+  --st-ok: #ff7528;
+  --st-prog: #2f6fbf;
+  --st-pub: rgb(17 99 41);
+  --st-desc: #b9b8b0;
+  --warn: rgb(157 92 0);
+  --warn-tint: rgb(210 153 34 / 0.12);
+  --danger: rgb(207 34 46);
+
+  --r-xs: 4px;
+  --r-s: 8px;
+  --r-m: 10px;
+  --r-l: 12px;
+
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+
+  --shadow-1: 0 0 0 0.5px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-2: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 4px 14px rgb(0 0 0 / 0.07);
+  --shadow-3: 0 0 0 0.5px rgb(0 0 0 / 0.12), 0 10px 30px rgb(0 0 0 / 0.18);
+
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Geist Mono Variable", Menlo, monospace;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --side-w: 240px;
+  --thumb-bg: #1b1a15;
+}
+
+/* Oscuro: por el sistema, salvo que en Ajustes se fuerce claro; o forzado en Ajustes (data-tema en <html>). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --window-tint: rgb(12 14 17 / 0.5);
+    --content-bg: rgb(22 24 28);
+    --bg: rgb(22 24 28);
+    --bg-sunk: rgb(255 255 255 / 0.05);
+    --surface: rgb(30 32 36);
+    --surface-hover: rgb(230 237 243 / 0.03);
+    --raised: rgb(32 34 38);
+    --card-bg: rgb(255 255 255 / 0.05);
+
+    --ink: rgb(230 237 243);
+    --ink-2: rgb(150 155 160);
+    --ink-3: rgb(110 114 119);
+
+    --line: rgb(255 255 255 / 0.1);
+    --line-strong: rgb(255 255 255 / 0.18);
+    --line-soft: rgb(230 237 243 / 0.042);
+    --hover: rgb(230 237 243 / 0.042);
+    --selected: rgb(230 237 243 / 0.085);
+    --control: rgb(255 255 255 / 0.1);
+
+    --accent-ink: #ff9a5c;
+    --accent-tint: rgb(255 117 40 / 0.15);
+    --focus-ring: 0 0 0 1px var(--accent), 0 0 0 4px rgb(255 117 40 / 0.206);
+
+    --st-prog: #6aa3ea;
+    --st-pub: rgb(63 185 80);
+    --warn: rgb(210 153 34);
+    --warn-tint: rgb(210 153 34 / 0.14);
+    --danger: rgb(255 123 114);
+
+    --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.08);
+    --shadow-2: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 6px 18px rgb(0 0 0 / 0.35);
+    --shadow-3: inset 0 0 0 0.7px rgb(255 255 255 / 0.2), 0 12px 36px rgb(0 0 0 / 0.5);
+  }
+}
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+    --window-tint: rgb(12 14 17 / 0.5);
+    --content-bg: rgb(22 24 28);
+    --bg: rgb(22 24 28);
+    --bg-sunk: rgb(255 255 255 / 0.05);
+    --surface: rgb(30 32 36);
+    --surface-hover: rgb(230 237 243 / 0.03);
+    --raised: rgb(32 34 38);
+    --card-bg: rgb(255 255 255 / 0.05);
+
+    --ink: rgb(230 237 243);
+    --ink-2: rgb(150 155 160);
+    --ink-3: rgb(110 114 119);
+
+    --line: rgb(255 255 255 / 0.1);
+    --line-strong: rgb(255 255 255 / 0.18);
+    --line-soft: rgb(230 237 243 / 0.042);
+    --hover: rgb(230 237 243 / 0.042);
+    --selected: rgb(230 237 243 / 0.085);
+    --control: rgb(255 255 255 / 0.1);
+
+    --accent-ink: #ff9a5c;
+    --accent-tint: rgb(255 117 40 / 0.15);
+    --focus-ring: 0 0 0 1px var(--accent), 0 0 0 4px rgb(255 117 40 / 0.206);
+
+    --st-prog: #6aa3ea;
+    --st-pub: rgb(63 185 80);
+    --warn: rgb(210 153 34);
+    --warn-tint: rgb(210 153 34 / 0.14);
+    --danger: rgb(255 123 114);
+
+    --shadow-1: 0 0 0 0.5px rgb(255 255 255 / 0.08);
+    --shadow-2: 0 0 0 0.5px rgb(255 255 255 / 0.1), 0 6px 18px rgb(0 0 0 / 0.35);
+    --shadow-3: inset 0 0 0 0.7px rgb(255 255 255 / 0.2), 0 12px 36px rgb(0 0 0 / 0.5);
+}
+:root[data-tema="claro"] { color-scheme: light; }
