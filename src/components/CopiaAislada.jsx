@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { GitBranch, Check, Trash2, FileDiff } from "lucide-react";
 import { post } from "../lib/api.js";
+import { t } from "../lib/i18n.js";
 
-const ESTADO = { A: "nuevo", M: "editado", D: "borrado", R: "movido" };
 
 export function CopiaAislada({ encargo: e, onCambio }) {
   const [c, setC] = useState(null);
@@ -26,30 +26,30 @@ export function CopiaAislada({ encargo: e, onCambio }) {
 
   if (!pendiente) {
     return (
-      <p className="callout small"><GitBranch size={13} aria-hidden="true" /> {e.copia.aplicada ? `Cambios aplicados al repo (${(e.copia.archivos || []).length} archivos).` : "La copia aislada se descartó: el repo no cambió."}</p>
+      <p className="callout small"><GitBranch size={13} aria-hidden="true" /> {e.copia.aplicada ? t("copia.aplicada", { n: (e.copia.archivos || []).length }) : t("copia.descartada")}</p>
     );
   }
   return (
     <section className="detailsection" data-component="copia-aislada">
-      <h3><GitBranch size={14} aria-hidden="true" /> Copia aislada</h3>
-      <p className="muted small">El agente trabaja en su propia copia del repo. Nada llega al repo hasta que lo apliques.</p>
-      {trabajando ? <p className="muted small">Trabajando…</p> : !c ? (err ? null : <p className="muted small">Leyendo cambios…</p>) : (
+      <h3><GitBranch size={14} aria-hidden="true" /> {t("copia.titulo")}</h3>
+      <p className="muted small">{t("copia.sub")}</p>
+      {trabajando ? <p className="muted small">{t("copia.trabajando")}</p> : !c ? (err ? null : <p className="muted small">{t("copia.leyendo")}</p>) : (
         <>
-          <p className="small">{c.resumen.archivos ? `${c.resumen.archivos} archivo${c.resumen.archivos === 1 ? "" : "s"} · +${c.resumen.mas} −${c.resumen.menos}` : "Sin cambios."}</p>
+          <p className="small">{c.resumen.archivos ? t("copia.resumen", { n: c.resumen.archivos, mas: c.resumen.mas, menos: c.resumen.menos }) : t("copia.sinCambios")}</p>
           {c.archivos.length ? (
             <ul className="filelist small">
-              {c.archivos.slice(0, 60).map((a) => <li key={a.ruta}><span className="mono">{a.ruta}</span> <span className="muted">{ESTADO[a.estado] || a.estado}</span></li>)}
+              {c.archivos.slice(0, 60).map((a) => <li key={a.ruta}><span className="mono">{a.ruta}</span> <span className="muted">{t(`copia.estado.${a.estado}`)}</span></li>)}
             </ul>
           ) : null}
           {c.diff ? (
             <>
-              <button type="button" className="btn ghost small" onClick={() => setVerDiff(!verDiff)} aria-expanded={verDiff}><FileDiff size={14} aria-hidden="true" /><span>{verDiff ? "Ocultar el diff" : "Ver el diff"}</span></button>
+              <button type="button" className="btn ghost small" onClick={() => setVerDiff(!verDiff)} aria-expanded={verDiff}><FileDiff size={14} aria-hidden="true" /><span>{verDiff ? t("copia.ocultarDiff") : t("copia.verDiff")}</span></button>
               {verDiff ? <pre className="diffblock mono small">{c.diff}</pre> : null}
             </>
           ) : null}
           <div className="row gap-s wrap">
-            <button type="button" className="btn primary small" disabled={haciendo || !c.resumen.archivos} onClick={() => hacer(`/api/encargos/${e.id}/aplicar`)}><Check size={14} aria-hidden="true" /><span>Aplicar al repo</span></button>
-            <button type="button" className="btn ghost small" disabled={haciendo} onClick={() => hacer(`/api/encargos/${e.id}/estado`, { estado: "descartado" })}><Trash2 size={14} aria-hidden="true" /><span>Descartar la copia</span></button>
+            <button type="button" className="btn primary small" disabled={haciendo || !c.resumen.archivos} onClick={() => hacer(`/api/encargos/${e.id}/aplicar`)}><Check size={14} aria-hidden="true" /><span>{t("copia.aplicar")}</span></button>
+            <button type="button" className="btn ghost small" disabled={haciendo} onClick={() => hacer(`/api/encargos/${e.id}/estado`, { estado: "descartado" })}><Trash2 size={14} aria-hidden="true" /><span>{t("copia.descartar")}</span></button>
           </div>
         </>
       )}

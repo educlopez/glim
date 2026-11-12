@@ -329,7 +329,14 @@ function Encargos({ a, cambiar }) {
             <label className="field"><span className="sr">{t("composer.modelo")}</span><input key={a.agente} defaultValue={(a.modelos || {})[a.agente] || ""} placeholder={{ codex: "gpt-5.5", cursor: "sonnet-4", opencode: "anthropic/claude-sonnet-4-5", gemini: "gemini-2.5-pro" }[a.agente] || ""} onBlur={(e) => cambiar({ modelos: { [a.agente]: e.target.value } })} /></label>
           </Fila>
         )}
-        <Fila label={t("ajustes.aLaVez")} ayuda={t("ajustes.aLaVezAyuda")}><span className="muted small">1</span></Fila>
+        <Fila label={t("ajustes.copiaAislada")} ayuda={t("ajustes.copiaAisladaAyuda")}>
+          <Switch checked={a.encargos.aislamiento === "copia"} onChange={(v) => cambiar({ encargos: { aislamiento: v ? "copia" : "repo" } })}><span className="sr">{t("ajustes.copiaAislada")}</span></Switch>
+        </Fila>
+        <Fila label={t("ajustes.aLaVez")} ayuda={a.encargos.aislamiento === "copia" ? t("ajustes.aLaVezCopia") : t("ajustes.aLaVezAyuda")}>
+          {a.encargos.aislamiento === "copia"
+            ? <Segmented label={t("ajustes.aLaVez")} value={a.encargos.paralelos} onChange={(v) => cambiar({ encargos: { paralelos: v } })} options={[1, 2, 3, 4].map((n) => ({ id: n, label: String(n) }))} />
+            : <span className="muted small">1</span>}
+        </Fila>
       </Grupo>
       <Grupo titulo={t("ajustes.redactarRevisar")}>
         <Fila label={t("composer.agente")} ayuda={t("ajustes.redactarAyuda")}>
