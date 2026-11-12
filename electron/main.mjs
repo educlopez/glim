@@ -362,6 +362,9 @@ ipcMain.handle("relanzar", () => {
 ipcMain.handle("tema", (_, t) => aplicar({ tema: t }));
 ipcMain.handle("ajustes", (_, a) => aplicar(a));
 ipcMain.handle("abrirAjustes", (_, seccion) => abrirAjustes(seccion));
+ipcMain.handle("cambiarCerebro", () => cambiarCerebro());
+ipcMain.handle("mostrarCerebro", () => raizCerebro && shell.openPath(raizCerebro));
+ipcMain.handle("registros", () => shell.openPath(app.getPath("logs")));
 
 process.on("uncaughtException", (e) => registro.error("uncaughtException", e));
 process.on("unhandledRejection", (e) => registro.error("unhandledRejection", e));

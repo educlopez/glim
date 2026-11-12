@@ -5,6 +5,7 @@
 // Dónde se busca el cerebro, por orden: GLIM_BRAIN, la ruta guardada por la app (config.json en la carpeta de
 // datos de Glim) y la carpeta actual si tiene glim.config.json. El estado local (encargos, ajustes, cachés)
 // vive en `<cerebro>/.glim/`, que el cerebro ignora en git.
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -71,9 +72,21 @@ export function enZona(iso) {
 export const horaCorta = (ms) => new Date(ms).toLocaleTimeString(cfg.idioma === "es" ? "es-ES" : cfg.idioma, { timeZone: cfg.zonaHoraria, hour: "2-digit", minute: "2-digit" });
 
 // Lo que el panel enseña de la configuración (vistas y textos). Sin rutas absolutas.
+// URL web del remoto origin del cerebro (GitHub, GitLab…), para el menú del cerebro. Se calcula una vez.
+let remotoWeb;
+function remoto() {
+  if (remotoWeb !== undefined) return remotoWeb;
+  try {
+    const u = execFileSync("git", ["remote", "get-url", "origin"], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const m = u.match(/^(?:https?:\/\/(?:[^@/]+@)?|git@)([^/:]+)[/:](.+?)(?:\.git)?$/);
+    remotoWeb = m ? `https://${m[1]}/${m[2]}` : null;
+  } catch { remotoWeb = null; }
+  return remotoWeb;
+}
+
 export function resumen() {
   return {
-    nombre: cfg.nombre, persona: cfg.persona, zonaHoraria: cfg.zonaHoraria, idioma: cfg.idioma, reglas: cfg.reglas, guias: cfg.guias,
+    nombre: cfg.nombre, remoto: remoto(), persona: cfg.persona, zonaHoraria: cfg.zonaHoraria, idioma: cfg.idioma, reglas: cfg.reglas, guias: cfg.guias,
     rutas: { aprendizajes: rutas.aprendizajes || null, borradores: rutas.borradores, avatar: tiene("avatar") ? rutas.avatar : null, lienzos: rutas.lienzos, kit: rutas.kitPublicacion || null, marcas: rutas.marcas || null, seriesCarrusel: rutas.seriesCarrusel || null, mediaCarruseles: rutas.mediaCarruseles || `${rutas.media}/carruseles` },
     redes: cfg.redes, cadencia: cfg.cadencia, llavero: cfg.llavero,
     autor: { nombre: cfg.autor.nombre || cfg.persona, usuario: cfg.autor.usuario || null },

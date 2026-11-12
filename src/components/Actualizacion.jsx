@@ -243,9 +243,12 @@ export function Actualizacion({ onReload }) {
   useEffect(() => {
     const abrir = () => { setDesde(null); setHoja("novedades"); };
     const pub = () => setHoja("publicar");
+    // Desde el menú del cerebro: tras comprobar, recarga el estado y abre la hoja de actualizar.
+    const act = () => { cargar().then(() => setHoja("actualizar")); };
     window.addEventListener("panel:novedades", abrir);
     window.addEventListener("panel:publicar", pub);
-    return () => { window.removeEventListener("panel:novedades", abrir); window.removeEventListener("panel:publicar", pub); };
+    window.addEventListener("panel:actualizar", act);
+    return () => { window.removeEventListener("panel:novedades", abrir); window.removeEventListener("panel:publicar", pub); window.removeEventListener("panel:actualizar", act); };
   }, []);
 
   const comprobar = async () => { setComprobando(true); try { setA(await post("/api/actualizacion/comprobar")); } catch {} finally { setComprobando(false); } };

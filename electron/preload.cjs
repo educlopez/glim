@@ -6,4 +6,7 @@ contextBridge.exposeInMainWorld("panelApp", {
   tema: (t) => ipcRenderer.invoke("tema", t),
   ajustes: (a) => ipcRenderer.invoke("ajustes", a),
   abrirAjustes: (s) => ipcRenderer.invoke("abrirAjustes", s),
+  cambiarCerebro: () => ipcRenderer.invoke("cambiarCerebro"),
+  mostrarCerebro: () => ipcRenderer.invoke("mostrarCerebro"),
+  registros: () => ipcRenderer.invoke("registros"),
 });

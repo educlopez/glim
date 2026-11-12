@@ -12,7 +12,7 @@ import { I18nProvider, guardarIdioma, idiomaGuardado, resolverIdioma, setIdioma,
 import { PostDetail } from "./components/PostDetail.jsx";
 import { Composer } from "./components/Composer.jsx";
 import { Actualizacion } from "./components/Actualizacion.jsx";
-import { GlimMark } from "./components/ui.jsx";
+import { MenuCerebro } from "./components/MenuCerebro.jsx";
 import Encargos from "./views/Encargos.jsx";
 import Referencias from "./views/Referencias.jsx";
 import Lienzos from "./views/Lienzos.jsx";
@@ -173,10 +173,7 @@ export default function App() {
       <EncargosContext.Provider value={enc}>
         <div className="shell">
           <aside className="side">
-            <a className="brand" href="#/">
-              <span className="brandmark" aria-hidden="true"><GlimMark size={15} /></span>
-              <span>{(data && data.cerebro && data.cerebro.nombre) || "Glim"}</span>
-            </a>
+            <MenuCerebro data={data} onPedir={() => route.set({ pedir: "general" })} />
             <nav aria-label={t("app.secciones")} className="nav">
               {nav(data).map((g) => (
                 <div key={g.group} className="navgroup">

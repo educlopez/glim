@@ -318,3 +318,27 @@ html.is-app:has(.scrim, .quicklook, [role="dialog"]) .side::before { -webkit-app
 .agente[aria-checked="true"] { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--surface)); }
 .agente:disabled { opacity: 0.45; cursor: default; }
 .agente code { font-size: 11px; }
+
+/* Fila del cerebro (primera de la barra lateral) y su menú, como el de Pond. */
+.cerebrobar { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.cerebrobtn { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; height: 32px; padding: 0 8px 0 5px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; cursor: default; transition: background-color 120ms var(--ease-out); }
+.cerebrobtn:hover, .cerebrobtn[aria-expanded="true"] { background: var(--hover); }
+.cerebrobtn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+.cerebronombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cerebrochev { flex: none; color: var(--ink-3); }
+.cerebroicono { flex: none; width: 22px; height: 22px; border-radius: 6px; object-fit: contain; transform: scale(1.22); }
+.cerebroicono.vacio { display: grid; place-items: center; transform: none; background: var(--ink); color: var(--surface); }
+.cerebromas { flex: none; width: 28px; height: 28px; }
+.cerebromenu { position: fixed; z-index: 60; display: grid; min-width: 248px; padding: 5px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-3); animation: menuin 0.14s var(--ease-out); transform-origin: top left; }
+.cerebromenu.sub { position: absolute; top: -6px; left: calc(100% + 4px); min-width: 220px; transform-origin: top left; }
+.cerebromenu hr { height: 1px; margin: 5px -5px; border: 0; background: var(--line); }
+.cerebromenu [role="menuitem"] { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 32px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); font: inherit; font-size: 13.5px; text-align: left; text-decoration: none; cursor: default; }
+.cerebromenu [role="menuitem"] > svg { flex: none; color: var(--ink-2); }
+.cerebromenu [role="menuitem"]:hover, .cerebromenu [role="menuitem"]:focus-visible, .cerebromenu [aria-expanded="true"] { background: var(--hover); outline: none; }
+.cerebromenu [role="menuitem"]:disabled { color: var(--ink-2); }
+.cerebromenu .fin { margin-left: auto; color: var(--ink-3); }
+.cerebromenu kbd { font: inherit; font-size: 12px; }
+.cerebrosubwrap { position: relative; }
+.cerebromenu .gira { animation: spin 0.9s linear infinite; }
+@keyframes menuin { from { opacity: 0; transform: scale(0.97) translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .cerebromenu { animation: none; } .cerebromenu .gira { animation: none; } }
