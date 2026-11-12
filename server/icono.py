@@ -209,7 +209,7 @@ def documento_icon(tinta, glifo, destino, avatar=None):
     os.makedirs(os.path.join(destino, "Assets"), exist_ok=True)
     gm = glifo_mascara(glifo)
     # En el lienzo de Icon Composer el glifo se ve más pequeño: se amplía un 18 % alrededor del centro.
-    lado = int(S * 1.18)
+    lado = int(S * 1.28)
     grande = gm.resize((lado, lado), Image.LANCZOS)
     off = (lado - S) // 2
     gm = grande.crop((off, off, off + S, off + S)).resize((1024, 1024), Image.LANCZOS)
@@ -225,7 +225,7 @@ def documento_icon(tinta, glifo, destino, avatar=None):
         "groups": [{
             "layers": [{"image-name": "glifo.png", "name": "glifo"}],
             "shadow": {"kind": "neutral", "opacity": 0.5},
-            "translucency": {"enabled": True, "value": 0.5},
+            "translucency": {"enabled": False, "value": 0.5},
         }],
         "supported-platforms": {"squares": ["macOS"]},
     }
@@ -233,9 +233,27 @@ def documento_icon(tinta, glifo, destino, avatar=None):
         json.dump(doc, f, indent=2)
 
 
+def encuadrar(ruta):
+    # ictool exporta la forma a sangre (1024 px). En el Dock un icono de macOS ocupa 824 px con su sombra debajo:
+    # se reduce, se centra y se le pone la sombra de la plantilla para que mida lo mismo que los demás.
+    img = Image.open(ruta).convert("RGBA").resize((824, 824), Image.LANCZOS)
+    lienzo = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+    sombra = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+    alfa = Image.new("L", (1024, 1024), 0)
+    alfa.paste(img.getchannel("A"), (100, 110))
+    sombra.putalpha(alfa.filter(ImageFilter.GaussianBlur(10)).point(lambda v: v * 0.30))
+    lienzo = Image.alpha_composite(lienzo, sombra)
+    lienzo.alpha_composite(img, (100, 100))
+    lienzo.save(ruta)
+
+
 if __name__ == "__main__":
     o = json.loads(sys.argv[1])
     INICIALES = str(o.get("iniciales") or "m")
+    if o.get("encuadrar"):
+        encuadrar(o["encuadrar"])
+        print("ok")
+        sys.exit(0)
     if o.get("documento"):
         documento_icon(o.get("tinta", "musgo"), o.get("glifo", "musgo"), o["documento"], o.get("avatar"))
     if o.get("salida"):

@@ -30,7 +30,7 @@ const ICTOOL = ["/Applications/Xcode.app/Contents/Applications/Icon Composer.app
 export async function generar({ tinta, glifo }) {
   if (!TINTAS.includes(tinta) || !GLIFOS.includes(glifo)) throw new Error("Tinta o glifo no válidos");
   fs.mkdirSync(DIR, { recursive: true });
-  const nombre = `${ICTOOL ? "v3" : "v2"}-${tinta}-${glifo}`;
+  const nombre = `${ICTOOL ? "v4" : "v2"}-${tinta}-${glifo}`;
   const png = path.join(DIR, `${nombre}.png`);
   const barraDir = path.join(DIR, `barra-${glifo}`);
   const barra = path.join(barraDir, "trayTemplate.png");
@@ -41,6 +41,7 @@ export async function generar({ tinta, glifo }) {
     if (!r.ok) throw new Error(`No se pudo dibujar el icono: ${r.err.split("\n").slice(-2).join(" ")}`);
     if (ICTOOL) {
       const e = await run(ICTOOL, [documento, "--export-image", "--output-file", png, "--platform", "macOS", "--rendition", "Default", "--width", "1024", "--height", "1024", "--scale", "1"]);
+      if (e.ok && fs.existsSync(png)) await run("python3", ["-I", PY, JSON.stringify({ encuadrar: png })]);
       if (!e.ok || !fs.existsSync(png)) {
         const plano = await run("python3", ["-I", PY, JSON.stringify({ tinta, glifo, avatar: AVATAR, iniciales: INICIALES, salida: png })]);
         if (!plano.ok) throw new Error("No se pudo dibujar el icono");

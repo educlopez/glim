@@ -26,7 +26,10 @@ if (!fs.existsSync(path.join(ICONOS, "app.png")) || !fs.existsSync(path.join(ICO
   fs.mkdirSync(ICONOS, { recursive: true });
   execFileSync("python3", ["-I", path.join(APP, "server", "icono.py"), JSON.stringify({ tinta: "musgo", glifo: "musgo", salida: path.join(ICONOS, "app.png"), barra: path.join(ICONOS, "trayTemplate.png") })], { stdio: "inherit" });
   // Con Icon Composer, el .icns de los macOS anteriores sale del mismo documento (con su cristal).
-  if (ICTOOL) execFileSync(ICTOOL, [DOC, "--export-image", "--output-file", path.join(ICONOS, "app.png"), "--platform", "macOS", "--rendition", "Default", "--width", "1024", "--height", "1024", "--scale", "1"], { stdio: "ignore" });
+  if (ICTOOL) {
+    execFileSync(ICTOOL, [DOC, "--export-image", "--output-file", path.join(ICONOS, "app.png"), "--platform", "macOS", "--rendition", "Default", "--width", "1024", "--height", "1024", "--scale", "1"], { stdio: "ignore" });
+    execFileSync("python3", ["-I", path.join(APP, "server", "icono.py"), JSON.stringify({ encuadrar: path.join(ICONOS, "app.png") })], { stdio: "ignore" });
+  }
   if (process.platform === "darwin") {
     const set = path.join(AQUI, "icon.iconset");
     fs.mkdirSync(set, { recursive: true });
