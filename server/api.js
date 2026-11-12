@@ -157,7 +157,7 @@ const RUTAS = [
   ["GET", /^\/api\/ajustes$/, async () => ({ ajustes: aj.ajustes(), claves: await claves() })],
   ["POST", /^\/api\/ajustes$/, async (b) => { const a = aj.guardar(b); if (b.icono) await icono.aplicar().catch((e) => console.warn("[panel] icono:", e.message)); return { ajustes: a }; }],
   ["POST", /^\/api\/ajustes\/restablecer$/, async () => { const a = aj.restablecer(); await icono.aplicar().catch(() => {}); return { ajustes: a }; }],
-  ["POST", /^\/api\/icono\/vista$/, async (b) => { const g = await icono.generar({ tinta: b.tinta, glifo: b.glifo, apariencia: b.apariencia }); return { ruta: g.rel }; }],
+  ["POST", /^\/api\/icono\/vista$/, async (b) => { const g = await icono.generar({ tinta: b.tinta, glifo: b.glifo }); return { ruta: g.rel }; }],
   ["POST", /^\/api\/sistema\/reiniciar$/, () => vivo.reiniciar(encargos.ocupado())],
   ["POST", /^\/api\/sistema\/abrir$/, (b) => vivo.abrirCarpeta(b.que)],
   ["POST", /^\/api\/ajustes\/clave$/, async (b) => {

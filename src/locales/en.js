@@ -176,8 +176,8 @@ export default {
   "ajustes.global": "Global",
   "ajustes.globalPie": "Works from any app: shows the panel, or hides it if it is already in front.",
   "ajustes.iconoApp": "App icon",
-  "ajustes.iconoAppSub": "Follows the macOS icon template: continuous corners, light from above and a glass glyph. It changes the Dock, the menu bar and the app icon in Finder.",
-  "ajustes.iconoAyuda": "Automatic switches the Dock icon with the system light or dark mode. Finder always uses the light version.",
+  "ajustes.iconoAppSub": "Follows the macOS icon template: continuous corners, a colored background lit from above and a white glyph. Changes the Dock, the menu bar and the app icon in the Finder.",
+  "ajustes.iconoAyuda": "A colored background and a white glyph. It stays the same in light and dark mode, like macOS app icons.",
   "ajustes.iconoBarra": "Menu bar icon",
   "ajustes.iconoBarraAyuda": "With task status and what is waiting for review.",
   "ajustes.iconoEn": "Icon in {ap}",
@@ -902,4 +902,6 @@ export default {
   "copia.estado.M": "edited",
   "copia.estado.D": "deleted",
   "copia.estado.R": "moved",
+  "ajustes.iconoVista": "App icon preview",
+  "ajustes.glifo.musgo": "Leaf",
 };

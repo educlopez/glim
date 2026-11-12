@@ -189,18 +189,18 @@ const TINTAS = [
   ["teal", "#2fb5a8"], ["helecho", "#34c759"], ["musgo", "#7a9a3a"], ["moca", "#9a7350"], ["grafito", "#7c7c82"],
 ];
 // Las etiquetas salen de src/locales/*.js (ajustes.tinta.<id>, ajustes.glifo.<id>).
-const GLIFOS = ["brote", "estrella", "ventana", "monograma", "avatar"];
+const GLIFOS = ["musgo", "brote", "estrella", "ventana", "monograma", "avatar"];
 
-// Editor del icono: vista previa grande en claro y oscuro, tintas, glifos y apariencia.
+// Editor del icono: vista previa grande, tintas y glifos. Una sola versión, igual en claro y en oscuro.
 function IconoApp({ a, cambiar }) {
   const i = a.icono;
-  const [vistas, setVistas] = useState({});
+  const [vista, setVista] = useState(null);
   const [glifosVista, setGlifosVista] = useState({});
   const [aplicando, setAplicando] = useState(false);
   useEffect(() => {
     let vivo = true;
-    for (const ap of ["claro", "oscuro"]) post("/api/icono/vista", { tinta: i.tinta, glifo: i.glifo, apariencia: ap }).then((j) => vivo && setVistas((v) => ({ ...v, [ap]: j.ruta }))).catch(() => {});
-    for (const g of GLIFOS) post("/api/icono/vista", { tinta: i.tinta, glifo: g, apariencia: "claro" }).then((j) => vivo && setGlifosVista((v) => ({ ...v, [g]: j.ruta }))).catch(() => {});
+    post("/api/icono/vista", { tinta: i.tinta, glifo: i.glifo }).then((j) => vivo && setVista(j.ruta)).catch(() => {});
+    for (const g of GLIFOS) post("/api/icono/vista", { tinta: i.tinta, glifo: g }).then((j) => vivo && setGlifosVista((v) => ({ ...v, [g]: j.ruta }))).catch(() => {});
     return () => { vivo = false; };
   }, [i.tinta, i.glifo]);
   const set = async (patch) => { setAplicando(true); try { await cambiar({ icono: patch }); } finally { setAplicando(false); } };
@@ -209,12 +209,9 @@ function IconoApp({ a, cambiar }) {
     <>
       <div className="iconoeditor">
         <div className="iconovistas" aria-live="polite">
-          {["claro", "oscuro"].map((ap) => (
-            <figure key={ap} className={`iconovista ${ap}`}>
-              {vistas[ap] ? <img src={src(vistas[ap])} alt={t("ajustes.iconoEn", { ap: ap === "claro" ? t("ajustes.claro") : t("ajustes.oscuro") })} width="112" height="112" /> : <span className="iconovacio" />}
-              <figcaption className="small muted">{ap === "claro" ? t("ajustes.claro") : t("ajustes.oscuro")}</figcaption>
-            </figure>
-          ))}
+          <figure className="iconovista unica">
+            {vista ? <img src={src(vista)} alt={t("ajustes.iconoVista")} width="128" height="128" /> : <span className="iconovacio" />}
+          </figure>
         </div>
         <div className="stack">
           <div className="tintas" role="radiogroup" aria-label={t("ajustes.tinta")}>
@@ -232,8 +229,6 @@ function IconoApp({ a, cambiar }) {
               </button>
             ))}
           </div>
-          <Segmented label={t("ajustes.apariencia")} value={i.apariencia} onChange={(v) => set({ apariencia: v })}
-            options={[{ id: "auto", label: t("ajustes.automatica"), icon: Monitor }, { id: "claro", label: t("ajustes.clara"), icon: Sun }, { id: "oscuro", label: t("ajustes.oscura"), icon: Moon }]} />
           <p className="muted small">{aplicando ? t("ajustes.aplicando") : t("ajustes.iconoAyuda")}</p>
         </div>
       </div>

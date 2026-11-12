@@ -1,9 +1,9 @@
-// Icono personalizable de la app (Ajustes → Interfaz → Icono): tinta, glifo y apariencia. Lo dibuja icono.py según
+// Icono personalizable de la app (Ajustes → Interfaz → Icono): tinta y glifo. Lo dibuja icono.py según
 // la plantilla de iconos de macOS y se aplica en caliente:
 //   - Dock: app.dock.setIcon, a 512 px (AppKit guarda ~32 MB por cada representación de 1024 px).
 //   - Barra de menús: imagen plantilla negra de 18 pt; macOS la tiñe en claro y oscuro.
 //   - Bundle (Finder, Launchpad y el Dock con la app cerrada): NSWorkspace setIcon:forFile: por osascript, como Pond.
-// Con apariencia «auto» sigue al modo claro u oscuro del sistema. Caché en dashboard/encargos/iconos/ (local).
+// Una sola versión, la misma en claro y en oscuro, como los iconos de macOS. Caché en <cerebro>/.moss/iconos/.
 import fs from "node:fs";
 import path from "node:path";
 import { execFile } from "node:child_process";
@@ -23,38 +23,28 @@ const run = (cmd, args, timeout = 120000) => new Promise((resolve) => execFile(c
 
 const el = () => { const e = globalThis.panelElectron; return e && e.app ? e : null; };
 
-function oscuroAhora(ap) {
-  if (ap === "oscuro") return true;
-  if (ap === "claro") return false;
-  const e = el();
-  return !!(e && e.nativeTheme && e.nativeTheme.shouldUseDarkColors);
-}
-
 // Dibuja (o reutiliza) el PNG de 1024 y la plantilla de la barra para una combinación.
-export async function generar({ tinta, glifo, apariencia }) {
+export async function generar({ tinta, glifo }) {
   if (!TINTAS.includes(tinta) || !GLIFOS.includes(glifo)) throw new Error("Tinta o glifo no válidos");
   fs.mkdirSync(DIR, { recursive: true });
-  const ap = apariencia === "oscuro" ? "oscuro" : "claro";
-  const png = path.join(DIR, `${tinta}-${glifo}-${ap}.png`);
+  const png = path.join(DIR, `v2-${tinta}-${glifo}.png`);
   const barraDir = path.join(DIR, `barra-${glifo}`);
   const barra = path.join(barraDir, "trayTemplate.png");
   if (!fs.existsSync(png) || !fs.existsSync(barra)) {
     fs.mkdirSync(barraDir, { recursive: true });
-    const r = await run("python3", ["-I", PY, JSON.stringify({ tinta, glifo, apariencia: ap, avatar: AVATAR, iniciales: INICIALES, salida: png, barra })]);
+    const r = await run("python3", ["-I", PY, JSON.stringify({ tinta, glifo, avatar: AVATAR, iniciales: INICIALES, salida: png, barra })]);
     if (!r.ok) throw new Error(`No se pudo dibujar el icono: ${r.err.split("\n").slice(-2).join(" ")}`);
   }
   return { png, barra, rel: path.relative(ROOT, png) };
 }
 
 let aplicado = null;
-let escuchando = false;
 let bundleCola = Promise.resolve();
 
 // Aplica el icono de los ajustes actuales. Sin Electron (navegador) solo genera la vista previa.
 export async function aplicar() {
   const i = ajustes().icono;
-  const ap = oscuroAhora(i.apariencia) ? "oscuro" : "claro";
-  const g = await generar({ ...i, apariencia: ap });
+  const g = await generar({ tinta: i.tinta, glifo: i.glifo });
   const e = el();
   if (!e) return g;
   const clave = `${g.png}|${g.barra}`;
@@ -62,16 +52,7 @@ export async function aplicar() {
     aplicado = clave;
     if (e.app.dock) e.app.dock.setIcon(e.nativeImage.createFromPath(g.png).resize({ width: 512, height: 512, quality: "best" }));
     if (typeof e.ponerBarra === "function") e.ponerBarra(g.barra);
-    // El icono del bundle solo cambia con la tinta y el glifo (en claro): Finder no tiene versión oscura propia.
-    const claro = ap === "claro" ? g : await generar({ ...i, apariencia: "claro" });
-    bundleCola = bundleCola.then(() => iconoBundle(claro.png)).catch(() => {});
-  }
-  // Un solo oyente por proceso (Vite recarga este módulo en cada reinicio del servidor).
-  if (!escuchando && e.nativeTheme) {
-    escuchando = true;
-    if (globalThis.__panelIconoTema) e.nativeTheme.removeListener("updated", globalThis.__panelIconoTema);
-    globalThis.__panelIconoTema = () => { if (ajustes().icono.apariencia === "auto") aplicar().catch(() => {}); };
-    e.nativeTheme.on("updated", globalThis.__panelIconoTema);
+    bundleCola = bundleCola.then(() => iconoBundle(g.png)).catch(() => {});
   }
   return g;
 }
@@ -98,4 +79,4 @@ if (!$.NSWorkspace.sharedWorkspace.setIconForFileOptions(img, ${JSON.stringify(a
 }
 
 export const TINTAS = ["naranja", "mandarina", "fresa", "frambuesa", "uva", "ciruela", "arandano", "aqua", "teal", "helecho", "musgo", "moca", "grafito"];
-export const GLIFOS = ["brote", "estrella", "ventana", "monograma", "avatar"];
+export const GLIFOS = ["musgo", "brote", "estrella", "ventana", "monograma", "avatar"];

@@ -16,7 +16,7 @@ const ICONOS = path.join(AQUI, "iconos");
 const icns = path.join(AQUI, "icon.icns");
 if (!fs.existsSync(path.join(ICONOS, "app.png")) || !fs.existsSync(path.join(ICONOS, "trayTemplate.png")) || !fs.existsSync(icns)) {
   fs.mkdirSync(ICONOS, { recursive: true });
-  execFileSync("python3", ["-I", path.join(APP, "server", "icono.py"), JSON.stringify({ tinta: "musgo", glifo: "brote", apariencia: "claro", salida: path.join(ICONOS, "app.png"), barra: path.join(ICONOS, "trayTemplate.png") })], { stdio: "inherit" });
+  execFileSync("python3", ["-I", path.join(APP, "server", "icono.py"), JSON.stringify({ tinta: "musgo", glifo: "musgo", salida: path.join(ICONOS, "app.png"), barra: path.join(ICONOS, "trayTemplate.png") })], { stdio: "inherit" });
   if (process.platform === "darwin") {
     const set = path.join(AQUI, "icon.iconset");
     fs.mkdirSync(set, { recursive: true });

@@ -20,11 +20,10 @@ const ESQUEMA = {
   textoLateral: { ...uno(13, 12, 14, 15) },
   animacion: { ...uno("agil", "natural", "no") },
   idioma: { ...uno("auto", "es", "en") }, // idioma de la interfaz; auto: el del cerebro (moss.config.json → idioma) o el del navegador
-  // Icono de la app (server/icono.js): tinta del fondo, glifo de cristal y apariencia (auto sigue al sistema).
+  // Icono de la app (server/icono.js): tinta del fondo y glifo.
   icono: {
     tinta: { ...uno("musgo", "naranja", "mandarina", "fresa", "frambuesa", "uva", "ciruela", "arandano", "aqua", "teal", "helecho", "moca", "grafito") },
-    glifo: { ...uno("brote", "estrella", "ventana", "monograma", "avatar") },
-    apariencia: { ...uno("auto", "claro", "oscuro") },
+    glifo: { ...uno("musgo", "brote", "estrella", "ventana", "monograma", "avatar") },
   },
   // Sonidos de interfaz (src/lib/sonidos.js): clics y confirmaciones sintetizados.
   sonidos: { activo: si(true), interfaz: si(true), volumen: { ...uno(70, 30, 50, 100) } },

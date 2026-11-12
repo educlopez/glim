@@ -249,9 +249,7 @@ html.is-app:has(.scrim, .quicklook, [role="dialog"]) .side::before { -webkit-app
 .iconoeditor { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; padding: 14px 16px; }
 .iconovistas { display: flex; gap: 10px; }
 .iconovista { display: grid; justify-items: center; gap: 6px; margin: 0; padding: 12px 12px 8px; border-radius: 14px; }
-.iconovista.claro { background: linear-gradient(#f4f4f2, #e6e6e3); }
-.iconovista.oscuro { background: linear-gradient(#2a2a2d, #18181a); }
-.iconovista.oscuro figcaption { color: #a1a1a6; }
+.iconovista.unica { padding: 18px; background: var(--surface-hover); }
 .iconovista img { display: block; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.08)); }
 .iconovacio { display: block; width: 112px; height: 112px; border-radius: 26px; background: var(--bg-sunk); }
 .iconovacio.mini { width: 44px; height: 44px; border-radius: 11px; }

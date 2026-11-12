@@ -1,12 +1,8 @@
-# Icono de la app según la plantilla de iconos de macOS (Apple Human Interface Guidelines, macOS):
-#   - lienzo de 1024 px, forma de 824 px centrada (100 px de margen) con esquinas continuas (superelipse, no un
-#     rectángulo redondeado: la curvatura empieza antes y no hay saltos)
-#   - sombra propia bajo la forma, dentro del lienzo
-#   - luz desde arriba: degradado de la tinta, brillo superior y un filo claro arriba y oscuro abajo
-#   - glifo de cristal (estilo Liquid Glass de macOS 26): relleno translúcido, filo de luz y sombra de color
-#   - versión plantilla (negro sobre transparente) para la barra de menús, a 18 pt
+# Icono de la app según la plantilla de iconos de macOS: lienzo de 1024 px, forma de 824 px con esquinas continuas
+# (superelipse) y sombra propia. Estilo plano, como los iconos de Codex, Rex o Pond: fondo de color con luz suave
+# desde arriba y un glifo blanco grande. Más la plantilla (negro sobre transparente) de la barra de menús, a 18 pt.
 # Se dibuja a 2048 px y se reduce a 1024 para un antialias limpio.
-# Uso: python3 -I icono.py '<json>'  con {tinta, glifo, apariencia, avatar, salida, barra}
+# Uso: python3 -I icono.py '<json>'  con {tinta, glifo, avatar, iniciales, salida, barra}
 import sys, json, math
 from PIL import Image, ImageDraw, ImageFilter, ImageChops, ImageFont
 
@@ -55,44 +51,35 @@ INICIALES = "m"
 
 
 def glifo_mascara(glifo, avatar=None):
+    # Glifos grandes y planos (como los iconos de Codex, Rex o Pond): una forma rotunda que se lee a 16 px.
     m = Image.new("L", (S, S), 0)
     d = ImageDraw.Draw(m)
     c = S / 2
-    if glifo == "estrella":
-        # Destello de cuatro puntas: astroide con los lados algo hinchados.
-        r = 318 * K
+    if glifo == "musgo":
+        # La marca de Moss: una hoja gruesa en diagonal con el nervio central vaciado.
+        largo, ancho = 640 * K, 380 * K
+        r = (largo * largo / 4 + ancho * ancho / 4) / ancho
+        d0 = r - ancho / 2
+        medio = math.asin((largo / 2) / r)
         pts = []
-        for i in range(1440):
-            t = 2 * math.pi * i / 1440
-            co, si = math.cos(t), math.sin(t)
-            pts.append((c + r * math.copysign(abs(co) ** 2.7, co), c + r * math.copysign(abs(si) ** 2.7, si)))
-        d.polygon(pts, fill=255)
-    elif glifo == "ventana":
-        # Ventana: marco redondeado con una barra lateral, la forma del propio panel.
-        w = 520 * K; h = 420 * K; g = 56 * K
-        x0, y0 = c - w / 2, c - h / 2
-        d.rounded_rectangle((x0, y0, x0 + w, y0 + h), radius=96 * K, fill=255)
-        d.rounded_rectangle((x0 + g, y0 + g, x0 + w - g, y0 + h - g), radius=52 * K, fill=0)
-        d.rounded_rectangle((x0 + g + 24 * K, y0 + g + 24 * K, x0 + g + 140 * K, y0 + h - g - 24 * K), radius=28 * K, fill=255)
-    elif glifo == "monograma":
-        f = None
-        for ruta in ("/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/SFNS.ttf", "/System/Library/Fonts/Helvetica.ttc"):
-            try:
-                f = ImageFont.truetype(ruta, int(470 * K))
-                try:
-                    f.set_variation_by_name("Bold")
-                except Exception:
-                    pass
-                break
-            except Exception:
-                continue
-        texto = (INICIALES or "m")[:2]
-        bb = d.textbbox((0, 0), texto, font=f)
-        d.text((c - (bb[0] + bb[2]) / 2, c - (bb[1] + bb[3]) / 2 - 10 * K), texto, font=f, fill=255)
+        for lado in (1, -1):
+            for i in range(361):
+                t = -medio + 2 * medio * i / 360
+                pts.append((lado * (r * math.cos(t) - d0), r * math.sin(t) * lado))
+        a_ = math.radians(45)
+        rot = lambda x, y: (c + x * math.cos(a_) - y * math.sin(a_), c + x * math.sin(a_) + y * math.cos(a_))
+        d.polygon([rot(x, y) for x, y in pts], fill=255)
+        # Nervio: una línea que nace en el pecíolo y se afina hacia la punta.
+        nervio = [rot(-14 * K, largo * 0.5), rot(14 * K, largo * 0.5), rot(5 * K, -largo * 0.30), rot(-5 * K, -largo * 0.30)]
+        d.polygon(nervio, fill=0)
+        # Pecíolo corto que sale por abajo a la izquierda.
+        x0, y0 = rot(0, largo * 0.5)
+        x1, y1 = rot(0, largo * 0.66)
+        d.line((x0, y0, x1, y1), fill=255, width=int(40 * K))
+        d.ellipse((x1 - 20 * K, y1 - 20 * K, x1 + 20 * K, y1 + 20 * K), fill=255)
     elif glifo == "brote":
-        # Brote (el icono de Moss): dos hojas sobre un tallo corto.
+        # Brote: dos hojas gruesas y un tallo redondeado.
         def hoja(px, py, largo, ancho, ang):
-            # Hoja = intersección de dos círculos (vesica), girada `ang` grados desde la vertical.
             pts = []
             r = (largo * largo / 4 + ancho * ancho / 4) / ancho
             d0 = r - ancho / 2
@@ -100,101 +87,107 @@ def glifo_mascara(glifo, avatar=None):
             for lado in (1, -1):
                 for i in range(361):
                     t = -medio + 2 * medio * i / 360
-                    x = lado * (r * math.cos(t) - d0)
-                    y = r * math.sin(t) * lado
-                    pts.append((x, y))
+                    pts.append((lado * (r * math.cos(t) - d0), r * math.sin(t) * lado))
             a_ = math.radians(ang)
-            out = []
-            for x, y in pts:
-                yy = y - largo / 2  # la base de la hoja en el origen
-                out.append((px + x * math.cos(a_) - yy * math.sin(a_), py + x * math.sin(a_) + yy * math.cos(a_)))
-            d.polygon(out, fill=255)
-        base_y = c + 250 * K
-        d.rounded_rectangle((c - 26 * K, c - 40 * K, c + 26 * K, base_y), radius=26 * K, fill=255)
-        hoja(c - 6 * K, c - 10 * K, 400 * K, 190 * K, -42)
-        hoja(c + 6 * K, c + 60 * K, 330 * K, 160 * K, 46)
+            d.polygon([(px + x * math.cos(a_) - (y - largo / 2) * math.sin(a_), py + x * math.sin(a_) + (y - largo / 2) * math.cos(a_)) for x, y in pts], fill=255)
+        d.rounded_rectangle((c - 44 * K, c - 10 * K, c + 44 * K, c + 300 * K), radius=44 * K, fill=255)
+        hoja(c - 10 * K, c + 20 * K, 440 * K, 250 * K, -48)
+        hoja(c + 10 * K, c + 70 * K, 360 * K, 210 * K, 50)
+    elif glifo == "estrella":
+        r = 340 * K
+        pts = []
+        for i in range(1440):
+            t = 2 * math.pi * i / 1440
+            co, si = math.cos(t), math.sin(t)
+            pts.append((c + r * math.copysign(abs(co) ** 3.2, co), c + r * math.copysign(abs(si) ** 3.2, si)))
+        d.polygon(pts, fill=255)
+    elif glifo == "ventana":
+        w = 560 * K; h = 450 * K; g = 64 * K
+        x0, y0 = c - w / 2, c - h / 2
+        d.rounded_rectangle((x0, y0, x0 + w, y0 + h), radius=110 * K, fill=255)
+        d.rounded_rectangle((x0 + g, y0 + g, x0 + w - g, y0 + h - g), radius=56 * K, fill=0)
+        d.rounded_rectangle((x0 + g + 30 * K, y0 + g + 30 * K, x0 + g + 160 * K, y0 + h - g - 30 * K), radius=34 * K, fill=255)
+    elif glifo == "monograma":
+        f = None
+        for ruta in ("/System/Library/Fonts/SFNSRounded.ttf", "/System/Library/Fonts/SFNS.ttf", "/System/Library/Fonts/Helvetica.ttc"):
+            try:
+                f = ImageFont.truetype(ruta, int(560 * K))
+                try:
+                    f.set_variation_by_name("Heavy")
+                except Exception:
+                    try:
+                        f.set_variation_by_name("Bold")
+                    except Exception:
+                        pass
+                break
+            except Exception:
+                continue
+        texto = (INICIALES or "m")[:2]
+        bb = d.textbbox((0, 0), texto, font=f)
+        d.text((c - (bb[0] + bb[2]) / 2, c - (bb[1] + bb[3]) / 2), texto, font=f, fill=255)
     else:  # avatar: el círculo donde va la foto
-        r = 290 * K
+        r = 320 * K
         d.ellipse((c - r, c - r, c + r, c + r), fill=255)
+    # Tamaño óptico: cada glifo ocupa más o menos lo mismo (en torno al 55 % de la forma) y queda centrado.
+    escala = {"musgo": 0.78, "brote": 0.72, "estrella": 0.78, "ventana": 0.70, "monograma": 0.68, "avatar": 0.9}.get(glifo, 0.8)
+    caja = m.getbbox()
+    if caja:
+        recorte = m.crop(caja)
+        lado = max(recorte.size)
+        objetivo = int(824 * K * 0.62 * escala / 0.8)
+        f = objetivo / lado
+        recorte = recorte.resize((max(1, int(recorte.size[0] * f)), max(1, int(recorte.size[1] * f))), Image.LANCZOS)
+        m = Image.new("L", (S, S), 0)
+        m.paste(recorte, (int(c - recorte.size[0] / 2), int(c - recorte.size[1] / 2)))
     return m
 
 
-def icono(tinta, glifo, apariencia, avatar=None):
-    base = hexrgb(TINTAS.get(tinta, TINTAS["naranja"]))
+def icono(tinta, glifo, apariencia=None, avatar=None):
+    # Estilo plano: fondo de color vivo con un degradado suave (luz desde arriba), glifo blanco macizo con una
+    # sombra corta del color del fondo, y un filo claro muy fino arriba. Sin versión oscura.
+    base = hexrgb(TINTAS.get(tinta, TINTAS["musgo"]))
     blanco, negro = (255, 255, 255), (0, 0, 0)
-    oscuro = apariencia == "oscuro"
     forma = mascara_forma()
     lienzo = Image.new("RGBA", (S, S), (0, 0, 0, 0))
 
-    # 1. Sombra de la forma: abajo y difusa, como la plantilla de Apple.
     sombra = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    sm = forma.filter(ImageFilter.GaussianBlur(14 * K))
-    sombra.paste((0, 0, 0, 96), (0, int(12 * K)), sm)
+    sombra.paste((0, 0, 0, 70), (0, int(10 * K)), forma.filter(ImageFilter.GaussianBlur(12 * K)))
     lienzo = Image.alpha_composite(lienzo, sombra)
 
-    # 2. Fondo: degradado de luz desde arriba.
-    if oscuro:
-        fondo = degradado_vertical(mezcla((44, 44, 48), base, 0.10), (14, 14, 16))
-    else:
-        fondo = degradado_vertical(mezcla(base, blanco, 0.22), mezcla(base, negro, 0.12))
+    fondo = degradado_vertical(mezcla(base, blanco, 0.16), mezcla(base, negro, 0.10))
     capa = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     capa.paste(fondo, (0, 0), forma)
     lienzo = Image.alpha_composite(lienzo, capa)
 
-    # 3. Brillo superior: elipse clara muy difusa, recortada a la forma.
-    brillo = Image.new("L", (S, S), 0)
-    ImageDraw.Draw(brillo).ellipse((S * 0.12, -S * 0.32, S * 0.88, S * 0.42), fill=70 if not oscuro else 34)
-    brillo = ImageChops.multiply(brillo.filter(ImageFilter.GaussianBlur(70 * K)), forma)
-    lienzo = Image.alpha_composite(lienzo, Image.merge("RGBA", (*[Image.new("L", (S, S), 255)] * 3, brillo)))
-
-    # 4. Glifo de cristal.
     gm = glifo_mascara(glifo)
-    color_glifo = base if oscuro else blanco
-    #   sombra de color bajo el glifo
-    gs = Image.new("RGBA", (S, S), mezcla(base, negro, 0.55) + (0,))
-    gs.putalpha(gm.filter(ImageFilter.GaussianBlur(22 * K)).point(lambda v: v * (0.42 if not oscuro else 0.6)))
-    gs = gs.transform(gs.size, Image.AFFINE, (1, 0, 0, 0, 1, -16 * K))
+    gs = Image.new("RGBA", (S, S), mezcla(base, negro, 0.45) + (0,))
+    gs.putalpha(gm.filter(ImageFilter.GaussianBlur(16 * K)).point(lambda v: v * 0.38))
+    gs = gs.transform(gs.size, Image.AFFINE, (1, 0, 0, 0, 1, -14 * K))
     lienzo = Image.alpha_composite(lienzo, gs)
     if glifo == "avatar" and avatar:
         try:
-            a = Image.open(avatar).convert("RGBA").resize((int(580 * K), int(580 * K)), Image.LANCZOS)
+            a = Image.open(avatar).convert("RGBA").resize((int(640 * K), int(640 * K)), Image.LANCZOS)
             hueco = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-            hueco.paste(a, (int(S / 2 - 290 * K), int(S / 2 - 290 * K)))
+            hueco.paste(a, (int(S / 2 - 320 * K), int(S / 2 - 320 * K)))
             hueco.putalpha(gm)
             lienzo = Image.alpha_composite(lienzo, hueco)
-            anillo = ImageChops.subtract(gm.filter(ImageFilter.MaxFilter(int(13 * K) | 1)), gm)
-            lienzo = Image.alpha_composite(lienzo, Image.merge("RGBA", (*[Image.new("L", (S, S), 255)] * 3, anillo.point(lambda v: v * 0.75))))
         except Exception:
             pass
     else:
-        #   relleno translúcido, más opaco abajo
-        rel = degradado_vertical(mezcla(color_glifo, blanco, 0.35), color_glifo)
-        alfa = gm.point(lambda v: v * (0.82 if not oscuro else 0.92))
-        rel_rgba = rel.convert("RGBA"); rel_rgba.putalpha(alfa)
-        lienzo = Image.alpha_composite(lienzo, rel_rgba)
-        #   brillo interior desde los bordes (el cristal recoge luz en el canto)
-        borde_int = ImageChops.subtract(gm, gm.filter(ImageFilter.MinFilter(int(9 * K) | 1)))
-        glow = borde_int.filter(ImageFilter.GaussianBlur(10 * K))
-        glow = ImageChops.multiply(glow, gm).point(lambda v: min(255, v * 1.6))
-        lienzo = Image.alpha_composite(lienzo, Image.merge("RGBA", (*[Image.new("L", (S, S), 255)] * 3, glow.point(lambda v: v * 0.7))))
-    #   filo de luz arriba del glifo
-    filo = ImageChops.subtract(gm, gm.transform(gm.size, Image.AFFINE, (1, 0, 0, 0, 1, -5 * K)))
-    luz_arriba = degradado_vertical((255, 255, 255), (60, 60, 60)).convert("L")
-    filo = ImageChops.multiply(filo, luz_arriba)
-    lienzo = Image.alpha_composite(lienzo, Image.merge("RGBA", (*[Image.new("L", (S, S), 255)] * 3, filo)))
+        solido = Image.new("RGBA", (S, S), (255, 255, 255, 255))
+        solido.putalpha(gm)
+        lienzo = Image.alpha_composite(lienzo, solido)
 
-    # 5. Filo de la forma: claro arriba, oscuro abajo (2 px a 1024).
-    canto = ImageChops.subtract(forma, forma.filter(ImageFilter.MinFilter(int(4 * K) | 1)))
-    arriba = ImageChops.multiply(canto, luz_arriba.point(lambda v: v * (0.55 if not oscuro else 0.35)))
-    abajo = ImageChops.multiply(canto, luz_arriba.point(lambda v: (255 - v) * 0.25))
+    canto = ImageChops.subtract(forma, forma.filter(ImageFilter.MinFilter(int(3 * K) | 1)))
+    luz = degradado_vertical((255, 255, 255), (0, 0, 0)).convert("L")
+    arriba = ImageChops.multiply(canto, luz.point(lambda v: v * 0.35))
     lienzo = Image.alpha_composite(lienzo, Image.merge("RGBA", (*[Image.new("L", (S, S), 255)] * 3, arriba)))
-    lienzo = Image.alpha_composite(lienzo, Image.merge("RGBA", (*[Image.new("L", (S, S), 0)] * 3, abajo)))
     return lienzo.resize((1024, 1024), Image.LANCZOS)
 
 
 def barra(glifo, salida):
     # Imagen plantilla para la barra de menús: negro y alfa; macOS la tiñe sola en claro y oscuro.
-    g = glifo if glifo != "avatar" else "estrella"
+    g = glifo if glifo != "avatar" else "musgo"
     m = glifo_mascara(g)
     caja = m.getbbox()
     m = m.crop(caja)
@@ -212,7 +205,7 @@ def barra(glifo, salida):
 if __name__ == "__main__":
     o = json.loads(sys.argv[1])
     INICIALES = str(o.get("iniciales") or "m")
-    icono(o.get("tinta", "musgo"), o.get("glifo", "brote"), o.get("apariencia", "claro"), o.get("avatar")).save(o["salida"])
+    icono(o.get("tinta", "musgo"), o.get("glifo", "musgo"), avatar=o.get("avatar")).save(o["salida"])
     if o.get("barra"):
-        barra(o.get("glifo", "brote"), o["barra"])
+        barra(o.get("glifo", "musgo"), o["barra"])
     print("ok")

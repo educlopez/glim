@@ -176,8 +176,8 @@ export default {
   "ajustes.global": "Global",
   "ajustes.globalPie": "Funciona desde cualquier app: muestra el panel, o lo oculta si ya está delante.",
   "ajustes.iconoApp": "Icono de la app",
-  "ajustes.iconoAppSub": "Sigue la plantilla de iconos de macOS: forma de esquinas continuas, luz desde arriba y glifo de cristal. Cambia el Dock, la barra de menús y el icono de la app en el Finder.",
-  "ajustes.iconoAyuda": "Automática cambia el icono del Dock con el modo claro u oscuro del sistema. El Finder usa siempre la versión clara.",
+  "ajustes.iconoAppSub": "Sigue la plantilla de iconos de macOS: forma de esquinas continuas, fondo de color con luz desde arriba y un glifo blanco. Cambia el Dock, la barra de menús y el icono de la app en el Finder.",
+  "ajustes.iconoAyuda": "Un fondo de color y un glifo blanco. Es el mismo en modo claro y oscuro, como los iconos de macOS.",
   "ajustes.iconoBarra": "Icono en la barra de menús",
   "ajustes.iconoBarraAyuda": "Con el estado de los encargos y lo que espera revisión.",
   "ajustes.iconoEn": "Icono en {ap}",
@@ -902,4 +902,6 @@ export default {
   "copia.estado.M": "editado",
   "copia.estado.D": "borrado",
   "copia.estado.R": "movido",
+  "ajustes.iconoVista": "Vista previa del icono",
+  "ajustes.glifo.musgo": "Hoja",
 };

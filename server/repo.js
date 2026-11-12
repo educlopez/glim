@@ -8,7 +8,7 @@ const comoRegex = (r) => new RegExp(`^${r.replace(/\/$/, "").replace(/[.*+?^${}(
 
 // Nunca se sirve: lo privado del cerebro (moss.config.json → privadas), el estado local de Moss (salvo las notas de
 // feedback), secretos, git y dependencias.
-export const DENY = [...cfg.privadas.map(comoRegex), /^\.moss\/(?!feedback\/)/, /(^|\/)\.env/, /(^|\/)node_modules(\/|$)/, /(^|\/)\.git(\/|$)/, /\.(pem|key)$/];
+export const DENY = [...cfg.privadas.map(comoRegex), /^\.moss\/(?!(feedback|iconos)\/)/, /(^|\/)\.env/, /(^|\/)node_modules(\/|$)/, /(^|\/)\.git(\/|$)/, /\.(pem|key)$/];
 
 export const MIME = {
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".svg": "image/svg+xml", ".webp": "image/webp",
