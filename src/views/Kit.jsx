@@ -1,11 +1,11 @@
 // Kit de publicación: firmas y presets. Un preset junta redes, idioma, formato, plantilla, firma e instrucciones
 // para lanzar un post nuevo de un tipo conocido en un clic. Se guarda en estrategia/kit-publicacion.json.
 import { useState } from "react";
-import { Plus, PenLine, Trash2, Sparkles, Signature, Layers, X as Close } from "lucide-react";
+import { Plus, PenLine, Trash2, Signature, Layers, X as Close } from "lucide-react";
 import { useData, REDES } from "../lib/data.js";
 import { useRouteCtx } from "../lib/route.js";
 import { post } from "../lib/api.js";
-import { PageHeader, Toggles, RedIcon, Empty, Section } from "../components/ui.jsx";
+import { PageHeader, Toggles, RedIcon, Empty, Section, GlimMark } from "../components/ui.jsx";
 import { t } from "../lib/i18n.js";
 
 const recargar = () => window.dispatchEvent(new Event("panel:reload"));
@@ -88,7 +88,7 @@ export default function Kit() {
                       {p.firma && firmaDe(p.firma) ? <span className="tag">{t("kit.firmaTag", { nombre: firmaDe(p.firma).nombre })}</span> : null}
                     </span>
                     <div className="row gap-s">
-                      <button type="button" className="btn small primary" onClick={() => r.set({ pedir: "general", preset: p.id })}><Sparkles size={14} aria-hidden="true" /><span>{t("kit.crearPost")}</span></button>
+                      <button type="button" className="btn small primary" onClick={() => r.set({ pedir: "general", preset: p.id })}><GlimMark size={14} /><span>{t("kit.crearPost")}</span></button>
                       <button type="button" className="iconbtn tiny" onClick={() => setEditando({ tipo: "preset", item: p })} aria-label={t("kit.editarPreset")}><PenLine size={13} aria-hidden="true" /></button>
                       <button type="button" className="iconbtn tiny" onClick={() => quitar("preset", p.id)} aria-label={t("kit.borrarPreset")}><Trash2 size={13} aria-hidden="true" /></button>
                     </div>

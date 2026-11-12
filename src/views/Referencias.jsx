@@ -3,10 +3,7 @@
 // público. Muchas ideas vienen de Pond (raphaelsalaja/pond, MIT): paleta y filtro por color, mosaico, vista rápida
 // con teclado, vídeo al pasar el ratón, duplicadas por huella visual, búsqueda con sintaxis y vistas guardadas.
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Plus, Link2, Upload, ExternalLink, Sparkles, Trash2, Pin, BookOpen, Images, X as Close, Star, LayoutGrid, Columns3,
-  List, Copy, Merge, ChevronLeft, ChevronRight, Contrast, Bookmark, Loader2, Keyboard, Download, Archive, ScanSearch, Check,
-} from "lucide-react";
+import { Plus, Link2, Upload, ExternalLink, Trash2, Pin, BookOpen, Images, X as Close, Star, LayoutGrid, Columns3, List, Copy, Merge, ChevronLeft, ChevronRight, Contrast, Bookmark, Loader2, Keyboard, Download, Archive, ScanSearch, Check } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx, hrefOf } from "../lib/route.js";
 import { post, hace } from "../lib/api.js";
@@ -14,7 +11,7 @@ import { sonar } from "../lib/sonidos.js";
 import { repo } from "../lib/format.js";
 import { COLORES, familia, familias, duplicadas, consulta, proporcion, empaquetar, normUrl, motivoDuplicada } from "../lib/refs.js";
 import { fmtNumero, t } from "../lib/i18n.js";
-import { PageHeader, Segmented, Toggles, SearchBox, Empty, Fields } from "../components/ui.jsx";
+import { PageHeader, Segmented, Toggles, SearchBox, Empty, Fields, GlimMark } from "../components/ui.jsx";
 import { Drawer } from "../components/Drawer.jsx";
 import { Thumb, Player, HoverVideo } from "../components/Media.jsx";
 
@@ -295,7 +292,7 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
     <Drawer open onClose={onClose} width={900} title={r.titulo} kicker={<span className="muted">{r.fuente === "propia" ? t("refs.tuya") : r.fuente}{r.handle ? ` · @${r.handle}` : ""} · {r.creado}</span>}
       actions={<>
         {r.url ? <a className="btn ghost small" href={r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("refs.abrir")}</span></a> : null}
-        <button type="button" className="btn small primary" onClick={() => ro.set({ pedir: "general", ref: r.id })}><Sparkles size={14} aria-hidden="true" /><span>{t("lienzos.usarEncargo")}</span></button>
+        <button type="button" className="btn small primary" onClick={() => ro.set({ pedir: "general", ref: r.id })}><GlimMark size={14} /><span>{t("lienzos.usarEncargo")}</span></button>
       </>}>
       <div className="detailgrid" data-referencia={r.id} data-path={r.archivo || undefined}>
         <div className="detailmain">
@@ -458,7 +455,7 @@ function Vistas({ vistas, activa, hayFiltro, params, ids, dupCount, onAplicar })
           <>
             <button type="button" className="btn ghost small" onClick={() => setNombre("")}><Bookmark size={13} aria-hidden="true" /><span>{t("refs.guardarVista")}</span></button>
             <button type="button" className="btn ghost small" disabled={!ids.length} onClick={() => r.set({ pedir: "general", ref: ids.slice(0, 12).join(",") })} title={t("refs.adjunta12")}>
-              <Sparkles size={13} aria-hidden="true" /><span>{t("refs.usarEncargoN", { n: Math.min(12, ids.length) })}</span>
+              <GlimMark size={13} /><span>{t("refs.usarEncargoN", { n: Math.min(12, ids.length) })}</span>
             </button>
           </>
         ) : (

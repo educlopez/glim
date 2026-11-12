@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Agentation } from "agentation";
-import {
-  LayoutDashboard, CalendarDays, PenLine, LayoutTemplate, GalleryHorizontal, Share2, Palette, Film, BookOpen, ShieldAlert, MessageSquareText,
-  Sparkles, Images, History, LoaderCircle, Layers, Settings,
-  Spline,
-} from "lucide-react";
+import { LayoutDashboard, CalendarDays, PenLine, LayoutTemplate, GalleryHorizontal, Share2, Palette, Film, BookOpen, ShieldAlert, MessageSquareText, Images, History, LoaderCircle, Layers, Settings, Spline, ListTodo } from "lucide-react";
 import { DataContext, useOverview } from "./lib/data.js";
 import { useRoute, hrefOf, RouteContext } from "./lib/route.js";
 import { EncargosContext, useEncargosPoll } from "./lib/api.js";
@@ -38,7 +34,7 @@ const REGLAS = "AGENTS.md"; // marcador; nav() lo cambia por el archivo de regla
 // group y label son claves de src/locales/*.js.
 const NAV = [
   { group: "nav.grupo.trabajo", items: [
-    { path: "encargos", label: "nav.encargos", icon: Sparkles, view: Encargos, count: (_d, enc) => enc.lista.filter((e) => ["cola", "en-curso", "revisar", "error"].includes(e.estado)).length || null },
+    { path: "encargos", label: "nav.encargos", icon: ListTodo, view: Encargos, count: (_d, enc) => enc.lista.filter((e) => ["cola", "en-curso", "revisar", "error"].includes(e.estado)).length || null },
     { path: "referencias", label: "nav.referencias", icon: Images, view: Referencias, count: (d) => d.referencias.filter((r) => r.fuente === "propia").length || null },
     { path: "lienzos", label: "nav.lienzos", icon: Spline, view: Lienzos, count: (d) => (d.lienzos || []).length || null },
     { path: "registro", label: "nav.registro", icon: History, view: Registro, count: (d) => d.registro.length },
@@ -194,9 +190,6 @@ export default function App() {
               ))}
             </nav>
             <div className="sidefoot">
-              <button type="button" className="btn primary" onClick={() => route.set({ pedir: "general" })}>
-                <Sparkles size={14} aria-hidden="true" /><span>{t("app.pedirCambio")}</span>
-              </button>
               {trabajando ? (
                 <a className="working" href={hrefOf("encargos", { ver: trabajando.id })}>
                   <LoaderCircle size={14} className="spin" aria-hidden="true" />

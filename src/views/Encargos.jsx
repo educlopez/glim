@@ -1,22 +1,19 @@
 // Encargos: lo que se ha pedido a los agentes desde el panel, en un tablero por estado. El panel lateral enseña
 // el trabajo en directo, el resultado, los archivos tocados y las decisiones que propone registrar.
 import { useEffect, useRef, useState } from "react";
-import {
-  Sparkles, Square, Play, Check, Trash2, Terminal, Eye, FileText, FilePen, FilePlus, Search, Wrench, Globe, Bot, ListChecks, BookMarked,
-  TriangleAlert, MessageSquareText, ArrowRight, Info, LoaderCircle, Repeat,
-} from "lucide-react";
+import { Square, Play, Check, Trash2, Terminal, Eye, FileText, FilePen, FilePlus, Search, Wrench, Globe, Bot, ListChecks, BookMarked, TriangleAlert, MessageSquareText, ArrowRight, Info, LoaderCircle, Repeat, Puzzle, ListTodo } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx, hrefOf } from "../lib/route.js";
 import { post, useEncargos, md, duracion, hace } from "../lib/api.js";
 import { TIPOS_OBJETIVO, infoObjetivo } from "../lib/objetivos.js";
-import { PageHeader, Empty, Fields, CopyButton, Switch } from "../components/ui.jsx";
+import { PageHeader, Empty, Fields, CopyButton, Switch, GlimMark } from "../components/ui.jsx";
 import { Drawer } from "../components/Drawer.jsx";
 import { Thumb, Player } from "../components/Media.jsx";
 import { EncargoCard, EstadoEncargo } from "../components/EncargoCard.jsx";
 import { CopiaAislada } from "../components/CopiaAislada.jsx";
 import { t } from "../lib/i18n.js";
 
-const ICONOS = { leer: FileText, editar: FilePen, crear: FilePlus, terminal: Terminal, buscar: Search, skill: Sparkles, agente: Bot, web: Globe, plan: ListChecks, herramienta: Wrench };
+const ICONOS = { leer: FileText, editar: FilePen, crear: FilePlus, terminal: Terminal, buscar: Search, skill: Puzzle, agente: Bot, web: Globe, plan: ListChecks, herramienta: Wrench };
 const esMedio = (p) => /^media\/.+\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i.test(p);
 
 function Paso({ ev }) {
@@ -184,7 +181,7 @@ function Detalle({ id, onClose }) {
               <textarea rows={3} value={vuelta} onChange={(x) => setVuelta(x.target.value)} placeholder={t("encargos.vueltaEjemplo")}
                 onKeyDown={(x) => { if (x.key === "Enter" && (x.metaKey || x.ctrlKey) && vuelta.trim()) accion(`/api/encargos/${e.id}/otra-vuelta`, { texto: vuelta }).then(() => setVuelta("")); }} />
               <div className="row gap-s">
-                <button type="button" className="btn primary small" disabled={!vuelta.trim()} onClick={() => accion(`/api/encargos/${e.id}/otra-vuelta`, { texto: vuelta }).then(() => setVuelta(""))}><Sparkles size={14} aria-hidden="true" /><span>{t("encargos.lanzarVuelta")}</span></button>
+                <button type="button" className="btn primary small" disabled={!vuelta.trim()} onClick={() => accion(`/api/encargos/${e.id}/otra-vuelta`, { texto: vuelta }).then(() => setVuelta(""))}><GlimMark size={14} /><span>{t("encargos.lanzarVuelta")}</span></button>
               </div>
             </section>
           ) : null}
@@ -253,12 +250,12 @@ export default function Encargos() {
   return (
     <>
       <PageHeader title={t("nav.encargos")} sub={t("encargos.sub")}
-        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><Sparkles size={14} aria-hidden="true" /><span>{t("encargos.nuevo")}</span></button>}>
+        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><GlimMark size={14} /><span>{t("encargos.nuevo")}</span></button>}>
         <Switch checked={verDescartados} onChange={(v) => r.set({ descartados: v ? "1" : null })}>{t("posts.mostrarDescartados")}</Switch>
       </PageHeader>
       <div className="pad-x">
         {!enc.lista.length ? (
-          <Empty icon={Sparkles} title={t("encargos.vacio")}>
+          <Empty icon={ListTodo} title={t("encargos.vacio")}>
             {t("encargos.vacioAyuda")}
           </Empty>
         ) : (
@@ -286,7 +283,7 @@ export default function Encargos() {
                 <div key={n} className="noteitem">
                   <span className="mono small">{n.replace(/\.md$/, "").replace(/T(\d\d)-(\d\d).*/, " $1:$2")}</span>
                   <a className="btn small" href={hrefOf("biblioteca", { doc: `.glim/feedback/${n}` })}>{t("encargos.leer")}</a>
-                  <button type="button" className="btn small primary" onClick={() => r.set({ pedir: "general", nota: n })}><Sparkles size={14} aria-hidden="true" /><span>{t("encargos.convertir")}</span></button>
+                  <button type="button" className="btn small primary" onClick={() => r.set({ pedir: "general", nota: n })}><GlimMark size={14} /><span>{t("encargos.convertir")}</span></button>
                 </div>
               ))}
             </div>

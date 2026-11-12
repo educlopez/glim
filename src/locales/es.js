@@ -377,7 +377,6 @@ export default {
   "composer.generalRepo": "General (el repo entero)",
   "composer.guardarSinLanzar": "Guardar sin lanzar",
   "composer.irACola": " Ahora mismo trabaja en «{texto}»: este irá a la cola.",
-  "composer.kicker": "Un agente en local, con el contexto del repo",
   "composer.lanzando": "Lanzando…",
   "composer.lanzar": "Lanzar",
   "composer.modelo": "Modelo",

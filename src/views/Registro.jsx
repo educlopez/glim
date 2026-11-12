@@ -1,7 +1,7 @@
 // Registro de decisiones y aprendizajes: lee estrategia/aprendizajes.md (la fuente única) y añade entradas
 // nuevas arriba con el mismo formato. Así lo que funciona y lo que no queda escrito para la próxima pieza.
 import { useMemo, useState } from "react";
-import { Plus, X as Close, BookOpen, Sparkles } from "lucide-react";
+import { Plus, X as Close, BookOpen } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx, hrefOf } from "../lib/route.js";
 import { post, md } from "../lib/api.js";
@@ -81,7 +81,7 @@ export default function Registro() {
                   <article className="regcard">
                     <header className="reghead">
                       <span className="tag">{e.ambito}</span>
-                      {e.panel ? <span className="tag accent"><Sparkles size={11} aria-hidden="true" /> {t("registro.desdePanel")}</span> : null}
+                      {e.panel ? <span className="tag accent">{t("registro.desdePanel")}</span> : null}
                       <h3>{e.titulo}</h3>
                     </header>
                     {e.quePaso || e.aprendimos || e.accion ? (

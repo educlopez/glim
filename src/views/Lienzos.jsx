@@ -2,14 +2,14 @@
 // que se mueven y redimensionan, flechas entre ellos, zoom y desplazamiento. Se guardan solos en
 // estrategia/lienzos.json. Un lienzo entero se puede mandar a un encargo: sus referencias y sus notas.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Plus, StickyNote, Type, ZoomIn, ZoomOut, Maximize, Sparkles, Trash2, Search, Spline, ArrowLeft, ExternalLink, PanelRight, Images } from "lucide-react";
+import { Plus, StickyNote, Type, ZoomIn, ZoomOut, Maximize, Trash2, Search, Spline, ArrowLeft, ExternalLink, PanelRight, Images } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx, hrefOf } from "../lib/route.js";
 import { post, hace } from "../lib/api.js";
 import { sonar } from "../lib/sonidos.js";
 import { repo } from "../lib/format.js";
 import { proporcion, consulta } from "../lib/refs.js";
-import { PageHeader, Empty } from "../components/ui.jsx";
+import { PageHeader, Empty, GlimMark } from "../components/ui.jsx";
 import { t } from "../lib/i18n.js";
 
 const recargar = () => window.dispatchEvent(new Event("panel:reload"));
@@ -335,7 +335,7 @@ function Editor({ inicial }) {
         <button type="button" className="iconbtn" onClick={encajar} aria-label={t("lienzos.encajar")}><Maximize size={15} aria-hidden="true" /></button>
         <span className="lzsep" />
         {sel ? <button type="button" className="btn ghost small" onClick={quitarSel}><Trash2 size={14} aria-hidden="true" /><span>{sel.tipo === "enlace" ? t("lienzos.quitarFlecha") : t("lienzos.quitarElemento")}</span></button> : null}
-        <button type="button" className="btn small primary" onClick={mandar} disabled={!nodos.length}><Sparkles size={14} aria-hidden="true" /><span>{t("lienzos.usarEncargo")}</span></button>
+        <button type="button" className="btn small primary" onClick={mandar} disabled={!nodos.length}><GlimMark size={14} /><span>{t("lienzos.usarEncargo")}</span></button>
         <button type="button" className={`iconbtn${lateral ? " on" : ""}`} onClick={() => setLateral((v) => !v)} aria-pressed={lateral} aria-label={t("lienzos.panelRefs")}><PanelRight size={15} aria-hidden="true" /></button>
       </div>
 

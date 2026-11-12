@@ -2,10 +2,7 @@
 // secciones, botones de atrás y adelante, y grupos con filas. Las claves de API van al Llavero; el navegador
 // solo sabe si hay clave, nunca cuál.
 import { createContext, useContext, useEffect, useState } from "react";
-import {
-  Monitor, Sun, Moon, KeyRound, Plug, Unplug, RefreshCw, CircleCheck, CircleAlert, Sparkles, Search, ChevronLeft, ChevronRight,
-  LayoutPanelLeft, Bell, Command, Blocks, Server, FolderOpen, RotateCcw, Rows3, Rows4, Zap, Waves, Ban,
-} from "lucide-react";
+import { Monitor, Sun, Moon, KeyRound, Plug, Unplug, RefreshCw, CircleCheck, CircleAlert, Search, ChevronLeft, ChevronRight, LayoutPanelLeft, Bell, Command, Blocks, Server, FolderOpen, RotateCcw, Rows3, Rows4, Zap, Waves, Ban } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx } from "../lib/route.js";
 import { post, hace } from "../lib/api.js";
@@ -21,7 +18,7 @@ const SECCIONES = [
   { id: "interfaz", get label() { return t("ajustes.sec.interfaz"); }, icon: LayoutPanelLeft, color: "#5b5f66" },
   { id: "notificaciones", get label() { return t("ajustes.sec.notificaciones"); }, icon: Bell, color: "#ff453a" },
   { id: "atajos", get label() { return t("ajustes.sec.atajos"); }, icon: Command, color: "#6e7177" },
-  { id: "encargos", get label() { return t("ajustes.sec.encargos"); }, icon: Sparkles, color: "#cf520d" },
+  { id: "encargos", get label() { return t("ajustes.sec.encargos"); }, icon: GlimMark, color: "#cf520d" },
   { id: "integraciones", get label() { return t("ajustes.sec.integraciones"); }, icon: Blocks, color: "#a855f7" },
   { id: "servidor", get label() { return t("ajustes.sec.servidor"); }, icon: Server, color: "#0a84ff" },
 ];

@@ -377,7 +377,6 @@ export default {
   "composer.generalRepo": "General (the whole repo)",
   "composer.guardarSinLanzar": "Save without starting",
   "composer.irACola": " It is working on “{texto}” right now: this one will be queued.",
-  "composer.kicker": "A local agent, with the repo as context",
   "composer.lanzando": "Starting…",
   "composer.lanzar": "Start",
   "composer.modelo": "Model",

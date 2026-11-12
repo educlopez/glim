@@ -51,6 +51,8 @@ h2 { font-size: 15px; font-weight: 600; }
   border: 0; background: var(--control); border-radius: 8px; color: var(--ink);
 }
 .field input:focus, .field textarea:focus, .detailsection textarea:focus, .selectbox select:focus { box-shadow: var(--focus-ring); }
+/* Un buscador dentro de un campo es una sola caja: el input no lleva fondo ni anillo propios (los pone .searchbox). */
+.field .searchbox input, .field .searchbox input:focus { height: auto; padding: 0; border: 0; background: transparent; box-shadow: none; }
 
 .switchtrack { background: var(--control); }
 

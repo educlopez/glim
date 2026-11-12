@@ -1,9 +1,9 @@
 
-import { ArrowRight, TriangleAlert, Info, Sparkles } from "lucide-react";
+import { ArrowRight, TriangleAlert, Info } from "lucide-react";
 import { useEncargos } from "../lib/api.js";
 import { EncargoCard } from "../components/EncargoCard.jsx";
 import { useData, ESTADOS } from "../lib/data.js";
-import { PageHeader, Section, Empty, Estado } from "../components/ui.jsx";
+import { PageHeader, Section, Empty, Estado, GlimMark } from "../components/ui.jsx";
 import { PostCard, PostChip } from "../components/PostCard.jsx";
 import { Thumb } from "../components/Media.jsx";
 import { parseDia, isoDia, addDias, lunesDe, diasCortos, fechaLarga, haceDias } from "../lib/format.js";
@@ -27,7 +27,7 @@ export default function Overview() {
   return (
     <>
       <PageHeader title={t("nav.resumen")} sub={fechaLarga(d.hoy)}
-        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><Sparkles size={14} aria-hidden="true" /><span>{t("app.pedirCambio")}</span></button>} />
+        actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><GlimMark size={14} /><span>{t("app.pedirCambio")}</span></button>} />
 
       {encargos.length ? (
         <Section id="h-encargos" title={t("resumen.encargos")} count={encargos.length} actions={<a className="btn ghost small" href={hrefOf("encargos", {})}><span>{t("comun.verTodos")}</span><ArrowRight size={14} aria-hidden="true" /></a>}>

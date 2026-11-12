@@ -2,12 +2,12 @@
 // todo el contexto del objeto. Se abre con ?pedir=<tipo:id> desde cualquier vista (o ?pedir=general).
 import { sonar } from "../lib/sonidos.js";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X as Close, Sparkles, LayoutTemplate, Images, Eye, ShieldCheck, Search, Check } from "lucide-react";
+import { X as Close, LayoutTemplate, Images, Eye, ShieldCheck, Search, Check } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx, hrefOf } from "../lib/route.js";
 import { post, useEncargos } from "../lib/api.js";
 import { TIPOS_OBJETIVO, claveDe, parseClave, infoObjetivo, objetivoDeNota } from "../lib/objetivos.js";
-import { Segmented } from "./ui.jsx";
+import { Segmented, GlimMark } from "./ui.jsx";
 import { Thumb } from "./Media.jsx";
 import { t } from "../lib/i18n.js";
 
@@ -165,10 +165,7 @@ export function Composer() {
       <div className="scrim top" onClick={cerrar} aria-hidden="true" />
       <div className="composer" role="dialog" aria-label={t("composer.dialogo")} data-component="composer">
         <header className="composerhead">
-          <div>
-            <p className="small muted"><Sparkles size={13} aria-hidden="true" /> {t("composer.kicker")}</p>
-            <h2>{t("app.pedirCambio")}</h2>
-          </div>
+          <h2>{t("app.pedirCambio")}</h2>
           <button type="button" className="iconbtn" onClick={cerrar} aria-label={t("comun.cerrar")}><Close size={18} aria-hidden="true" /></button>
         </header>
 
@@ -176,9 +173,9 @@ export function Composer() {
           <div className="field">
             <span className="fieldlabel">{t("composer.sobreQue")}</span>
             <div className="objrow">
-              <span className="objthumb">{info.thumb ? <Thumb path={info.thumb.path} kind={info.thumb.kind} /> : <span className="muted small">{TIPOS_OBJETIVO[o.tipo]}</span>}</span>
+              {info.thumb ? <span className="objthumb"><Thumb path={info.thumb.path} kind={info.thumb.kind} /></span> : null}
               <div className="objinfo">
-                <span className="small muted">{TIPOS_OBJETIVO[o.tipo] || o.tipo}</span>
+                {(TIPOS_OBJETIVO[o.tipo] || o.tipo) !== info.titulo ? <span className="small muted">{TIPOS_OBJETIVO[o.tipo] || o.tipo}</span> : null}
                 <strong>{info.titulo}</strong>
               </div>
               <ObjetivoSelect value={objetivo} onChange={setObjetivo} />
@@ -193,12 +190,12 @@ export function Composer() {
           </label>
 
           <div className="field">
-            <span className="fieldlabel"><LayoutTemplate size={13} aria-hidden="true" /> {t("composer.plantillaUsar")} <span className="muted">{t("comun.opcional")}</span></span>
+            <span className="fieldlabel">{t("composer.plantillaUsar")} <span className="muted">{t("comun.opcional")}</span></span>
             <PlantillaPicker value={plantilla} onChange={setPlantilla} />
           </div>
 
           <div className="field">
-            <span className="fieldlabel"><Images size={13} aria-hidden="true" /> {t("nav.referencias")} <span className="muted">{t("composer.refsElegidas", { n: refs.length })}</span></span>
+            <span className="fieldlabel">{t("nav.referencias")} <span className="muted">{t("composer.refsElegidas", { n: refs.length })}</span></span>
             <RefsPicker value={refs} onChange={setRefs} />
           </div>
 
@@ -245,7 +242,7 @@ export function Composer() {
             <p className="small muted"><ShieldCheck size={14} aria-hidden="true" /> {t("composer.seguridad")}{ocupado ? t("composer.irACola", { texto: ocupado.texto.slice(0, 40) }) : ""}</p>
             <div className="row gap-s">
               <button type="button" className="btn" disabled={enviando} onClick={() => enviar(false)}>{t("composer.guardarSinLanzar")}</button>
-              <button type="submit" className="btn primary" disabled={enviando}><Sparkles size={14} aria-hidden="true" /><span>{enviando ? t("composer.lanzando") : t("composer.lanzar")}</span><kbd>⌘↵</kbd></button>
+              <button type="submit" className="btn primary" disabled={enviando}><GlimMark size={14} /><span>{enviando ? t("composer.lanzando") : t("composer.lanzar")}</span><kbd>⌘↵</kbd></button>
             </div>
           </footer>
         </form>
@@ -259,7 +256,7 @@ export function PedirCambio({ objetivo, label, className = "" }) {
   const r = useRouteCtx();
   return (
     <button type="button" className={`btn small primary ${className}`} onClick={() => r.set({ pedir: claveDe(objetivo) })}>
-      <Sparkles size={14} aria-hidden="true" /><span>{label || t("composer.pedirCambio")}</span>
+      <GlimMark size={14} /><span>{label || t("composer.pedirCambio")}</span>
     </button>
   );
 }

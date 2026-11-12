@@ -1,11 +1,11 @@
 // Revisión de un post: seleccionas un trozo del texto y dejas un comentario anclado, das el OK por red y
 // mandas los comentarios abiertos a Claude como encargo. Idea de Postiz (comentarios con anchorQuote).
 import { useRef, useState } from "react";
-import { MessageSquareQuote, Check, Undo2, Trash2, Sparkles, BadgeCheck } from "lucide-react";
+import { MessageSquareQuote, Check, Undo2, Trash2, BadgeCheck } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { useRouteCtx } from "../lib/route.js";
 import { post as enviar, hace } from "../lib/api.js";
-import { RedIcon } from "./ui.jsx";
+import { RedIcon, GlimMark } from "./ui.jsx";
 import { fmtFechaHora, t } from "../lib/i18n.js";
 
 const recargar = () => window.dispatchEvent(new Event("panel:reload"));
@@ -102,7 +102,7 @@ export function Revision({ post, seleccion, setSeleccion }) {
           ))}
         </ul>
       ) : null}
-      {abiertos.length ? <button type="button" className="btn small primary" onClick={aClaude}><Sparkles size={14} aria-hidden="true" /><span>{t("revision.mandar", { n: abiertos.length })}</span></button> : null}
+      {abiertos.length ? <button type="button" className="btn small primary" onClick={aClaude}><GlimMark size={14} /><span>{t("revision.mandar", { n: abiertos.length })}</span></button> : null}
       {err ? <p className="formerror small">{err}</p> : null}
     </section>
   );
