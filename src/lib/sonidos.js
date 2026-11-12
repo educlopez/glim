@@ -6,7 +6,9 @@
 //   exito     dos senos (do5 y sol5) con un armónico y una sala pequeña
 //   papelera  ruido rosa en paso banda con trémolo + un seno que cae
 // Cada sonido varía un poco de tono para no sonar a máquina, se limita a uno cada 40 ms, baja el volumen si se
-// repite rápido y el AudioContext se suspende a los 3 s de silencio (uno en marcha despierta al proceso de audio).
+// repite rápido y el AudioContext se suspende a los 20 s de silencio (uno en marcha despierta al proceso de audio).
+// Al despertar, el dispositivo tarda ~100 ms y se come lo que suene antes: por eso cada sonido espera a que el contexto
+// esté en marcha y deja un margen, en vez de programarse sobre un reloj parado (antes los clics tras una pausa no sonaban).
 let ajustes = { activo: true, interfaz: true, volumen: 70 };
 export function configurar(a) { if (a) ajustes = { ...ajustes, ...a }; }
 
@@ -31,10 +33,17 @@ function contexto() {
     sala.buffer = ir;
     sala.connect(salida);
   }
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
   clearTimeout(pausa);
-  pausa = setTimeout(() => ctx && ctx.state === "running" && ctx.suspend().catch(() => {}), 3000);
+  pausa = setTimeout(() => ctx && ctx.state === "running" && ctx.suspend().catch(() => {}), 20000);
   return ctx;
+}
+
+// Promesa que se resuelve con el margen hasta el primer sonido: casi nada si ya suena, más si acaba de despertar.
+let despertando = null;
+function listo(c) {
+  if (c.state === "running") return Promise.resolve(0.005);
+  if (!despertando) despertando = c.resume().then(() => { despertando = null; return 0.06; }, () => { despertando = null; return null; });
+  return despertando;
 }
 
 let ruidoBlanco = null, ruidoRosa = null;
@@ -117,31 +126,42 @@ export function sonar(nombre) {
     ultimo[nombre] = ahora;
     const c = contexto();
     if (!c) return;
-    const t = c.currentTime + 0.005;
-    const k = Math.pow(2, ((Math.random() - 0.5) * (nombre === "exito" ? 16 : 28)) / 1200); // ±14 cents
-    const vol = c.createGain();
-    vol.gain.value = (ajustes.volumen / 100) * (ahora - antes < 110 ? 0.7 : 1);
-    vol.connect(salida);
-    const seco = c.createGain(); seco.connect(vol);
-    const mojado = c.createGain(); mojado.connect(sala);
-    const mezcla = RECETAS[nombre](t, seco, k);
-    // Envío a la sala proporcional: los clics casi secos, el éxito con algo de cola.
-    const envio = c.createGain(); envio.gain.value = mezcla * (ajustes.volumen / 100); seco.connect(envio); envio.connect(mojado);
+    const rapido = ahora - antes < 110;
+    listo(c).then((margen) => {
+      if (margen == null || !ajustes.activo) return;
+      try {
+        const t = c.currentTime + margen;
+        const k = Math.pow(2, ((Math.random() - 0.5) * (nombre === "exito" ? 16 : 28)) / 1200); // ±14 cents
+        const vol = c.createGain();
+        vol.gain.value = (ajustes.volumen / 100) * (rapido ? 0.7 : 1);
+        vol.connect(salida);
+        const seco = c.createGain(); seco.connect(vol);
+        const mojado = c.createGain(); mojado.connect(sala);
+        const mezcla = RECETAS[nombre](t, seco, k);
+        // Envío a la sala proporcional: los clics casi secos, el éxito con algo de cola.
+        const envio = c.createGain(); envio.gain.value = mezcla * (ajustes.volumen / 100); seco.connect(envio); envio.connect(mojado);
+      } catch {}
+    });
   } catch {}
 }
 
-// Abrir el dispositivo de audio tarda ~100 ms: se prepara con la primera interacción, antes de que haga falta.
-export function preparar() { if (ajustes.activo) { try { contexto(); } catch {} } }
+// Abrir el dispositivo de audio tarda ~100 ms: se despierta al bajar el puntero o pulsar una tecla, antes de que haga falta.
+export function preparar() { if (ajustes.activo) { try { listo(contexto()); } catch {} } }
 
 // Clic táctil en cualquier botón del panel, sin tocar cada componente. Los interruptores tienen su propio sonido.
 export function escucharClics() {
   const on = (e) => {
     if (e.button !== 0) return;
-    const el = e.target.closest && e.target.closest("button, a.btn, a.card, [role='radio'], [role='tab'], .segbtn, summary");
+    const el = e.target.closest && e.target.closest("button, a.btn, a.card, [role='menuitem'], [role='option'], [role='radio'], [role='tab'], .segbtn, summary");
     if (!el || el.disabled || el.closest("[data-sin-sonido]") || el.getAttribute("role") === "switch" || el.closest(".switch")) return;
     sonar(el.matches("[role='radio'], [role='tab'], .segbtn, .colorbtn, .estrellas button") ? "suave" : "toque");
   };
-  window.addEventListener("pointerdown", preparar, { once: true, capture: true });
+  window.addEventListener("pointerdown", preparar, true);
   window.addEventListener("pointerdown", on, true);
-  return () => window.removeEventListener("pointerdown", on, true);
+  window.addEventListener("keydown", preparar, true);
+  return () => {
+    window.removeEventListener("pointerdown", preparar, true);
+    window.removeEventListener("pointerdown", on, true);
+    window.removeEventListener("keydown", preparar, true);
+  };
 }

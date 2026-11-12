@@ -3,7 +3,7 @@
 // la barra lateral: cambiar de cerebro, Ajustes, actualizaciones, novedades, registros y enlaces.
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bug, ChevronDown, ChevronRight, FolderOpen, Github, Layers, Plus, RefreshCw, ScrollText, Settings, Gift } from "lucide-react";
+import { Bug, ChevronDown, ChevronRight, FolderOpen, Github, Layers, Plus, RefreshCw, ScrollText, Settings, Gift, Volume2, VolumeX } from "lucide-react";
 import { post } from "../lib/api.js";
 import { t } from "../lib/i18n.js";
 import { GlimMark } from "./ui.jsx";
@@ -31,6 +31,8 @@ export function MenuCerebro({ data, onPedir }) {
   const raiz = useRef(null);
   const boton = useRef(null);
   const menu = useRef(null);
+  const cierreSub = useRef(null); // el submenú se cierra con retraso: da tiempo a llegar a él aunque el puntero se desvíe
+  useEffect(() => () => clearTimeout(cierreSub.current), []);
   const [pos, setPos] = useState(null);
   const id = useId();
   const c = (data && data.cerebro) || {};
@@ -38,6 +40,7 @@ export function MenuCerebro({ data, onPedir }) {
   const pa = app();
 
   const cerrar = (devolverFoco = true) => {
+    clearTimeout(cierreSub.current);
     setAbierto(false); setSub(false); setBuscando(null);
     if (devolverFoco && boton.current) boton.current.focus();
   };
@@ -72,6 +75,9 @@ export function MenuCerebro({ data, onPedir }) {
   const hacer = (fn) => () => { cerrar(false); fn(); };
   const ajustes = () => (pa && pa.abrirAjustes ? pa.abrirAjustes() : (location.hash = "#/ajustes"));
   const novedades = () => window.dispatchEvent(new Event("panel:novedades"));
+  const sonidos = data && data.ajustes && data.ajustes.sonidos;
+  const conSonido = !sonidos || sonidos.activo;
+  const alternarSonido = () => post("/api/ajustes", { sonidos: { activo: !conSonido } }).then(() => window.dispatchEvent(new Event("panel:reload"))).catch(() => {});
   const buscar = async () => {
     setBuscando("buscando");
     try {
@@ -95,7 +101,9 @@ export function MenuCerebro({ data, onPedir }) {
 
       {abierto && pos ? createPortal(
         <div className="cerebromenu" role="menu" id={id} aria-label={nombre} ref={menu} style={{ top: pos.top, left: pos.left }}>
-          <div className="cerebrosubwrap" onMouseEnter={() => setSub(true)} onMouseLeave={() => setSub(false)}>
+          <div className="cerebrosubwrap"
+            onMouseEnter={() => { clearTimeout(cierreSub.current); setSub(true); }}
+            onMouseLeave={() => { clearTimeout(cierreSub.current); cierreSub.current = setTimeout(() => setSub(false), 300); }}>
             <button type="button" role="menuitem" aria-haspopup="menu" aria-expanded={sub} onClick={() => setSub((v) => !v)}
               onKeyDown={(e) => { if (e.key === "ArrowRight") { e.preventDefault(); setSub(true); } }}>
               <Layers size={16} aria-hidden="true" /><span>{t("menu.cerebro")}</span><ChevronRight size={14} aria-hidden="true" className="fin" />
@@ -116,6 +124,10 @@ export function MenuCerebro({ data, onPedir }) {
           <hr />
           <button type="button" role="menuitem" onClick={hacer(ajustes)}>
             <Settings size={16} aria-hidden="true" /><span>{t("nav.ajustes")}</span><kbd className="fin">⌘ ,</kbd>
+          </button>
+          <button type="button" role="menuitem" data-sin-sonido onClick={hacer(alternarSonido)}>
+            {conSonido ? <VolumeX size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
+            <span>{t(conSonido ? "menu.silenciar" : "menu.activarSonidos")}</span>
           </button>
           <hr />
           <button type="button" role="menuitem" onClick={buscar} disabled={buscando === "buscando"} aria-live="polite">

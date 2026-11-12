@@ -23,7 +23,7 @@ const ESQUEMA = {
   // Icono de la app (server/icono.js): tinta del fondo y glifo.
   icono: {
     tinta: { ...uno("noche", "musgo", "naranja", "mandarina", "fresa", "frambuesa", "uva", "ciruela", "arandano", "aqua", "teal", "helecho", "moca", "grafito") },
-    glifo: { ...uno("destello", "musgo", "brote", "estrella", "ventana", "monograma", "avatar") },
+    glifo: { ...uno("glim", "destello", "musgo", "brote", "estrella", "ventana", "monograma", "avatar") },
   },
   // Sonidos de interfaz (src/lib/sonidos.js): clics y confirmaciones sintetizados.
   sonidos: { activo: si(true), interfaz: si(true), volumen: { ...uno(70, 30, 50, 100) } },

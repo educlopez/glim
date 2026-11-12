@@ -177,7 +177,7 @@ export default {
   "ajustes.globalPie": "Funciona desde cualquier app: muestra el panel, o lo oculta si ya está delante.",
   "ajustes.iconoApp": "Icono de la app",
   "ajustes.iconoAppSub": "Sigue la plantilla de iconos de macOS: forma de esquinas continuas, fondo de color con luz desde arriba y un glifo blanco. Cambia el Dock, la barra de menús y el icono de la app en el Finder.",
-  "ajustes.iconoAyuda": "Hecho con Icon Composer de Apple. El destello sobre fondo noche es el icono de Glim: macOS genera sus versiones oscura, transparente y tintada según Ajustes del Sistema → Aspecto. Uno personalizado se ve siempre igual.",
+  "ajustes.iconoAyuda": "Hecho con Icon Composer de Apple. El isotipo sobre fondo noche es el icono de Glim: macOS genera sus versiones oscura, transparente y tintada según Ajustes del Sistema → Aspecto. Uno personalizado se ve siempre igual.",
   "ajustes.iconoBarra": "Icono en la barra de menús",
   "ajustes.iconoBarraAyuda": "Con el estado de los encargos y lo que espera revisión.",
   "ajustes.iconoEn": "Icono en {ap}",
@@ -596,6 +596,8 @@ export default {
   "menu.buscando": "Buscando…",
   "menu.alDia": "Estás al día",
   "menu.errorBuscar": "No se pudo comprobar",
+  "menu.silenciar": "Silenciar sonidos",
+  "menu.activarSonidos": "Activar sonidos",
   "menu.registros": "Mostrar los registros",
   "menu.github": "Glim en GitHub",
   "menu.fallo": "Informar de un fallo",
@@ -916,4 +918,5 @@ export default {
   "ajustes.iconoVista": "Vista previa del icono",
   "ajustes.glifo.musgo": "Hoja",
   "ajustes.glifo.destello": "Destello",
+  "ajustes.glifo.glim": "Glim",
 };

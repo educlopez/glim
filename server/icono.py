@@ -56,8 +56,25 @@ def glifo_mascara(glifo, avatar=None):
     m = Image.new("L", (S, S), 0)
     d = ImageDraw.Draw(m)
     c = S / 2
-    if glifo == "destello":
-        # La marca de Glim: un destello alargado, cuatro puntas cóncavas (más alto que ancho), como el brillo de
+    if glifo == "glim":
+        # El isotipo de Glim: una cruz con dos esquinas opuestas curvas (arriba a la izquierda y abajo a la derecha),
+        # dibujada desde el SVG original en una rejilla de 48 unidades.
+        def p(x, y):
+            return (x / 48 * S, y / 48 * S)
+        def bez(p0, p1, p2, p3, n=120):
+            out = []
+            for i in range(n + 1):
+                t = i / n
+                a, b, cc, dd = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t ** 2, t ** 3
+                out.append((a * p0[0] + b * p1[0] + cc * p2[0] + dd * p3[0], a * p0[1] + b * p1[1] + cc * p2[1] + dd * p3[1]))
+            return out
+        pts = bez(p(20.4375, 9.75), p(20.4375, 15.6525), p(15.6525, 20.4375), p(9.75, 20.4375))
+        pts += [p(9.75, 27.5625), p(20.4375, 27.5625), p(20.4375, 38.25)]
+        pts += bez(p(27.5625, 38.25), p(27.5625, 32.3475), p(32.3475, 27.5625), p(38.25, 27.5625))
+        pts += [p(38.25, 20.4375), p(27.5625, 20.4375), p(27.5625, 9.75)]
+        d.polygon(pts, fill=255)
+    elif glifo == "destello":
+        # El destello (primera marca de Glim): un destello alargado, cuatro puntas cóncavas (más alto que ancho), como el brillo de
         # una luz sobre una superficie. Sobre la tinta noche: una luz pequeña en lo oscuro.
         pts = []
         for i in range(1440):
@@ -139,7 +156,7 @@ def glifo_mascara(glifo, avatar=None):
         r = 320 * K
         d.ellipse((c - r, c - r, c + r, c + r), fill=255)
     # Tamaño óptico: cada glifo ocupa más o menos lo mismo (en torno al 55 % de la forma) y queda centrado.
-    escala = {"destello": 0.86, "musgo": 0.78, "brote": 0.72, "estrella": 0.78, "ventana": 0.70, "monograma": 0.68, "avatar": 0.9}.get(glifo, 0.8)
+    escala = {"glim": 0.77, "destello": 0.86, "musgo": 0.78, "brote": 0.72, "estrella": 0.78, "ventana": 0.70, "monograma": 0.68, "avatar": 0.9}.get(glifo, 0.8)
     caja = m.getbbox()
     if caja:
         recorte = m.crop(caja)
@@ -197,7 +214,7 @@ def icono(tinta, glifo, apariencia=None, avatar=None):
 
 def barra(glifo, salida):
     # Imagen plantilla para la barra de menús: negro y alfa; macOS la tiñe sola en claro y oscuro.
-    g = glifo if glifo != "avatar" else "destello"
+    g = glifo if glifo != "avatar" else "glim"
     m = glifo_mascara(g)
     caja = m.getbbox()
     m = m.crop(caja)
@@ -265,9 +282,9 @@ if __name__ == "__main__":
         print("ok")
         sys.exit(0)
     if o.get("documento"):
-        documento_icon(o.get("tinta", "noche"), o.get("glifo", "destello"), o["documento"], o.get("avatar"))
+        documento_icon(o.get("tinta", "noche"), o.get("glifo", "glim"), o["documento"], o.get("avatar"))
     if o.get("salida"):
-        icono(o.get("tinta", "noche"), o.get("glifo", "destello"), avatar=o.get("avatar")).save(o["salida"])
+        icono(o.get("tinta", "noche"), o.get("glifo", "glim"), avatar=o.get("avatar")).save(o["salida"])
     if o.get("barra"):
-        barra(o.get("glifo", "destello"), o["barra"])
+        barra(o.get("glifo", "glim"), o["barra"])
     print("ok")

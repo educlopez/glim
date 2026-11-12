@@ -155,8 +155,10 @@ const RUTAS = [
   ["POST", /^\/api\/buffer\/sincronizar$/, async () => { const b = await buffer.sincronizar(); return { conectado: b.conectado, error: b.error || null, motivo: b.motivo || null, total: (b.posts || []).length }; }],
   ["POST", /^\/api\/posts\/([\w.-]+)\/fecha$/, (b, [id]) => borradores.moverFecha(id, b.dia)],
   ["GET", /^\/api\/ajustes$/, async () => ({ ajustes: aj.ajustes(), claves: await claves() })],
-  ["POST", /^\/api\/ajustes$/, async (b) => { const a = aj.guardar(b); if (b.icono) await icono.aplicar().catch((e) => console.warn("[panel] icono:", e.message)); return { ajustes: a }; }],
-  ["POST", /^\/api\/ajustes\/restablecer$/, async () => { const a = aj.restablecer(); await icono.aplicar().catch(() => {}); return { ajustes: a }; }],
+  // Los ajustes viven en .glim/, que el vigilante del repo ignora: se avisa aparte para que la ventana principal los
+  // aplique al momento cuando se cambian desde la ventana de Ajustes (sonidos, tema, densidad…).
+  ["POST", /^\/api\/ajustes$/, async (b) => { const a = aj.guardar(b); if (b.icono) await icono.aplicar().catch((e) => console.warn("[panel] icono:", e.message)); emitir("ajustes:cambio"); return { ajustes: a }; }],
+  ["POST", /^\/api\/ajustes\/restablecer$/, async () => { const a = aj.restablecer(); await icono.aplicar().catch(() => {}); emitir("ajustes:cambio"); return { ajustes: a }; }],
   ["POST", /^\/api\/icono\/vista$/, async (b) => { const g = await icono.generar({ tinta: b.tinta, glifo: b.glifo }); return { ruta: g.rel }; }],
   ["POST", /^\/api\/sistema\/reiniciar$/, () => vivo.reiniciar(encargos.ocupado())],
   ["POST", /^\/api\/sistema\/abrir$/, (b) => vivo.abrirCarpeta(b.que)],

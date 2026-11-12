@@ -331,6 +331,8 @@ html.is-app:has(.scrim, .quicklook, [role="dialog"]) .side::before { -webkit-app
 .cerebromas { flex: none; width: 28px; height: 28px; }
 .cerebromenu { position: fixed; z-index: 60; display: grid; min-width: 248px; padding: 5px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-3); animation: menuin 0.14s var(--ease-out); transform-origin: top left; }
 .cerebromenu.sub { position: absolute; top: -6px; left: calc(100% + 4px); min-width: 220px; transform-origin: top left; }
+/* Puente invisible sobre el hueco entre el elemento y el submenú: el puntero lo cruza sin salir del grupo. */
+.cerebromenu.sub::before { content: ""; position: absolute; top: 0; bottom: 0; left: -14px; width: 14px; }
 .cerebromenu hr { height: 1px; margin: 5px -5px; border: 0; background: var(--line); }
 .cerebromenu [role="menuitem"] { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 32px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); font: inherit; font-size: 13.5px; text-align: left; text-decoration: none; cursor: default; }
 .cerebromenu [role="menuitem"] > svg { flex: none; color: var(--ink-2); }

@@ -134,8 +134,9 @@ export default function App() {
   // El servidor vigila el repo y avisa en cuanto cambia un archivo (Claude, git pull, otra herramienta): se relee solo.
   useEffect(() => {
     let t = null;
-    const off = eventos.on("repo:cambio", () => { clearTimeout(t); t = setTimeout(reload, 250); });
-    return () => { clearTimeout(t); off(); };
+    const luego = () => { clearTimeout(t); t = setTimeout(reload, 250); };
+    const offs = [eventos.on("repo:cambio", luego), eventos.on("ajustes:cambio", luego)];
+    return () => { clearTimeout(t); offs.forEach((f) => f()); };
   }, [reload]);
 
   const save = useCallback(async (output) => {

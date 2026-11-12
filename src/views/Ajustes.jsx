@@ -190,7 +190,7 @@ const TINTAS = [
   ["noche", "#23263a"],
 ];
 // Las etiquetas salen de src/locales/*.js (ajustes.tinta.<id>, ajustes.glifo.<id>).
-const GLIFOS = ["destello", "musgo", "brote", "estrella", "ventana", "monograma", "avatar"];
+const GLIFOS = ["glim", "destello", "musgo", "brote", "estrella", "ventana", "monograma", "avatar"];
 
 // Editor del icono: vista previa grande, tintas y glifos. Una sola versión, igual en claro y en oscuro.
 function IconoApp({ a, cambiar }) {

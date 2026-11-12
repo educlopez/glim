@@ -105,7 +105,7 @@ export function Publicar({ onClose }) {
   }, [a && a.estado]);
   const empezar = async () => { setErr(null); try { await post("/api/publicar"); sonar("toque"); setTimeout(cargar, 400); } catch (x) { setErr(x.message); } };
   const cancelar = async () => { try { await post("/api/publicar/cancelar"); cargar(); } catch (x) { setErr(x.message); } };
-  const p = d.ajustes.publicar;
+  const p = (d && d.ajustes && d.ajustes.publicar) || {};
   const mostrarPasos = a && (vivo || (fin && a.inicio && Date.now() - new Date(a.inicio).getTime() < 3600e3));
   const c = e && e.cambios;
   return (
@@ -236,7 +236,7 @@ export function Actualizacion({ onReload }) {
 
   // Novedades al abrir tras una actualización (o la primera vez), como Pond.
   useEffect(() => {
-    if (!a || !d.ajustes.actualizaciones.novedades) return;
+    if (!a || !(d && d.ajustes && d.ajustes.actualizaciones && d.ajustes.actualizaciones.novedades)) return;
     const vista = leerVista();
     if (!vista || cmp(a.versionLocal, vista) > 0) { setDesde(vista); setHoja("novedades"); }
   }, [a && a.versionLocal]);
