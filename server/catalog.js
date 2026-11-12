@@ -8,10 +8,11 @@ export function media() {
   const files = walk(rutas.media, (p) => ["image", "video", "audio", "pdf"].includes(kindOf(p)), 5).filter((p) => !p.startsWith(`${rutas.mediaReferencias}/`));
   const groups = {};
   for (const p of files) (groups[path.dirname(p)] ||= []).push({ path: p, name: path.basename(p), kind: kindOf(p), mtime: mtime(p) });
-  // Carpetas de fotogramas de control (frames/ o secuencias 0001.png): ocultas por defecto.
+  // Carpetas de fotogramas de control (frames/ o secuencias 0001.png): ocultas por defecto. Igual las de media/_descartes/:
+  // piezas rechazadas que se guardan como ejemplo de lo que no hay que hacer (cada una con su LEEME.md).
   const isFrames = (dir, items) => /(^|\/)(frames|snapshots|\.raw)(\/|$)/.test(dir) || items.filter((m) => /^\d+\.(png|jpe?g)$/.test(m.name)).length > items.length * 0.7;
   return Object.entries(groups)
-    .map(([dir, items]) => ({ dir, frames: isFrames(dir, items), items: items.sort((a, b) => a.name.localeCompare(b.name)) }))
+    .map(([dir, items]) => ({ dir, frames: isFrames(dir, items), descarte: /(^|\/)_descartes(\/|$)/.test(dir), items: items.sort((a, b) => a.name.localeCompare(b.name)) }))
     .sort((a, b) => b.dir.localeCompare(a.dir));
 }
 
@@ -20,13 +21,16 @@ const CLAVE = cfg.clavesPlantillas;
 
 export function plantillas(mediaGroups) {
   const idx = (rutas.indiceRecursos && readJson(rutas.indiceRecursos)) || {};
-  const all = mediaGroups.filter((g) => !g.frames).flatMap((g) => g.items).filter((m) => m.kind === "video" || m.kind === "image");
-  const list = (idx.plantillas || []).map((p) => {
+  const all = mediaGroups.filter((g) => !g.frames && !g.descarte).flatMap((g) => g.items).filter((m) => m.kind === "video" || m.kind === "image");
+  // `mismo_que`: la entrada es otro nombre de una plantilla que ya está en la lista (se oculta para no duplicarla).
+  // `ejemplo_media`: ejemplos elegidos a mano (rutas de media/), que van primero; luego, los que casan por nombre.
+  const list = (idx.plantillas || []).filter((p) => !p.mismo_que).map((p) => {
     const key = CLAVE[p.id] || p.id.replace(/^(video-lab-|video-|carrusel-)/, "");
     const dir = String(p.ruta || "").split(" ")[0].replace(/\/$/, "");
     const readme = [`${dir}/README.md`, `${path.dirname(dir)}/README.md`].find((r) => exists(r)) || null;
-    const previews = key.length > 3 ? all.filter((m) => m.path.includes(key)).sort((a, b) => (a.kind === b.kind ? b.mtime - a.mtime : a.kind === "video" ? -1 : 1)).slice(0, 6) : [];
-    return { ...p, dir, readme, existe: exists(dir), previews };
+    const elegidos = [].concat(p.ejemplo_media || []).map((ruta) => all.find((m) => m.path === ruta)).filter(Boolean);
+    const porNombre = key.length > 3 ? all.filter((m) => m.path.includes(key) && !elegidos.includes(m)).sort((a, b) => (a.kind === b.kind ? b.mtime - a.mtime : a.kind === "video" ? -1 : 1)) : [];
+    return { ...p, dir, readme, existe: exists(dir), previews: [...elegidos, ...porNombre].slice(0, 6) };
   });
   return { meta: { version: idx.version, actualizado: idx.actualizado_madrid, cadencia: idx.cadencia, mezcla: idx.mezcla }, list };
 }

@@ -27,7 +27,8 @@ function TemplateCard({ pl, href }) {
         <p className="cardtext clamp3">{pl.para}</p>
         <div className="cardmeta">
           {pl.requiere_firma ? <span className="tag"><PenTool size={12} aria-hidden="true" /> {t("composer.firma")}</span> : null}
-          {!pl.existe ? <span className="tag warn"><FolderX size={12} aria-hidden="true" /> {t("plantillas.fueraRepo")}</span> : null}
+          {pl.ubicacion ? <span className="tag">{t("plantillas.enOtroSitio", { donde: pl.ubicacion })}</span>
+            : !pl.existe ? <span className="tag warn"><FolderX size={12} aria-hidden="true" /> {t("plantillas.fueraRepo")}</span> : null}
           {pl.previews.length > 1 ? <span className="tag">{t("plantillas.renders", { n: pl.previews.length })}</span> : null}
         </div>
       </div>

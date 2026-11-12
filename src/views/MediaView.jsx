@@ -35,8 +35,9 @@ export default function MediaView() {
   const kind = r.params.tipo || "video";
   const carpeta = r.params.carpeta || "";
   const frames = r.params.frames === "1";
+  const descartes = r.params.descartes === "1";
   const q = (r.params.q || "").toLowerCase();
-  const grupos = d.media.filter((g) => frames || !g.frames);
+  const grupos = d.media.filter((g) => (frames || !g.frames) && (descartes || !g.descarte));
   const items = useMemo(() => grupos
     .filter((g) => !carpeta || g.dir === carpeta)
     .flatMap((g) => g.items)
@@ -60,6 +61,7 @@ export default function MediaView() {
         </label>
         <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder={t("medios.buscar")} />
         <Switch checked={frames} onChange={(v) => r.set({ frames: v ? "1" : null })}>{t("medios.fotogramas")}</Switch>
+        <Switch checked={descartes} onChange={(v) => r.set({ descartes: v ? "1" : null })}>{t("medios.descartes")}</Switch>
       </PageHeader>
       {items.length ? (
         <>
@@ -67,7 +69,7 @@ export default function MediaView() {
             {items.slice(0, LIMITE).map((m) => (
               <a key={m.path} className="tile" href={r.withParams({ ver: m.path })} data-path={m.path}>
                 <Thumb path={m.path} kind={m.kind} fit={m.kind === "image" ? "contain" : "cover"} />
-                <span className="tilecap"><span className="tilename">{m.name}</span><span className="muted small">{m.path.split("/").slice(1, -1).join("/")} · {haceDias(m.mtime)}</span></span>
+                <span className="tilecap"><span className="tilename">{m.name}</span>{/(^|\/)_descartes\//.test(m.path) ? <span className="tag">{t("medios.descartado")}</span> : null}<span className="muted small">{m.path.split("/").slice(1, -1).join("/")} · {haceDias(m.mtime)}</span></span>
               </a>
             ))}
           </div>
