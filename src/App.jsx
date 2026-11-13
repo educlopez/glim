@@ -54,7 +54,7 @@ const NAV = [
   ] },
   { group: "nav.grupo.conocimiento", items: [
     { path: "biblioteca", label: "nav.biblioteca", icon: BookOpen, view: Library, match: (r) => r.path === "biblioteca" && r.params.doc !== REGLAS },
-    { path: "biblioteca", params: { doc: REGLAS }, label: "nav.reglas", icon: ShieldAlert, match: (r) => r.path === "biblioteca" && r.params.doc === REGLAS },
+    { path: "biblioteca", params: { doc: REGLAS, sec: "reglas-duras" }, label: "nav.reglas", icon: ShieldAlert, match: (r) => r.path === "biblioteca" && r.params.doc === REGLAS },
   ] },
   { group: "nav.grupo.panel", items: [
     { path: "ajustes", label: "nav.ajustes", icon: Settings, view: Ajustes },
@@ -71,7 +71,7 @@ function nav(data) {
     ...g,
     items: g.items
       .filter((it) => !mod || !MODULO[it.path] || mod[MODULO[it.path]])
-      .map((it) => (it.params && it.params.doc === REGLAS ? { ...it, params: { doc: reglas }, match: (r) => r.path === "biblioteca" && r.params.doc === reglas } : it.path === "biblioteca" ? { ...it, match: (r) => r.path === "biblioteca" && r.params.doc !== reglas } : it)),
+      .map((it) => (it.params && it.params.doc === REGLAS ? { ...it, params: { ...it.params, doc: reglas }, match: (r) => r.path === "biblioteca" && r.params.doc === reglas } : it.path === "biblioteca" ? { ...it, match: (r) => r.path === "biblioteca" && r.params.doc !== reglas } : it)),
   })).filter((g) => g.items.length);
 }
 

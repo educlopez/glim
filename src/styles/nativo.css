@@ -72,7 +72,7 @@ h2 { font-size: 15px; font-weight: 600; }
 .day { background: var(--surface); }
 .day.out { background: color-mix(in srgb, var(--surface) 92%, var(--ink) 4%); }
 .day.past:not(.today) { background: color-mix(in srgb, var(--surface) 96%, var(--ink) 2%); }
-.day.today .daynum { background: var(--accent); color: #fff; }
+.day.today .daynum { background: var(--accent-strong); color: #fff; }
 
 /* Panel lateral y formulario: superficie elevada, entrada tipo hoja */
 .scrim { background: rgb(0 0 0 / 0.18); }
@@ -122,8 +122,11 @@ html.is-app .main {
 html.is-app .pagehead { -webkit-app-region: drag; }
 html.is-app .pagehead :is(button, a, input, select, label, [role="radiogroup"], [role="group"]) { -webkit-app-region: no-drag; }
 html.is-app .drawer { top: 8px; right: 8px; bottom: 8px; border-radius: 12px; border-left: 0; overflow: hidden; box-shadow: var(--shadow-3); }
-html.is-app .library { height: calc(100dvh - 16px); }
-html.is-app .libnav { height: calc(100dvh - 16px); top: 0; }
+/* Biblioteca: la tarjeta no se desplaza; el índice y el lector llevan cada uno su scroll. */
+@media (min-width: 861px) {
+  html.is-app .main:has(> .library) { overflow: hidden; }
+  html.is-app .library { height: 100%; }
+}
 @media (prefers-color-scheme: dark) {
   html.is-app:not([data-tema="claro"]) .main { box-shadow: inset 0 0 0 0.7px rgb(255 255 255 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.5); }
 }
@@ -155,7 +158,7 @@ html:has(.ajustesapp.en-ventana), html:has(.ajustesapp.en-ventana) body { height
 .ajustesapp.en-ventana .ajside { overflow-y: auto; min-height: 0; }
 .ajustesapp.en-ventana .ajmain { min-height: 0; overflow-y: auto; }
 /* Los contenedores con scroll que no son fixed van posicionados: así lo absoluto de dentro (textos .sr) no alarga la página. */
-.ajmain, .main, .library, .libnav { position: relative; }
+.ajmain, .main, .library, .libnav, .libreader { position: relative; }
 .ajside { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s4) 10px; border-right: 1px solid var(--line); background: rgb(0 0 0 / 0.025); }
 .ajustesapp.en-ventana .ajside { padding-top: 52px; }
 .ajbuscar { min-width: 0; width: 100%; height: 30px; }

@@ -19,8 +19,8 @@
 
   /* Texto */
   --ink: rgb(31 35 40);
-  --ink-2: rgb(105 109 113);
-  --ink-3: rgb(135 138 142);
+  --ink-2: rgb(80 84 89);
+  --ink-3: rgb(98 102 107); /* 4,5:1 también sobre los fondos hundidos y seleccionados (WCAG AA) */
 
   /* Líneas y estados neutros */
   --line: rgb(0 0 0 / 0.09);
@@ -33,7 +33,7 @@
   /* Acento */
   --accent: #ff7528;
   --accent-ink: #b54300;
-  --accent-strong: #cf520d; /* relleno de botón principal: blanco encima con contraste suficiente */
+  --accent-strong: #c24c0b; /* relleno de botón principal: blanco encima a 4,8:1 */
   --accent-tint: rgb(255 117 40 / 0.12);
   --focus-ring: 0 0 0 1px var(--accent), 0 0 0 4px rgb(255 117 40 / 0.18);
 
@@ -46,6 +46,7 @@
   --warn: rgb(157 92 0);
   --warn-tint: rgb(210 153 34 / 0.12);
   --danger: rgb(207 34 46);
+  --danger-strong: rgb(196 43 43); /* relleno de botón de borrar: blanco encima a 5,6:1 en los dos temas */
 
   --r-xs: 4px;
   --r-s: 8px;
@@ -80,8 +81,8 @@
     --card-bg: rgb(255 255 255 / 0.05);
 
     --ink: rgb(230 237 243);
-    --ink-2: rgb(150 155 160);
-    --ink-3: rgb(110 114 119);
+    --ink-2: rgb(170 174 179);
+    --ink-3: rgb(152 156 161);
 
     --line: rgb(255 255 255 / 0.1);
     --line-strong: rgb(255 255 255 / 0.18);
@@ -117,8 +118,8 @@
     --card-bg: rgb(255 255 255 / 0.05);
 
     --ink: rgb(230 237 243);
-    --ink-2: rgb(150 155 160);
-    --ink-3: rgb(110 114 119);
+    --ink-2: rgb(170 174 179);
+    --ink-3: rgb(152 156 161);
 
     --line: rgb(255 255 255 / 0.1);
     --line-strong: rgb(255 255 255 / 0.18);

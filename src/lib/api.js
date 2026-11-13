@@ -1,6 +1,6 @@
 // Llamadas que escriben en el repo o lanzan a Claude. La cabecera x-panel la exige el servidor (protección CSRF).
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { marked } from "marked";
+import { Marked } from "marked";
 import { fmtFecha, t } from "./i18n.js";
 
 export async function post(url, body = {}) {
@@ -47,8 +47,10 @@ export function useEncargosPoll(onFin) {
   return { ...state, recargar };
 }
 
-// Markdown que viene de Claude: se escapa el HTML antes de pasarlo por marked.
-export const md = (s) => marked.parse(String(s || "").replace(/</g, "&lt;"), { gfm: true, breaks: true });
+// Markdown sin HTML crudo: el HTML del texto se muestra como texto. Escapar «<» antes de parsear rompía el código en
+// línea (`<cerebro>` salía como «&lt;cerebro>»), así que se escapa en el renderizador, solo en los nodos HTML.
+const seguro = new Marked({ gfm: true, breaks: true, renderer: { html: (t) => String(t.text ?? t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") } });
+export const md = (s) => seguro.parse(String(s || ""));
 
 export const duracion = (ms) => {
   if (!ms && ms !== 0) return null;
