@@ -74,6 +74,9 @@ export const Esquema = z.object({
     buffer: z.object({ importarDesde: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).default("2026-01-01") }).optional(),
     dub: z.object({ comentario: z.string().default("glim") }).optional(),
   }).default({}),
+  // Secciones propias del menú (galería, lista, tablero o documento). Cada una se valida aparte en server/secciones.js:
+  // una sección mal escrita sale como error en el panel y no impide arrancar.
+  secciones: z.array(z.record(z.string(), z.unknown())).default([]),
   // Prefijo de las claves del Llavero (servicio `<prefijo>-buffer`, `<prefijo>-dub`).
   llavero: z.string().regex(/^[\w.-]+$/).default("glim"),
 }).strict();

@@ -312,6 +312,14 @@
           "additionalProperties": false,
           "default": {}
         },
+        "secciones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "default": []
+        },
         "llavero": {
           "type": "string",
           "pattern": "^[\\w.-]+$",

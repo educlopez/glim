@@ -11,6 +11,7 @@ export const TIPOS_OBJETIVO = {
   get og() { return t("objetivo.og"); },
   get marca() { return t("objetivo.marca"); },
   get medio() { return t("objetivo.medio"); },
+  get lumi() { return "Lumi"; },
 };
 
 export const claveDe = (o) => (!o || o.tipo === "general" ? "general" : `${o.tipo}:${o.id}`);
@@ -48,6 +49,7 @@ export function infoObjetivo(d, o) {
     const m = d.marcas.find((x) => x.id === id);
     return { titulo: m ? m.data.nombre || id : id, thumb: m && m.logo ? { path: m.logo, kind: "image" } : null, href: hrefOf("marcas", { ver: id }) };
   }
+  if (tipo === "lumi") return { titulo: "Lumi", thumb: null, href: null };
   if (tipo === "medio") return { titulo: id.split("/").pop(), thumb: { path: id, kind: kindOf(id) }, href: hrefOf("medios", { ver: id }) };
   return { titulo: o.titulo || id, thumb: null, href: null };
 }

@@ -9,6 +9,7 @@ import { ESTADO, cfg } from "./cerebro.js";
 const F = path.join(ESTADO, "ajustes.json");
 const uno = (...v) => ({ tipo: "uno", v });
 const si = (d = true) => ({ tipo: "bool", d });
+const num = (d, min, max) => ({ tipo: "num", d, min, max });
 
 const ESQUEMA = {
   // Interfaz
@@ -52,6 +53,9 @@ const ESQUEMA = {
   publicar: { revisar: si(true), fusionarSola: si(true), esperaMin: { ...uno(2, 0, 5, 10) }, modelo: { ...uno("sonnet", "haiku", "opus") }, agente: { ...uno("claude", "codex") } },
   buffer: { cadaMin: { ...uno(10, 5, 15, 30, 60) }, autoPublicar: si(true) },
   dub: { activo: si(false), porDefecto: si(false), dominio: { tipo: "texto", d: "", max: 190 }, utm: si(true) },
+  // Lumi (components/AgentePanel.jsx): ancho del panel y conversación abierta (id de su encargo). Aquí y no en el
+  // navegador porque la app arranca cada vez en un puerto distinto y localStorage va por origen.
+  lumi: { ancho: num(400, 320, 680), conversacion: { tipo: "texto", d: "", max: 100 } },
 };
 export const SERVICIOS = { buffer: `${cfg.llavero}-buffer`, dub: `${cfg.llavero}-dub` };
 
@@ -67,6 +71,7 @@ function validar(esq, valor, base) {
     if (v === undefined) return [k, b];
     if (e.tipo === "bool") return [k, !!v];
     if (e.tipo === "uno") { const ok = e.v.find((x) => String(x) === String(v)); return [k, ok === undefined ? b : ok]; }
+    if (e.tipo === "num") { const n = Number(v); return [k, Number.isFinite(n) ? Math.min(e.max, Math.max(e.min, Math.round(n))) : b]; }
     return [k, String(v ?? "").trim().slice(0, e.max)];
   }));
 }

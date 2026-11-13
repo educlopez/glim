@@ -11,7 +11,8 @@ import { media, plantillas, carruseles, marcas, ogs } from "./catalog.js";
 import { referencias } from "./referencias.js";
 import { contexto as kitContexto } from "./kit.js";
 import { ajustes } from "./ajustes.js";
-import { cfg, rutas, ESTADO } from "./cerebro.js";
+import { cfg, rutas, ESTADO, CONFIG } from "./cerebro.js";
+import { guiaAgente as guiaSecciones } from "./secciones.js";
 import * as agentes from "./agentes.js";
 
 const DIR = path.join(ESTADO, "encargos");
@@ -150,8 +151,34 @@ export function resolver(obj, cat = catalogo()) {
     const usado = cat.posts.filter((p) => p.visual.archivos.includes(id)).map((p) => p.path);
     return { tipo, id, titulo: path.basename(id), path: id, contexto: [`Archivo ${id}.`, usado.length ? `- Lo usan: ${usado.join(", ")}` : "- Ningún borrador lo cita."].join("\n") };
   }
+  if (tipo === "lumi") {
+    const n = (x) => (Array.isArray(x) ? x.length : 0);
+    return {
+      tipo, id: null, titulo: "Lumi", path: null,
+      contexto: [
+        `Conversación con Lumi, la asistente de Glim (el panel local de ${P} sobre este repo).`,
+        `Lo que hay ahora: ${n(cat.posts)} borradores, ${n(cat.plantillas)} plantillas, ${n(cat.carruseles)} carruseles, ${n(cat.marcas)} marcas, ${n(cat.ogs)} OG animadas.`,
+        "## Secciones propias de Glim",
+        guiaSecciones(),
+      ].join("\n"),
+    };
+  }
   return { tipo: "general", id: null, titulo: "General", path: null, contexto: "Encargo general sobre el repo." };
 }
+
+// Lumi: la asistente del panel lateral (⌘J). Responde preguntas sobre el repo, hace cambios como un encargo general
+// y adapta Glim con secciones propias.
+const PASOS_LUMI = [
+  `Eres Lumi, la asistente de Glim. Habla con ${P} de tú, cercana y breve; nada de relleno.`,
+  `1. Si ${P} pregunta algo (qué hay programado, dónde está una cosa, qué dice una guía), mira el repo y responde. No cambies nada.`,
+  `2. Si pide un cambio de contenido (un borrador, una plantilla, un documento), lee antes ${cfg.reglas} y la guía que toque, y haz el cambio en los archivos del repo. Si hay render, genéralo en ${rutas.media}/ y míralo antes de darlo por bueno.`,
+  `3. Si pide adaptar Glim (una sección nueva, cambiar u ordenar las suyas), edita solo la clave "secciones" de ${CONFIG}, con el JSON válido (vuelve a leerlo al terminar). La carpeta o el archivo que enseñe la sección tiene que existir: si no existe, créalo con un primer elemento de ejemplo.`,
+  "4. Nunca publiques ni programes, no hagas commit, no muevas ni borres archivos que ya existen y no toques el código de Glim.",
+].join("\n");
+
+const FORMATO_LUMI = `## Cómo responder
+- Si solo era una pregunta: la respuesta, directa y corta.
+- Si has cambiado algo: **Hecho** (qué), **Archivos** (rutas creadas o editadas) y **Revisa** (qué mirar en el panel; una sección nueva sale sola en el menú).`;
 
 export function prompt(e, cat = catalogo()) {
   const obj = resolver(e.objetivo, cat) || { contexto: `Objetivo ${e.objetivo.tipo} ${e.objetivo.id} (ya no se encuentra en el repo).` };
@@ -168,6 +195,10 @@ export function prompt(e, cat = catalogo()) {
   if (refs.length) partes.push("## Referencias que adjunta", refs.map((r) => `- ${r.titulo || r.url || r.archivo}${r.url ? ` · ${r.url}` : ""}${r.archivo ? ` · archivo local ${r.archivo} (ábrelo con Read para verlo)` : ""}${r.thumb && r.thumb !== r.archivo ? ` · vista previa ${r.thumb}` : ""}${r.notas ? `\n  Notas de ${P}: ${r.notas}` : ""}`).join("\n") + "\n\nSon referencias de estilo internas: nunca las nombres en una pieza pública.");
   const kc = kitContexto(e.preset, e.firma);
   if (kc) partes.push(kc);
+  if (e.objetivo.tipo === "lumi") {
+    partes.push("## Cómo trabajar", PASOS_LUMI, FORMATO_LUMI);
+    return partes.join("\n\n");
+  }
   partes.push("## Cómo trabajar", [
     `1. Lee ${cfg.reglas}${rutas.skills ? ` y la guía o skill de ${rutas.skills}/ que toque` : " y la guía que toque"} antes de cambiar nada.`,
     `2. Haz el cambio en los archivos del repo. Si hay render, genéralo en ${rutas.media}/ y míralo antes de darlo por bueno.`,
@@ -178,7 +209,7 @@ export function prompt(e, cat = catalogo()) {
   return partes.join("\n\n");
 }
 
-const promptRonda = (texto) => [`${P} ha revisado el resultado y pide otra vuelta (texto literal):`, texto.split("\n").map((l) => `> ${l}`).join("\n"), "Mismas reglas que antes.", FORMATO].join("\n\n");
+const promptRonda = (texto, lumi = false) => [lumi ? `${P} sigue la conversación (texto literal):` : `${P} ha revisado el resultado y pide otra vuelta (texto literal):`, texto.split("\n").map((l) => `> ${l}`).join("\n"), "Mismas reglas que antes.", lumi ? FORMATO_LUMI : FORMATO].join("\n\n");
 
 // ---- Crear y mover ----
 
@@ -294,7 +325,7 @@ function ejecutar(e) {
   const agenteId = e.agente || aj.agente || "claude";
   const ad = agentes.ADAPTADORES[agenteId] || agentes.ADAPTADORES.claude;
   const nombre = ad.nombre;
-  const texto = n === 0 || !e.sesion ? prompt(e) : promptRonda(ronda.texto);
+  const texto = n === 0 || !e.sesion ? prompt(e) : promptRonda(ronda.texto, e.objetivo.tipo === "lumi");
   ronda.estado = "en-curso";
   ronda.inicio = ahora();
   ronda.prompt = texto;
@@ -305,7 +336,8 @@ function ejecutar(e) {
   // las siguientes la reutilizan; el repo no cambia hasta que se aplican sus cambios.
   let cwd = ROOT;
   if (e.copia && !e.copia.aplicada && !e.copia.descartada) cwd = aislada.ruta(e.id);
-  else if (aj.encargos.aislamiento === "copia") {
+  // Lumi trabaja siempre en el repo: lo que cambie (una sección nueva) tiene que verse en el panel nada más terminar.
+  else if (aj.encargos.aislamiento === "copia" && e.objetivo.tipo !== "lumi") {
     try { e.copia = aislada.crear(e.id); cwd = aislada.ruta(e.id); } catch (x) { guardar(e); return fallarAntes(e, n, `No se pudo crear la copia aislada: ${x.message}`); }
   }
   guardar(e);
@@ -405,7 +437,8 @@ function ejecutar(e) {
       r.error = signal ? "Detenido desde el panel" : (err.trim().split("\n").slice(-6).join("\n") || `Salió con código ${code}`);
       evento(e.id, { ronda: n, tipo: signal ? "sistema" : "fallo", texto: r.error });
     }
-    cur.estado = r.estado === "error" ? "error" : "revisar";
+    // Lumi es una conversación: su respuesta se lee en el panel, no se queda pidiendo revisión en el tablero.
+    cur.estado = r.estado === "error" ? "error" : cur.objetivo.tipo === "lumi" ? "hecho" : "revisar";
     if (cur.copia) { try { cur.copia.resumen = aislada.cambios(cur.id, cur.copia.base, { diff: false }).resumen; } catch {} }
     guardar(cur);
     siguiente();

@@ -14,6 +14,7 @@ import * as analisis from "./analisis.js";
 import * as lectores from "./lectores.js";
 import * as copias from "./archivo.js";
 import * as herramientas from "./herramientas.js";
+import * as secciones from "./secciones.js";
 import * as nav from "./navegador.js";
 import * as lz from "./lienzos.js";
 import * as icono from "./icono.js";
@@ -71,6 +72,7 @@ async function overview() {
     ajustes,
     claves: await claves(),
     cerebro: cerebro.resumen(),
+    secciones: secciones.resumen(),
   };
 }
 
@@ -191,6 +193,7 @@ const RUTAS = [
   ["POST", /^\/api\/sistema\/comprobar$/, () => vivo.estado(true)],
   ["POST", /^\/api\/sistema\/traer$/, () => vivo.traer(encargos.ocupado())],
   ["POST", /^\/api\/sistema\/npm$/, () => vivo.instalarDependencias()],
+  ["GET", /^\/api\/secciones\/([a-z0-9-]+)$/, (_, [id]) => secciones.contenido(id)],
   ["GET", /^\/api\/sistema\/herramientas$/, () => herramientas.estado(false)],
   ["POST", /^\/api\/sistema\/herramientas$/, () => herramientas.estado(true)],
   ["GET", /^\/api\/agentes$/, async () => ({ agentes: await agentesMod.disponibles(false), elegido: aj.ajustes().agente })],

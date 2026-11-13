@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Agentation } from "agentation";
-import { LayoutDashboard, CalendarDays, PenLine, LayoutTemplate, GalleryHorizontal, Share2, Palette, Film, BookOpen, ShieldAlert, Images, History, LoaderCircle, Layers, Settings, Spline, ListTodo } from "lucide-react";
+import { LayoutDashboard, CalendarDays, PenLine, LayoutTemplate, GalleryHorizontal, Share2, Palette, Film, BookOpen, ShieldAlert, Images, History, LoaderCircle, Layers, Settings, Spline, ListTodo, Folder, Image, Video, FileText, Lightbulb, Star, Bookmark, Tag, List, Table, SquareKanban, Link2, Mic, Music, Sparkles, Megaphone, Users, Box } from "lucide-react";
 import { DataContext, useOverview } from "./lib/data.js";
 import { useRoute, hrefOf, RouteContext } from "./lib/route.js";
 import { EncargosContext, useEncargosPoll } from "./lib/api.js";
@@ -27,6 +27,9 @@ import Brands from "./views/Brands.jsx";
 import MediaView from "./views/MediaView.jsx";
 import Library from "./views/Library.jsx";
 import Bienvenida from "./views/Bienvenida.jsx";
+import Seccion from "./views/Seccion.jsx";
+import { AgentePanel } from "./components/AgentePanel.jsx";
+import { LumiAvatar } from "./components/LumiAvatar.jsx";
 import { useGlimm } from "glimm/react";
 import { animado, opciones } from "./lib/barrido.js";
 
@@ -65,17 +68,29 @@ const NAV = [
 ];
 const VIEWS = Object.fromEntries(NAV.flatMap((g) => g.items).filter((i) => i.view).map((i) => [i.path, i.view]));
 
+// Iconos que puede pedir una sección propia (server/secciones.js → ICONOS).
+const ICONOS_SECCION = { folder: Folder, image: Image, images: Images, film: Film, video: Video, "share-2": Share2, palette: Palette, "layout-template": LayoutTemplate, "book-open": BookOpen, "file-text": FileText, lightbulb: Lightbulb, star: Star, bookmark: Bookmark, tag: Tag, calendar: CalendarDays, list: List, table: Table, kanban: SquareKanban, link: Link2, mic: Mic, music: Music, sparkles: Sparkles, megaphone: Megaphone, users: Users, box: Box };
+
 // Qué módulo del cerebro necesita cada vista (glim.config.json → rutas). Sin él, la vista no sale en el menú.
 const MODULO = { registro: "registro", kit: "kit", plantillas: "plantillas", carruseles: "carruseles", og: "ogs", marcas: "marcas" };
 function nav(data) {
   const mod = (data && data.cerebro && data.cerebro.modulos) || null;
   const reglas = (data && data.cerebro && data.cerebro.reglas) || "AGENTS.md";
-  return NAV.map((g) => ({
+  const grupos = NAV.map((g) => ({
     ...g,
     items: g.items
       .filter((it) => !mod || !MODULO[it.path] || mod[MODULO[it.path]])
       .map((it) => (it.params && it.params.doc === REGLAS ? { ...it, params: { ...it.params, doc: reglas }, match: (r) => r.path === "biblioteca" && r.params.doc === reglas } : it.path === "biblioteca" ? { ...it, match: (r) => r.path === "biblioteca" && r.params.doc !== reglas } : it)),
-  })).filter((g) => g.items.length);
+  }));
+  // Secciones propias del cerebro (glim.config.json → secciones): en su grupo o en «Tus secciones», antes de «Panel».
+  const propias = (data && data.secciones && data.secciones.secciones) || [];
+  for (const s of propias) {
+    const clave = `nav.grupo.${s.grupo}`;
+    let g = grupos.find((x) => x.group === clave);
+    if (!g) { g = { group: clave, items: [] }; grupos.splice(Math.max(0, grupos.length - 1), 0, g); }
+    g.items = [...g.items, { path: `s/${s.id}`, texto: s.titulo, icon: ICONOS_SECCION[s.icono] || Folder, count: () => s.n || null }];
+  }
+  return grupos.filter((g) => g.items.length);
 }
 
 export default function App() {
@@ -138,6 +153,20 @@ export default function App() {
   }, [!!data, route.path]);
   useEffect(() => escucharClics(), []);
 
+  // Lumi, la asistente (⌘J o el botón de la barra lateral). abrirAgente(texto) la abre desde cualquier vista.
+  const [agente, setAgente] = useState(null);
+  // Ancho: mientras se arrastra, solo en memoria; al soltar, a los ajustes (server/ajustes.js → lumi.ancho).
+  const [anchoArrastre, setAnchoArrastre] = useState(null);
+  const anchoAgente = anchoArrastre || (aj && aj.lumi && aj.lumi.ancho) || 400;
+  const fijarAncho = useCallback((w) => { fetch("/api/ajustes", { method: "POST", headers: { "Content-Type": "application/json", "x-panel": "1" }, body: JSON.stringify({ lumi: { ancho: w } }) }).catch(() => {}).finally(() => setTimeout(() => setAnchoArrastre(null), 600)); }, []);
+  useEffect(() => {
+    const abrir = (e) => setAgente({ texto: (e.detail && e.detail.texto) || "" });
+    const tecla = (e) => { if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "j") { e.preventDefault(); setAgente((x) => (x ? null : { texto: "" })); } };
+    window.addEventListener("glim:agente", abrir);
+    window.addEventListener("keydown", tecla);
+    return () => { window.removeEventListener("glim:agente", abrir); window.removeEventListener("keydown", tecla); };
+  }, []);
+
   // Las vistas que escriben en el repo (referencias, registro) piden releerlo con este evento.
   useEffect(() => {
     const on = () => reload();
@@ -161,6 +190,7 @@ export default function App() {
     reload();
   }, [reload]);
 
+  const idSeccion = route.path.startsWith("s/") ? route.path.slice(2) : null;
   const View = VIEWS[route.path];
   const post = data && route.params.ver && route.path !== "encargos" ? data.posts.find((p) => p.id === route.params.ver) : null;
   const trabajando = enc.ocupado && enc.lista.find((e) => e.id === enc.ocupado);
@@ -199,7 +229,7 @@ export default function App() {
     <RouteContext.Provider value={route}>
       <DataContext.Provider value={data}>
       <EncargosContext.Provider value={enc}>
-        <div className="shell">
+        <div className={`shell ${agente ? "con-agente" : ""}`} style={agente ? { "--agente-w": `${anchoAgente}px` } : undefined}>
           <aside className="side">
             <MenuCerebro data={data} onPedir={() => route.set({ pedir: "general" })} />
             <nav aria-label={t("app.secciones")} className="nav">
@@ -209,10 +239,10 @@ export default function App() {
                   {g.items.map((it) => {
                     const active = it.match ? it.match(route) : route.path === it.path;
                     return (
-                      <a key={it.label} href={hrefOf(it.path, it.params)} className="navitem" aria-current={active ? "page" : undefined}
+                      <a key={it.path + (it.label || "")} href={hrefOf(it.path, it.params)} className="navitem" aria-current={active ? "page" : undefined}
                         onClick={it.path === "ajustes" && window.panelApp && window.panelApp.abrirAjustes ? (e) => { e.preventDefault(); window.panelApp.abrirAjustes(); } : undefined}>
                         <it.icon size={16} aria-hidden="true" />
-                        <span>{t(it.label)}</span>
+                        <span>{it.texto || t(it.label)}</span>
                         {data && it.count && it.count(data, enc) ? <span className="count">{it.count(data, enc)}</span> : null}
                       </a>
                     );
@@ -220,6 +250,11 @@ export default function App() {
                 </div>
               ))}
             </nav>
+            <button type="button" className="navitem agentebtn" aria-pressed={!!agente} onClick={() => setAgente(agente ? null : { texto: "" })}>
+              <LumiAvatar size={16} still />
+              <span>{t("agente.abrir")}</span>
+              <kbd className="agentetecla">⌘J</kbd>
+            </button>
             <div className="sidefoot">
               {trabajando ? (
                 <a className="working" href={hrefOf("encargos", { ver: trabajando.id })}>
@@ -233,8 +268,9 @@ export default function App() {
           <main className={`main ${["biblioteca", "ajustes"].includes(route.path) || (route.path === "lienzos" && route.params.l) ? "flush" : ""}`}>
             {error ? <div className="banner" role="alert">{t("app.errorRepo", { error })}<code>npm run dev</code>{t("app.errorRepoFin")}</div> : null}
             {!data ? (!error ? <p className="muted pad">{t("app.leyendoRepo")}</p> : null)
-              : View ? <View /> : <div className="pad"><p>{t("app.noExiste")}</p><a href="#/">{t("app.volverResumen")}</a></div>}
+              : idSeccion ? <Seccion id={idSeccion} /> : View ? <View /> : <div className="pad"><p>{t("app.noExiste")}</p><a href="#/">{t("app.volverResumen")}</a></div>}
           </main>
+          {data && agente ? <AgentePanel textoInicial={agente.texto} onClose={() => setAgente(null)} ancho={anchoAgente} onAncho={setAnchoArrastre} onFin={fijarAncho} /> : null}
           {post ? <PostDetail post={post} onClose={() => route.set({ ver: null })} /> : null}
           {data && route.params.pedir ? <Composer key={route.params.pedir + (route.params.nota || "") + (route.params.preset || "")} /> : null}
           {import.meta.env.DEV ? <Agentation appName="Glim" useHashLocation endpoint={endpoint}

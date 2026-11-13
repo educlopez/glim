@@ -42,7 +42,8 @@ function Cronometro({ desde }) {
 const NOMBRE_AGENTE = { claude: "Claude", codex: "Codex", cursor: "Cursor", opencode: "OpenCode", gemini: "Gemini", get propio() { return t("encargos.elAgente"); } };
 export const nombreAgente = (id) => NOMBRE_AGENTE[id] || "Claude";
 
-function Ronda({ ronda, n, eventos, viva, agente }) {
+export function Ronda({ ronda, n, eventos, viva, agente, quien }) {
+  const nombre = quien || nombreAgente(ronda.agente || agente);
   // El último mensaje de Claude es el resultado: se enseña abajo, no también en los pasos.
   const pasos = eventos.filter((e) => e.ronda === n && e.tipo !== "resultado" && !(e.tipo === "texto" && ronda.resultado && e.texto.trim() === ronda.resultado.trim()));
   const [abierto, setAbierto] = useState(viva);
@@ -63,10 +64,10 @@ function Ronda({ ronda, n, eventos, viva, agente }) {
           </button>
           {abierto ? <ol className="pasos">{pasos.map((ev, i) => <Paso key={i} ev={ev} />)}</ol> : null}
         </div>
-      ) : viva ? <p className="muted small"><LoaderCircle size={14} className="spin" aria-hidden="true" /> {t("encargos.arrancando", { agente: nombreAgente(ronda.agente || agente) })}</p> : null}
+      ) : viva ? <p className="muted small"><LoaderCircle size={14} className="spin" aria-hidden="true" /> {t("encargos.arrancando", { agente: nombre })}</p> : null}
       {ronda.resultado ? (
         <div className="resultado">
-          <p className="rondawho">{t("encargos.responde", { agente: nombreAgente(ronda.agente || agente) })}</p>
+          <p className="rondawho">{t("encargos.responde", { agente: nombre })}</p>
           <div className="prose" dangerouslySetInnerHTML={{ __html: md(ronda.resultado.replace(/^\s*[-*]?\s*\**DECISI[ÓO]N:?\**:?.*$/gim, "").trim()) }} />
         </div>
       ) : null}

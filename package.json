@@ -37,6 +37,7 @@
   "dependencies": {
     "electron-updater": "^6.8.11",
     "glimm": "0.4.1",
+    "open-bot-avatar": "0.2.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {

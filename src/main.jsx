@@ -7,6 +7,7 @@ import "./styles/tokens.css";
 import "./styles/app.css";
 import "./styles/trabajo.css";
 import "./styles/nativo.css";
+import "./styles/secciones.css";
 
 // GlimmProvider: los barridos de vista entera (entrar tras la bienvenida, cambiar el tema). Ver src/lib/barrido.js.
 createRoot(document.getElementById("root")).render(

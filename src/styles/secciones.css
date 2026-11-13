@@ -1,0 +1,108 @@
+/* Secciones propias (views/Seccion.jsx) y Lumi (components/AgentePanel.jsx, LumiAvatar.jsx). Solo tokens. */
+
+/* ── Galería ─────────────────────────────────────────── */
+.secmedia { aspect-ratio: 16 / 10; overflow: hidden; }
+.secmedia .thumb { position: absolute; inset: 0; }
+.secframe { position: relative; width: 100%; overflow: hidden; background: var(--bg-sunk); }
+.secmedia .secframe { position: absolute; inset: 0; }
+.secframe iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: #fff; }
+.drawer .secframe { border: 1px solid var(--line); border-radius: var(--r-m); }
+.secfuente { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Lista ───────────────────────────────────────────── */
+.sectabla { display: grid; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--surface); overflow: hidden; }
+.secfila { display: grid; grid-template-columns: minmax(200px, 2fr) repeat(var(--cols, 0), minmax(90px, 1fr)); gap: var(--s4); align-items: center; padding: 10px var(--s4); color: var(--ink); text-decoration: none; font-size: 13px; }
+.secfila + .secfila { border-top: 1px solid var(--line-soft); }
+.secfila.cabecera { background: var(--bg-sunk); color: var(--ink-2); font-size: 12px; font-weight: 600; }
+a.secfila:hover { background: var(--surface-hover); }
+.secfila > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.secfilatitulo { font-weight: 550; }
+.secitem .cardbody { padding: var(--s3); }
+.seccdoc { max-width: 72ch; }
+
+/* ── Botón de Lumi en la barra lateral ───────────────── */
+.agentebtn { display: flex; align-items: center; width: auto; margin-top: var(--s2); border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: default; }
+.agentebtn:hover { background: var(--hover); }
+.agentebtn[aria-pressed="true"] { background: var(--selected); font-weight: 600; }
+.navitem.agentebtn > .lumiavatar { flex: none; margin: -1px 0; }
+.agentebtn .agentetecla { flex: none; margin-left: auto; padding: 1px 6px; border: 0; border-radius: 4px; background: var(--control); color: var(--ink-3); font: 500 10.5px/1.5 var(--sans); }
+
+/* ── Lumi: un panel hermano de la tarjeta de contenido, como los paneles de Rex ──
+   Misma caja que .main en la app (8 px al cristal, radio 10, borde de medio píxel), separada de ella por un hueco
+   de 8 px de cristal; el tirador vive en ese hueco. Cabecera compacta: título a la izquierda, iconos a la derecha. */
+.shell.con-agente { grid-template-columns: var(--side-w) minmax(0, 1fr) var(--agente-w, 400px); }
+.lumi {
+  position: sticky; top: 0; height: 100dvh; min-width: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  background: var(--content-bg); border-left: 1px solid var(--line);
+}
+html.is-app .lumi {
+  top: 8px; height: calc(100dvh - 16px); margin: 8px 8px 8px 0; border-left: 0; border-radius: 10px;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.1), 0 1px 3px rgb(0 0 0 / 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  html.is-app:not([data-tema="claro"]) .lumi { box-shadow: inset 0 0 0 0.7px rgb(255 255 255 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.5); }
+}
+html.is-app[data-tema="oscuro"] .lumi { box-shadow: inset 0 0 0 0.7px rgb(255 255 255 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.5); }
+.lumi > *:not(.lumitirador) { min-width: 0; }
+html.is-app .lumi > .lumihead { border-radius: 10px 10px 0 0; }
+
+/* Tirador: el hueco entre las dos tarjetas. Al pasar, una línea fina de acento; al arrastrar, cursor de columna. */
+.lumitirador { position: absolute; top: 0; bottom: 0; left: -8px; z-index: 2; width: 8px; cursor: col-resize; touch-action: none; }
+.lumitirador::after { content: ""; position: absolute; top: 14px; bottom: 14px; left: 3px; width: 2px; border-radius: 2px; background: transparent; transition: background-color 120ms var(--ease-out); }
+.lumitirador:hover::after, .lumitirador:focus-visible::after, html.redimensionando .lumitirador::after { background: var(--accent); }
+.lumitirador:focus-visible { outline: 0; }
+html.redimensionando, html.redimensionando * { cursor: col-resize !important; user-select: none; -webkit-user-select: none; }
+html.redimensionando iframe { pointer-events: none; }
+
+.lumihead { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); height: 36px; padding: 0 6px 0 12px; border-bottom: 1px solid var(--line); -webkit-app-region: drag; }
+.lumititulo { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; letter-spacing: -0.005em; }
+.lumiavatar { display: inline-block; flex: none; position: relative; }
+.lumimarca { margin: 0 -2px 0 -3px; }
+.lumiacciones { display: inline-flex; gap: 2px; -webkit-app-region: no-drag; }
+.lumiboton { display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-3); cursor: default; }
+.lumiboton:hover { background: var(--hover); color: var(--ink); }
+.lumiboton:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+
+.lumicuerpo { overflow-y: auto; overscroll-behavior: contain; padding: 14px; display: grid; align-content: start; gap: var(--s4); }
+.lumicuerpo > *, .lumicuerpo .ronda, .lumicuerpo .resultado { min-width: 0; }
+.lumicuerpo .ronda { margin: 0; padding-bottom: var(--s4); }
+.lumicuerpo .rondapide { padding: 9px 12px; }
+.lumicuerpo .rondapide p { font-size: 13px; }
+.lumicuerpo .prose { overflow-wrap: anywhere; font-size: 13px; }
+.lumicuerpo .prose pre { white-space: pre-wrap; }
+.lumicuerpo .resultado { padding: 12px; }
+.lumicuerpo .paso { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 2px 8px; }
+.lumicuerpo .pasodetalle { grid-column: 2; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lumivacio { display: grid; gap: 10px; padding-top: 6px; }
+.lumivacio p { margin: 0; font-size: 13px; line-height: 1.5; }
+.lumigrande { margin: 0 0 2px -6px; }
+.lumisug { display: grid; gap: 6px; margin-top: 4px; }
+.lumichip { padding: 8px 11px; border: 0; border-radius: 8px; background: var(--card-bg); color: var(--ink); font: inherit; font-size: 12.5px; line-height: 1.4; text-align: left; cursor: default; }
+.lumichip:hover { background: var(--selected); }
+.lumichip:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.lumi-nuevas { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.lumiform { display: grid; gap: 4px; padding: 10px; border-top: 1px solid var(--line); }
+.lumicaja { position: relative; display: grid; border: 1px solid var(--line); border-radius: 10px; background: var(--control); transition: border-color 120ms var(--ease-out), box-shadow 120ms var(--ease-out); }
+.lumicaja:focus-within { border-color: var(--accent); box-shadow: var(--focus-ring); }
+.lumicaja textarea { width: 100%; min-height: 44px; max-height: 180px; resize: none; padding: 9px 40px 9px 11px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 13px; line-height: 1.45; field-sizing: content; }
+.lumicaja textarea:focus { outline: 0; }
+.lumienviar { position: absolute; right: 6px; bottom: 6px; display: grid; place-items: center; width: 26px; height: 26px; border: 0; border-radius: 7px; background: var(--accent-strong); color: #fff; cursor: default; }
+.lumienviar:disabled { background: var(--control); color: var(--ink-3); }
+.lumienviar:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.lumipie { margin: 0; padding: 0 2px; font-size: 11px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-animacion="no"]) .lumi { animation: lumi-entra 200ms var(--ease-out) both; }
+}
+@keyframes lumi-entra { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+
+/* Ventanas estrechas: Lumi va encima del contenido, como una hoja. */
+@media (max-width: 1000px) {
+  .shell.con-agente { grid-template-columns: var(--side-w) minmax(0, 1fr); }
+  .lumi { position: fixed; top: 0; right: 0; bottom: 0; z-index: 40; width: min(400px, 100vw); box-shadow: var(--shadow-3); }
+  html.is-app .lumi { top: 8px; right: 8px; bottom: 8px; height: auto; margin: 0; }
+  .lumitirador { display: none; }
+}
