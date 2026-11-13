@@ -1,5 +1,6 @@
-
+import { useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
+import { barridoEn } from "../lib/barrido.js";
 import { useData } from "../lib/data.js";
 import { ESTADOS_ENCARGO, hace, duracion } from "../lib/api.js";
 import { TIPOS_OBJETIVO, infoObjetivo } from "../lib/objetivos.js";
@@ -18,8 +19,19 @@ export function EstadoEncargo({ estado }) {
 
 // Tarjeta de encargo: qué se tocó (título), qué se pidió (texto) y una línea de datos. Sin franja de color, sin
 // hueco de miniatura cuando no la hay y sin iconos en los datos. En el tablero el estado ya lo dice la columna.
+// Último estado visto de cada encargo. Fuera del componente porque al cambiar de columna la tarjeta se monta de nuevo.
+const vistos = new Map();
+const TRABAJANDO = ["cola", "en-curso"];
+
 export function EncargoCard({ e, href, sinEstado = false }) {
   const d = useData();
+  const ref = useRef(null);
+  // Un encargo que termina y queda para revisar: la banda cruza su tarjeta.
+  useEffect(() => {
+    const antes = vistos.get(e.id);
+    vistos.set(e.id, e.estado);
+    if (TRABAJANDO.includes(antes) && e.estado === "revisar") requestAnimationFrame(() => barridoEn(ref.current, { direction: "ltr" }));
+  }, [e.id, e.estado]);
   const info = infoObjetivo(d, e.objetivo);
   const titulo = e.objetivo.tipo === "general" ? t("objetivo.general") : info.titulo || e.objetivo.titulo;
   const tipo = TIPOS_OBJETIVO[e.objetivo.tipo] || e.objetivo.tipo;
@@ -32,7 +44,7 @@ export function EncargoCard({ e, href, sinEstado = false }) {
     e.ultima && e.ultima.duracion ? duracion(e.ultima.duracion) : null,
   ].filter(Boolean);
   return (
-    <a className={`enccard enc-${e.estado}`} href={href} data-encargo={e.id} data-path={e.objetivo.path || undefined}>
+    <a ref={ref} className={`enccard enc-${e.estado}`} href={href} data-encargo={e.id} data-path={e.objetivo.path || undefined}>
       <div className="enccard-head">
         {info.thumb ? <span className="encobjthumb"><Thumb path={info.thumb.path} kind={info.thumb.kind} /></span> : null}
         <span className="encobjtitle">{titulo}</span>

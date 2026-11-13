@@ -224,6 +224,7 @@ function Listo({ ir }) {
   const terminar = async () => {
     setAbriendo(true);
     await marcarNovedadesVistas();
+    try { sessionStorage.setItem("glim:entrada", "1"); } catch { /* sin almacenamiento: entra sin barrido */ }
     const res = window.panelApp && window.panelApp.terminarBienvenida ? await window.panelApp.terminarBienvenida().catch(() => null) : null;
     if (!res || !res.transformada) r.go("");
   };

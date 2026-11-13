@@ -27,6 +27,8 @@ import Brands from "./views/Brands.jsx";
 import MediaView from "./views/MediaView.jsx";
 import Library from "./views/Library.jsx";
 import Bienvenida from "./views/Bienvenida.jsx";
+import { useGlimm } from "glimm/react";
+import { animado, opciones } from "./lib/barrido.js";
 
 const MCP = "http://localhost:4747";
 const REGLAS = "AGENTS.md"; // marcador; nav() lo cambia por el archivo de reglas del cerebro
@@ -105,19 +107,35 @@ export default function App() {
   // Ajustes de interfaz: atributos en <html> para el CSS y, en la app de Mac, tema, desenfoque, icono y atajo nativos.
   const aj = data && data.ajustes;
   const ajKey = aj ? JSON.stringify(aj) : "";
+  const { sweep } = useGlimm();
+  const temaPrevio = useRef(null);
   useEffect(() => {
     if (!aj) return;
     const h = document.documentElement;
-    if (aj.tema === "sistema") delete h.dataset.tema; else h.dataset.tema = aj.tema;
-    h.dataset.estilo = aj.estilo;
-    h.dataset.tenir = aj.tenir ? "si" : "no";
-    h.dataset.paneles = aj.panelesCristal ? "cristal" : "opacos";
-    h.dataset.densidad = aj.densidad;
-    h.dataset.animacion = aj.animacion;
-    h.style.setProperty("--side-font", `${aj.textoLateral}px`);
+    const aplicar = () => {
+      if (aj.tema === "sistema") delete h.dataset.tema; else h.dataset.tema = aj.tema;
+      h.dataset.estilo = aj.estilo;
+      h.dataset.tenir = aj.tenir ? "si" : "no";
+      h.dataset.paneles = aj.panelesCristal ? "cristal" : "opacos";
+      h.dataset.densidad = aj.densidad;
+      h.dataset.animacion = aj.animacion;
+      h.style.setProperty("--side-font", `${aj.textoLateral}px`);
+      if (window.panelApp && window.panelApp.ajustes) window.panelApp.ajustes(aj);
+    };
+    // Cambiar el tema (aquí o desde la ventana de Ajustes): la banda cruza y deja detrás el tema nuevo.
+    const cambiaTema = temaPrevio.current !== null && temaPrevio.current !== aj.tema;
+    temaPrevio.current = aj.tema;
+    if (cambiaTema && animado()) sweep(aplicar, opciones({ direction: "ttb" })); else aplicar();
     configurarSonidos(aj.sonidos);
-    if (window.panelApp && window.panelApp.ajustes) window.panelApp.ajustes(aj);
   }, [ajKey]);
+
+  // Al terminar la bienvenida, la app entra con un barrido (Bienvenida.jsx deja la marca en sessionStorage).
+  useEffect(() => {
+    if (!data || route.path === "bienvenida") return;
+    let entrada = null;
+    try { entrada = sessionStorage.getItem("glim:entrada"); sessionStorage.removeItem("glim:entrada"); } catch { /* sin almacenamiento: sin barrido */ }
+    if (entrada && animado()) sweep(() => {}, opciones({ sweepMs: 1400 }));
+  }, [!!data, route.path]);
   useEffect(() => escucharClics(), []);
 
   // Las vistas que escriben en el repo (referencias, registro) piden releerlo con este evento.

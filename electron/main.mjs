@@ -270,15 +270,27 @@ function crearVentana() {
 }
 
 // Ajustes en su propia ventana, como en Rex y en las apps de Apple (⌘,).
+// Centra una ventana en la pantalla donde está otra (con varias pantallas, macOS la abriría en la principal).
+function centrarJunto(w, ref) {
+  if (!w || !ref || ref.isDestroyed()) return;
+  const { workArea } = screen.getDisplayMatching(ref.getBounds());
+  if (screen.getDisplayMatching(w.getBounds()).id === screen.getDisplayMatching(ref.getBounds()).id && w.isVisible()) return;
+  const { width, height } = w.getBounds();
+  w.setPosition(Math.round(workArea.x + (workArea.width - width) / 2), Math.round(workArea.y + (workArea.height - height) / 2));
+}
+
 function abrirAjustes(seccion) {
   const hash = `#/ajustes?ventana=1${seccion ? `&seccion=${encodeURIComponent(seccion)}` : ""}`;
-  if (winAjustes) { if (seccion) winAjustes.loadURL(base + hash); winAjustes.show(); winAjustes.focus(); return; }
+  // La pantalla de referencia es la de la ventana con foco o, si no hay, la de la ventana principal.
+  const ref = [BrowserWindow.getFocusedWindow(), win].find((x) => x && !x.isDestroyed() && x !== winAjustes);
+  if (winAjustes) { if (seccion) winAjustes.loadURL(base + hash); centrarJunto(winAjustes, ref); winAjustes.show(); winAjustes.focus(); return; }
   winAjustes = new BrowserWindow({
     width: 900, height: 700, minWidth: 720, minHeight: 480, title: "Ajustes", show: false,
     titleBarStyle: "hiddenInset", trafficLightPosition: { x: 18, y: 18 }, backgroundColor: "#00000000",
     vibrancy: "sidebar", visualEffectState: "followWindow", fullscreenable: false,
     webPreferences: PREFERENCIAS,
   });
+  centrarJunto(winAjustes, ref);
   winAjustes.loadURL(base + hash);
   prepararVentana(winAjustes);
   winAjustes.once("ready-to-show", () => winAjustes.show());
