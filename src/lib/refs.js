@@ -82,6 +82,9 @@ export function duplicadas(lista) {
   for (let i = 0; i < conHash.length; i++) {
     for (let j = i + 1; j < conHash.length; j++) {
       const d = hamming(conHash[i].analisis.dhash, conHash[j].analisis.dhash);
+      // Dos vídeos que duran distinto no son el mismo aunque arranquen igual (fundido a negro, logo de entrada).
+      const da = conHash[i].analisis.duracion, db = conHash[j].analisis.duracion;
+      if (da && db && Math.abs(da - db) > 1) continue;
       if (d <= UMBRAL) add(conHash[i], conHash[j], d === 0 ? "identica" : "parecida", d);
     }
   }

@@ -19,6 +19,9 @@ import { Thumb, Player, HoverVideo } from "../components/Media.jsx";
 const FUENTES = [{ id: "todas", get label() { return t("refs.fuente.todas"); } }, { id: "propia", get label() { return t("refs.fuente.propia"); } }, { id: "posts.design", label: "posts.design" }, { id: "estudios", get label() { return t("refs.fuente.estudios"); } }];
 const DISENOS = [{ id: "mosaico", get label() { return t("refs.diseno.mosaico"); }, icon: Columns3 }, { id: "rejilla", get label() { return t("posts.rejilla"); }, icon: LayoutGrid }, { id: "lista", get label() { return t("refs.diseno.lista"); }, icon: List }];
 const ORDENES = [{ id: "recientes", get label() { return t("refs.orden.recientes"); } }, { id: "valoradas", get label() { return t("refs.orden.valoradas"); } }, { id: "titulo", get label() { return t("registro.titulo"); } }];
+// Tipo de post de la referencia (referencias.json → anotaciones o la propia entrada): qué clase de pieza es.
+const TIPOS_POST = ["lanzamiento", "funcion", "hito", "tipografia", "marca", "proceso", "evento", "teaser", "comunidad"];
+const tipoPostLabel = (id) => (TIPOS_POST.includes(id) ? t(`refs.tipoPost.${id}`) : id);
 const MAX_MB = 60;
 // Plataformas con lector propio (server/lectores.js): al pegar su enlace se traen solos el vídeo o las imágenes.
 const CON_LECTOR = /(^|\.)(x\.com|twitter\.com|instagram\.com|threads\.(net|com)|linkedin\.com|tiktok\.com|youtube\.com|youtu\.be|vimeo\.com|pinterest\.[a-z.]+|pin\.it|dribbble\.com|behance\.net|are\.na|savee\.(it|com)|cosmos\.so)$/;
@@ -196,6 +199,7 @@ function Tarjeta({ x, modo, dup, onFoco, onColor }) {
         {x.notas && modo !== "mosaico" ? <span className="cardtext clamp2">{x.notas}</span> : null}
         <span className="cardmeta">
           <Paleta r={x} onColor={onColor} />
+          {x.tipo_post ? <span className="tag tipopost">{tipoPostLabel(x.tipo_post)}</span> : null}
           {x.fuente !== "propia" ? <span className="tag">{x.fuente}</span> : null}
           {(x.etiquetas || []).slice(0, modo === "lista" ? 6 : 3).map((et) => <span key={et} className="tag">{et}</span>)}
           {x.dominio ? <span className="tag">{x.dominio}</span> : null}
@@ -379,6 +383,7 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
             <Fields rows={[
               [t("postDetalle.tipo"), ["imagen", "video", "web", "post"].includes(r.tipo) ? t(`refs.tipo.${r.tipo}`) : r.tipo],
               [t("refs.tamano"), a && a.w ? `${a.w}×${a.h}${a.duracion ? ` · ${a.duracion} s` : ""}` : null],
+              [t("refs.tipoPost"), r.tipo_post ? tipoPostLabel(r.tipo_post) : null],
               [t("refs.colores"), familias(r).length ? familias(r).map((c) => t(`refs.color.${c}`)).join(", ") : null],
               [t("refs.etiquetas"), (r.etiquetas || []).length ? r.etiquetas.join(", ") : null],
               [t("postDetalle.archivo"), r.archivo ? <code className="small">{r.archivo}</code> : null],
@@ -478,6 +483,7 @@ export default function Referencias() {
   useEffect(() => { setQ(r.params.q || ""); }, [r.params.q]);
   const fuente = r.params.fuente || "todas";
   const tags = r.params.tags ? r.params.tags.split(",") : [];
+  const tp = r.params.tp || null;
   const color = r.params.color || null;
   const orden = r.params.orden || "recientes";
   const diseno = r.params.diseno || "mosaico";
@@ -488,25 +494,28 @@ export default function Referencias() {
 
   const todas = useMemo(() => d.referencias.map((x) => (x.id in val ? { ...x, valoracion: val[x.id] } : x)), [d.referencias, val]);
   const propias = todas.filter((x) => x.fuente === "propia");
-  const todasTags = useMemo(() => [...new Set(propias.flatMap((x) => x.etiquetas || []))].sort(), [d.referencias]);
+  const todasTags = useMemo(() => [...new Set(todas.flatMap((x) => x.etiquetas || []))].sort(), [d.referencias]);
+  const temas = useMemo(() => (tp ? [...new Set(todas.filter((x) => x.tipo_post === tp).flatMap((x) => x.etiquetas || []))].sort() : todasTags), [todas, tp, todasTags]);
+  const tiposPost = useMemo(() => TIPOS_POST.map((id) => ({ id, n: todas.filter((x) => x.tipo_post === id).length })).filter((x) => x.n), [d.referencias]);
   const dups = useMemo(() => duplicadas(d.referencias), [d.referencias]);
   const dupCount = Object.keys(dups).length;
   const sinAnalizar = d.referencias.filter((x) => !x.analisis && (x.archivo || x.thumb)).length;
   const coincide = useMemo(() => consulta(q, dups), [q, dups]);
   const lista = useMemo(() => {
     const l = todas.filter((x) => (fuente === "todas" || x.fuente === fuente)
+      && (!tp || x.tipo_post === tp)
       && (!tags.length || tags.every((t) => (x.etiquetas || []).includes(t)))
       && (!color || familias(x).includes(color))
       && coincide(x));
     if (orden === "valoradas") l.sort((a, b) => (b.valoracion || 0) - (a.valoracion || 0));
     else if (orden === "titulo") l.sort((a, b) => a.titulo.localeCompare(b.titulo, "es"));
     return l.slice(0, 300);
-  }, [todas, fuente, tags.join(), color, coincide, orden]);
+  }, [todas, fuente, tp, tags.join(), color, coincide, orden]);
   const abierta = r.params.ver && todas.find((x) => x.id === r.params.ver);
-  const params = { q: q.trim() || null, fuente: fuente === "todas" ? null : fuente, tags: tags.join(",") || null, color, orden: orden === "recientes" ? null : orden, diseno: diseno === "mosaico" ? null : diseno };
-  const hayFiltro = !!(params.q || params.fuente || params.tags || params.color || params.orden);
+  const params = { q: q.trim() || null, fuente: fuente === "todas" ? null : fuente, tp, tags: tags.join(",") || null, color, orden: orden === "recientes" ? null : orden, diseno: diseno === "mosaico" ? null : diseno };
+  const hayFiltro = !!(params.q || params.fuente || params.tp || params.tags || params.color || params.orden);
   const vistas = d.vistasRef || [];
-  const activa = (vistas.find((v) => ["q", "fuente", "tags", "color", "orden"].every((k) => (v.params[k] || null) === params[k])) || {}).id;
+  const activa = (vistas.find((v) => ["q", "fuente", "tp", "tags", "color", "orden"].every((k) => (v.params[k] || null) === params[k])) || {}).id;
 
   const valorar = async (x, n) => {
     setVal((m) => ({ ...m, [x.id]: n }));
@@ -562,13 +571,16 @@ export default function Referencias() {
             <Segmented label={t("refs.diseno")} value={diseno} onChange={(v) => r.set({ diseno: v === "mosaico" ? null : v })} options={DISENOS} />
           </>
         ) : null}
-        {todasTags.length && fuente !== "estudios" ? <Toggles label={t("refs.etiquetas")} value={tags} onChange={(v) => r.set({ tags: v.length ? v.join(",") : null })} options={todasTags.map((t) => ({ id: t, label: t }))} /> : null}
+        {tiposPost.length && fuente !== "estudios" ? <Toggles filtro label={t("refs.tipoPost")} value={tp ? [tp] : []} onChange={(v) => r.set({ tp: v.filter((x) => x !== tp)[0] || null, tags: null })}
+          options={tiposPost.map((x) => ({ id: x.id, label: tipoPostLabel(x.id), count: x.n }))} /> : null}
+        {/* Los temas salen al elegir un tipo (o si ya hay alguno marcado): con todos a la vez son demasiados. */}
+        {temas.length && fuente !== "estudios" && (tp || tags.length || !tiposPost.length) ? <Toggles filtro label={t("refs.etiquetas")} value={tags} onChange={(v) => r.set({ tags: v.length ? v.join(",") : null })} options={temas.map((t) => ({ id: t, label: t }))} /> : null}
       </PageHeader>
       <div className="pad-x">
         {nueva ? <Nueva onClose={() => r.set({ nueva: null })} onSaved={(ref) => { recargar(); r.set({ nueva: null, fuente: "propia", ver: ref.id }); }} /> : null}
         {fuente !== "estudios" ? (
           <Vistas vistas={vistas} activa={activa} hayFiltro={hayFiltro} params={params} ids={lista.map((x) => x.id)} dupCount={dupCount}
-            onAplicar={(v) => { setQ(v.params.q || ""); r.set({ q: null, fuente: null, tags: null, color: null, orden: null, ...v.params }); }} />
+            onAplicar={(v) => { setQ(v.params.q || ""); r.set({ q: null, fuente: null, tp: null, tags: null, color: null, orden: null, ...v.params }); }} />
         ) : null}
 
         {fuente === "estudios" ? (

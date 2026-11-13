@@ -33,26 +33,42 @@ const tipoDe = (r) => {
   return "web";
 };
 
-// posts.design ya descargados: <id>.mp4 con su hoja de fotogramas (-sheet.jpg) o miniatura.
+// posts.design ya descargados: <id>.mp4 con su hoja de fotogramas (-sheet.jpg o -hoja.jpg) o miniatura. Un post con
+// varios medios llega como <nombre>-0.mp4, <nombre>-1.mp4, <nombre>-2.webp…: es una sola referencia con galería.
+// Las hojas de fotogramas no son referencias, solo miniaturas.
+const HOJA = /-(sheet|hoja)\.jpg$/i;
+const MEDIO = /\.(mp4|jpe?g|png|webp)$/i;
 function postsDesign() {
-  const vids = walk(MR, (p) => /\.(mp4|jpe?g|png)$/i.test(p) && !p.startsWith(`${SUBIDAS}/`) && !p.includes("/mini/") && !p.startsWith(`${an.PREVIAS}/`) && !p.startsWith("media/referencias/archivo/") && !/-sheet\.jpg$/.test(p), 2);
+  const vids = walk(MR, (p) => MEDIO.test(p) && !p.startsWith(`${SUBIDAS}/`) && !p.includes("/mini/") && !p.startsWith(`${an.PREVIAS}/`) && !p.startsWith(`${MR}/archivo/`) && !HOJA.test(p), 2);
   const bases = {};
-  for (const p of vids) {
-    const base = p.replace(/\.(mp4|jpe?g|png)$/i, "");
-    (bases[base] ||= {})[kindOf(p)] = p;
+  for (const p of vids.sort()) {
+    const post = p.replace(MEDIO, "").replace(/^(.+-\d{4,})-\d$/, "$1");
+    (bases[post] ||= []).push(p);
   }
-  return Object.entries(bases).map(([base, f]) => {
+  return Object.entries(bases).map(([base, archivos]) => {
     const name = path.basename(base);
+    const principal = archivos.find((p) => kindOf(p) === "video") || archivos[0];
     const m = /^x-twitter-([^-]+(?:-ai)?)-\d+-(.+)$/.exec(name);
     const handle = m ? m[1] : null;
     const titulo = (m ? m[2] : name.replace(/^\d+-/, "")).replace(/-/g, " ");
-    const thumb = [`${base}-sheet.jpg`, `${base}.jpg`, `${MR}/mini/${name}.jpg`, f.image].find((x) => x && exists(x)) || null;
+    const pbase = principal.replace(MEDIO, "");
+    const thumb = [`${pbase}-sheet.jpg`, `${base}-sheet.jpg`, `${base}-hoja.jpg`, `${MR}/mini/${name}.jpg`, kindOf(principal) === "image" ? principal : null].find((x) => x && exists(x)) || null;
+    const galeria = archivos.filter((p) => p !== principal);
     return {
-      id: `pd-${name}`.slice(0, 90), fuente: "posts.design", titulo, handle, tipo: f.video ? "video" : "imagen",
-      archivo: f.video || f.image, thumb, url: m ? `https://x.com/${handle}/status/${/-(\d+)-/.exec(name)[1]}` : null,
-      grupo: path.dirname(base) === MR ? "Descargas" : path.basename(path.dirname(base)), etiquetas: [], creado: new Date(mtime(f.video || f.image)).toISOString().slice(0, 10),
+      id: `pd-${name}`.slice(0, 90), fuente: "posts.design", titulo, handle, tipo: kindOf(principal) === "video" ? "video" : "imagen",
+      archivo: principal, thumb, galeria: galeria.length ? galeria : undefined, url: m ? `https://x.com/${handle}/status/${/-(\d+)-/.exec(name)[1]}` : null,
+      grupo: path.dirname(base) === MR ? "Descargas" : path.basename(path.dirname(base)), etiquetas: [], creado: new Date(mtime(principal)).toISOString().slice(0, 10),
     };
   });
+}
+
+// Anotaciones de las referencias que no son tuyas (posts.design): título bueno, enlace, autor, tipo de post y
+// etiquetas. Viven en referencias.json → anotaciones, por id; las propias llevan tipo_post en su propia entrada.
+const ANOTABLES = ["titulo", "url", "handle", "tipo_post", "etiquetas", "notas"];
+function anotar(r, a) {
+  if (!a) return r;
+  for (const k of ANOTABLES) if (a[k] !== undefined && a[k] !== null && a[k] !== "") r[k] = k === "etiquetas" ? limpiarEtiquetas([...(r.etiquetas || []), ...a[k]]) : a[k];
+  return r;
 }
 
 // Archivo que se analiza: el propio (imagen o vídeo) o, si es un enlace, la imagen de vista previa descargada.
@@ -62,7 +78,8 @@ export function referencias() {
   const d = cargar();
   const val = d.valoraciones || {};
   const propias = (d.items || []).map((r) => ({ ...r, fuente: "propia", tipo: tipoDe(r), dominio: dominio(r.url), existe: r.archivo ? exists(r.archivo) : true, thumb: r.archivo && kindOf(r.archivo) === "image" ? r.archivo : r.thumb || null }));
-  const todas = [...propias.sort((a, b) => (b.creado || "").localeCompare(a.creado || "")), ...postsDesign()];
+  const anot = d.anotaciones || {};
+  const todas = [...propias.sort((a, b) => (b.creado || "").localeCompare(a.creado || "")), ...postsDesign().map((r) => anotar(r, anot[r.id]))];
   const pendientes = [];
   for (const r of todas) {
     r.valoracion = val[r.id] || r.valoracion || 0;
@@ -268,7 +285,7 @@ export function fusionar(idQueda, idSale) {
 }
 
 // Vistas guardadas: una combinación de búsqueda, fuente, etiquetas, color y orden con nombre.
-const CAMPOS_VISTA = ["q", "fuente", "tags", "color", "orden", "diseno"];
+const CAMPOS_VISTA = ["q", "fuente", "tp", "tags", "color", "orden", "diseno"];
 export function guardarVista({ nombre, params }) {
   const n = String(nombre || "").trim().slice(0, 40);
   if (!n) throw new Error("Ponle un nombre");
@@ -296,10 +313,10 @@ export function quitar(id) {
 
 // Guarda un posts.design ya descargado en la lista propia, para poder anotarlo y etiquetarlo.
 export function fijar(id, notas) {
-  const pd = postsDesign().find((x) => x.id === id);
-  if (!pd) throw new Error("No existe");
   const d = cargar();
-  const item = { id: `ref-${Date.now().toString(36)}`, creado: hoyLocal(), titulo: pd.titulo, url: pd.url, archivo: pd.archivo, thumb: pd.thumb, notas: String(notas || "").trim(), etiquetas: ["posts.design"] };
+  const pd = postsDesign().map((r) => anotar(r, (d.anotaciones || {})[r.id])).find((x) => x.id === id);
+  if (!pd) throw new Error("No existe");
+  const item = { id: `ref-${Date.now().toString(36)}`, creado: hoyLocal(), titulo: pd.titulo, url: pd.url, archivo: pd.archivo, galeria: pd.galeria, thumb: pd.thumb, tipo_post: pd.tipo_post, notas: [pd.notas, String(notas || "").trim()].filter(Boolean).join("\n\n"), etiquetas: limpiarEtiquetas(["posts.design", ...(pd.etiquetas || [])]) };
   d.items = [item, ...(d.items || [])];
   guardar(d);
   return item;

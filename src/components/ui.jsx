@@ -42,11 +42,12 @@ export function Segmented({ value, onChange, options, label }) {
   );
 }
 
-// Filtros que se pueden combinar (varios activos a la vez).
-export function Toggles({ value, onChange, options, label }) {
+// Filtros que se pueden combinar (varios activos a la vez). Por defecto muestran u ocultan (lo apagado sale
+// tachado); con filtro, lo marcado acota la lista y lo apagado es neutro.
+export function Toggles({ value, onChange, options, label, filtro = false }) {
   const set = new Set(value);
   return (
-    <div className="toggles" role="group" aria-label={label}>
+    <div className={`toggles${filtro ? " filtro" : ""}`} role="group" aria-label={label}>
       {options.map((o) => {
         const on = set.has(o.id);
         return (
