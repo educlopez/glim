@@ -1,0 +1,137 @@
+/* Bienvenida de Glim: una sola ventana que va paso a paso (cerebro, herramientas, agente, integraciones, listo)
+   y al final se abre como la app. La usan las dos fases: la página estática de Electron (antes de que haya
+   servidor, con los tokens de bienvenida-tokens.css) y la vista de React #/bienvenida (con los de la app).
+   Solo usa tokens: --ink, --line, --accent… */
+
+.onb { min-height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; color: var(--ink); font: 13px/1.45 var(--sans); -webkit-font-smoothing: antialiased; }
+html:not(.is-app) .onb.en-app { background: var(--content-bg); }
+
+/* Cabecera: zona de arrastre de la ventana y, en el centro, el progreso. */
+.onb-top { -webkit-app-region: drag; display: flex; align-items: center; justify-content: center; height: 52px; padding: 0 96px; }
+.onb-rail { display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.onb-rail li { display: flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.onb-rail li + li::before { content: ""; width: 18px; height: 1px; margin-right: 2px; background: var(--line-strong); }
+.onb-rail .punto { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); transition: background-color 200ms var(--ease-out), transform 200ms var(--ease-out); }
+.onb-rail li[data-estado="hecho"] { color: var(--ink-2); }
+.onb-rail li[data-estado="hecho"] .punto { background: var(--ink-2); }
+.onb-rail li[aria-current="step"] { color: var(--ink); font-weight: 600; }
+.onb-rail li[aria-current="step"] .punto { background: var(--accent); transform: scale(1.15); }
+
+/* Cuerpo: una columna centrada, un paso cada vez. */
+.onb-cuerpo { overflow-y: auto; overscroll-behavior: contain; padding: 20px 56px 28px; }
+.onb-paso { max-width: 600px; margin: 0 auto; animation: onb-entra 320ms var(--ease-out) both; }
+.onb-paso.centro { display: grid; place-items: center; align-content: center; min-height: 100%; text-align: center; }
+@keyframes onb-entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .onb-paso { animation: none; } .onb-rail .punto { transition: none; } }
+
+.onb-titulo { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.022em; text-wrap: balance; }
+.onb-sub { margin: 10px 0 26px; max-width: 54ch; color: var(--ink-2); font-size: 14px; line-height: 1.5; text-wrap: pretty; }
+.onb-paso.centro .onb-sub { margin-left: auto; margin-right: auto; }
+.onb-nota { margin: 14px 0 0; color: var(--ink-3); font-size: 12px; }
+.onb-nota code, .onb-sub code, .onb-fila code { font-family: var(--mono); font-size: 0.92em; }
+
+/* Marca del primer paso: el isotipo en su cuadrado naranja, como el icono de la app. */
+.onb-marca { display: grid; place-items: center; width: 76px; height: 76px; margin-bottom: 26px; border-radius: 19px; background: var(--accent); color: #fff; box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 10px 28px rgb(255 117 40 / 0.28); animation: onb-marca 640ms var(--ease-out) both; }
+.onb-marca svg { width: 40px; height: 40px; }
+@keyframes onb-marca { from { opacity: 0; transform: scale(0.86) rotate(-8deg); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .onb-marca { animation: none; } }
+
+/* Opciones grandes (cerebro, agente): una fila por opción, icono a la izquierda. */
+.onb-opciones { display: grid; gap: 8px; }
+.onb-opcion { -webkit-app-region: no-drag; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 14px; width: 100%; padding: 13px 16px; border: 1px solid transparent; border-radius: 12px; background: var(--card-bg); color: var(--ink); font: inherit; text-align: left; cursor: default; transition: background-color 120ms var(--ease-out), border-color 120ms var(--ease-out); }
+.onb-opcion:hover:not(:disabled) { background: var(--selected); }
+.onb-opcion[aria-pressed="true"], .onb-opcion[aria-checked="true"] { border-color: var(--accent); background: var(--accent-tint); }
+.onb-opcion:disabled { opacity: 0.55; }
+.onb-opcion:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.onb-icono { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: var(--control); color: var(--ink-2); }
+.onb-icono svg { width: 18px; height: 18px; }
+.onb-opcion[aria-pressed="true"] .onb-icono, .onb-opcion[aria-checked="true"] .onb-icono { background: var(--accent); color: #fff; }
+.onb-opcion strong { display: block; font-size: 13.5px; font-weight: 600; }
+.onb-opcion .detalle { display: block; margin-top: 1px; color: var(--ink-2); font-size: 12.5px; }
+.onb-opcion .lado { color: var(--ink-3); font-size: 12px; }
+
+/* Listas agrupadas como en Ajustes de macOS: filas separadas por una línea fina. */
+.onb-lista { margin: 0; padding: 0; list-style: none; border-radius: 12px; background: var(--card-bg); }
+.onb-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 52px; padding: 10px 16px; }
+.onb-fila + .onb-fila { border-top: 1px solid var(--line-soft); }
+.onb-fila strong { font-size: 13px; font-weight: 600; }
+.onb-fila .detalle { display: block; color: var(--ink-2); font-size: 12px; }
+.onb-fila .acciones { display: flex; align-items: center; gap: 8px; }
+.onb-fila .orden { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.onb-fila .orden code { padding: 2px 6px; border-radius: 5px; background: var(--control); color: var(--ink); font-size: 11.5px; user-select: all; -webkit-user-select: all; }
+
+.onb-estado { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--control); color: var(--ink-2); font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.onb-estado::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.onb-estado.ok { color: var(--st-pub); }
+.onb-estado.falta { color: var(--warn); }
+
+/* Repos de GitHub: buscador y lista con scroll propio. */
+.onb-repos { margin-top: 10px; }
+.onb-repos .lista { max-height: 228px; overflow-y: auto; margin-top: 8px; border-radius: 10px; background: var(--card-bg); }
+.onb-repo { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 8px 12px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: default; }
+.onb-repo + .onb-repo { border-top: 1px solid var(--line-soft); }
+.onb-repo:hover { background: var(--hover); }
+.onb-repo[aria-pressed="true"] { background: var(--accent-tint); }
+.onb-repo strong { font-weight: 600; font-size: 12.5px; }
+.onb-repo .detalle { display: block; overflow: hidden; color: var(--ink-3); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.onb-repo .lado { color: var(--ink-3); font-size: 11px; }
+
+/* Formulario de identidad. */
+.onb-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
+.onb-campo { display: grid; gap: 6px; min-width: 0; }
+.onb-campo.ancho { grid-column: 1 / -1; }
+.onb-campo > span, .onb-etiqueta { color: var(--ink-2); font-size: 12px; font-weight: 500; }
+.onb-campo small { color: var(--ink-3); font-size: 11.5px; }
+.onb input, .onb select { -webkit-app-region: no-drag; width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--control); color: var(--ink); font: inherit; font-size: 13px; }
+.onb input:focus-visible, .onb select:focus-visible { outline: 0; border-color: var(--accent); box-shadow: var(--focus-ring); }
+.onb input::placeholder { color: var(--ink-3); }
+
+.onb-seg { display: inline-flex; justify-self: start; gap: 2px; padding: 2px; border-radius: 8px; background: var(--control); }
+.onb-seg button { -webkit-app-region: no-drag; height: 26px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); font: inherit; font-weight: 500; cursor: default; }
+.onb-seg button[aria-pressed="true"] { background: var(--content-bg, #fff); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
+
+/* Redes y su cadencia: una fila por red con los siete días. */
+.onb-redes { display: grid; gap: 6px; }
+.onb-red { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px; background: var(--card-bg); }
+.onb-red label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.onb-red input[type="checkbox"] { width: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--accent); }
+.onb-red svg { width: 14px; height: 14px; }
+.onb-dias { display: flex; gap: 4px; }
+.onb-dias button { -webkit-app-region: no-drag; width: 30px; height: 26px; border: 0; border-radius: 7px; background: var(--control); color: var(--ink-3); font: inherit; font-size: 11.5px; font-weight: 600; cursor: default; }
+.onb-dias button[aria-pressed="true"] { background: var(--accent-tint); color: var(--accent-ink); }
+.onb-dias button:disabled { opacity: 0.4; }
+
+/* Pie: atrás a la izquierda, saltar y continuar a la derecha. */
+.onb-pie { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px 18px; border-top: 1px solid var(--line-soft); }
+.onb-pie .derecha { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.onb-btn { -webkit-app-region: no-drag; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--control); color: var(--ink); font: inherit; font-weight: 500; cursor: default; }
+.onb-btn:hover:not(:disabled) { background: var(--selected); }
+.onb-btn.primario { min-width: 104px; background: var(--accent-strong); color: #fff; }
+.onb-btn.primario:hover:not(:disabled) { background: color-mix(in srgb, var(--accent-strong) 88%, #000); }
+.onb-btn.grande { height: 36px; padding: 0 22px; font-size: 14px; }
+.onb-btn.texto { background: transparent; color: var(--ink-2); }
+.onb-btn.texto:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+.onb-btn.chico { height: 26px; padding: 0 10px; font-size: 12px; }
+.onb-btn:disabled { opacity: 0.5; }
+.onb-btn:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+.onb-btn svg { width: 14px; height: 14px; }
+
+.onb-error { min-height: 1.4em; margin: 12px 0 0; color: var(--danger); font-size: 12.5px; }
+.onb-cargando { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line-strong); border-top-color: var(--accent); border-radius: 50%; animation: onb-gira 800ms linear infinite; vertical-align: -3px; }
+@keyframes onb-gira { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .onb-cargando { animation-duration: 2s; } }
+
+/* Resumen final. */
+.onb-hecho { display: grid; gap: 0; width: 100%; max-width: 440px; margin: 0 auto; text-align: left; }
+.onb-hecho .onb-fila { grid-template-columns: 22px minmax(0, 1fr); }
+.onb-check { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--st-pub); color: #fff; }
+.onb-check.no { background: var(--control); color: var(--ink-3); }
+.onb-check svg { width: 11px; height: 11px; }
+
+@media (max-width: 640px) {
+  .onb-top { padding: 0 16px 0 84px; justify-content: flex-start; }
+  .onb-rail li > span:not(.punto) { display: none; }
+  .onb-cuerpo { padding: 16px; }
+  .onb-campos { grid-template-columns: 1fr; }
+  .onb-red { grid-template-columns: 1fr; }
+}

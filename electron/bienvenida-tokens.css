@@ -1,0 +1,52 @@
+/* Tokens de la página estática de bienvenida (antes de arrancar el servidor no hay src/styles/tokens.css).
+   Copia de los valores de la app: si cambian allí, cambian aquí. Claro y oscuro según el sistema. */
+:root {
+  color-scheme: light dark;
+  --content-bg: #ffffff;
+  --card-bg: rgb(0 0 0 / 0.035);
+  --ink: rgb(31 35 40);
+  --ink-2: rgb(80 84 89);
+  --ink-3: rgb(98 102 107);
+  --line: rgb(0 0 0 / 0.09);
+  --line-strong: rgb(0 0 0 / 0.16);
+  --line-soft: rgb(31 35 40 / 0.041);
+  --hover: rgb(31 35 40 / 0.041);
+  --selected: rgb(31 35 40 / 0.079);
+  --control: rgb(0 0 0 / 0.06);
+  --accent: #ff7528;
+  --accent-ink: #b54300;
+  --accent-strong: #c24c0b;
+  --accent-tint: rgb(255 117 40 / 0.12);
+  --focus-ring: 0 0 0 1px var(--accent), 0 0 0 4px rgb(255 117 40 / 0.18);
+  --st-pub: rgb(17 99 41);
+  --warn: rgb(157 92 0);
+  --danger: rgb(207 34 46);
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --content-bg: rgb(22 24 28);
+    --card-bg: rgb(255 255 255 / 0.05);
+    --ink: rgb(230 237 243);
+    --ink-2: rgb(170 174 179);
+    --ink-3: rgb(152 156 161);
+    --line: rgb(255 255 255 / 0.1);
+    --line-strong: rgb(255 255 255 / 0.18);
+    --line-soft: rgb(230 237 243 / 0.042);
+    --hover: rgb(230 237 243 / 0.042);
+    --selected: rgb(230 237 243 / 0.085);
+    --control: rgb(255 255 255 / 0.1);
+    --accent-ink: #ff9a5c;
+    --accent-tint: rgb(255 117 40 / 0.15);
+    --focus-ring: 0 0 0 1px var(--accent), 0 0 0 4px rgb(255 117 40 / 0.206);
+    --st-pub: rgb(63 185 80);
+    --warn: rgb(210 153 34);
+    --danger: rgb(255 123 114);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; }
+body { -webkit-user-select: none; user-select: none; }
+input { -webkit-user-select: text; user-select: text; }

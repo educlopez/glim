@@ -5,7 +5,7 @@
 // - Empaquetada (release): sirve la interfaz compilada y la API desde el propio paquete (server/servidor.js).
 // - Desde el checkout (npm run app:instalar): la app es una capa fina que arranca Vite en la carpeta de Glim, así que
 //   lo que cambie en el código se ve sin recompilar. origen.json guarda dónde está ese checkout.
-import { app, BrowserWindow, Notification, shell, Menu, dialog, ipcMain, nativeTheme, nativeImage, Tray, globalShortcut, session, crashReporter } from "electron";
+import { app, BrowserWindow, Notification, shell, Menu, dialog, ipcMain, nativeTheme, nativeImage, Tray, globalShortcut, session, crashReporter, screen } from "electron";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
@@ -15,6 +15,7 @@ import { execFileSync, execFile } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { iniciarRegistro, registro } from "./registro.mjs";
 import { buscarVersionNueva } from "./actualizador.mjs";
+import { describir, prepararCerebro } from "./cerebro-nuevo.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const NOMBRE = "Glim";
@@ -49,76 +50,111 @@ function arreglarPath() {
 }
 
 // ---- Elegir el cerebro ----
-const PLANTILLA_CONFIG = (nombre) => ({
-  $schema: "https://raw.githubusercontent.com/educlopez/glim/main/schema/glim.config.schema.json",
-  nombre, persona: os.userInfo().username, zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", idioma: "es",
-  reglas: "AGENTS.md", rutas: { borradores: "borradores", aprendizajes: "aprendizajes.md" }, privadas: ["privado/"],
-  publicar: { rama: "main", prefijos: { "borradores/": "borradores" }, prefijoPorDefecto: "repo" },
+const ejecutar = (cmd, args, opciones = {}) => new Promise((resolve) => {
+  execFile(cmd, args, { timeout: 15000, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" }, maxBuffer: 8e6, ...opciones }, (err, out, e) => resolve({ ok: !err, out: String(out || ""), err: String(e || (err && err.message) || "") }));
 });
 
-function crearCerebro(dir) {
-  const nombre = path.basename(dir);
-  fs.mkdirSync(path.join(dir, "borradores"), { recursive: true });
-  const escribir = (f, t) => { if (!fs.existsSync(path.join(dir, f))) fs.writeFileSync(path.join(dir, f), t); };
-  escribir("glim.config.json", JSON.stringify(PLANTILLA_CONFIG(nombre), null, 2) + "\n");
-  escribir("AGENTS.md", `# ${nombre}\n\nReglas para los agentes que trabajan en este repo.\n\n## Reglas duras\n\n1. Nunca publicar nada sin el OK explícito de la persona.\n`);
-  escribir("aprendizajes.md", "# Aprendizajes\n");
-  escribir(".gitignore", ".glim/\nprivado/\n.DS_Store\n");
-  if (!fs.existsSync(path.join(dir, ".git"))) { try { execFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir }); } catch { /* sin git: funciona igual, sin publicar */ } }
+async function estadoGh() {
+  const v = await ejecutar("gh", ["--version"], { timeout: 8000 });
+  if (!v.ok) return { instalado: false, sesion: false, cuenta: null };
+  const s = await ejecutar("gh", ["auth", "status"], { timeout: 8000 });
+  const m = /Logged in to \S+ (?:account|as) ([\w.-]+)/.exec(s.out + s.err);
+  return { instalado: true, sesion: s.ok && !!m, cuenta: m ? m[1] : null };
+}
+
+async function clonar(slug, destino) {
+  const dir = path.join(destino, slug.split("/").pop().replace(/\.git$/, ""));
+  if (fs.existsSync(dir)) {
+    if (fs.existsSync(path.join(dir, ".git"))) return dir; // ya clonado: se usa ese
+    throw new Error(`Ya existe ${dir} y no es un repo de git.`);
+  }
+  const gh = await estadoGh();
+  const [cmd, args] = gh.sesion ? ["gh", ["repo", "clone", slug, dir]] : ["git", ["clone", `https://github.com/${slug}.git`, dir]];
+  const r = await ejecutar(cmd, args, { timeout: 600000 });
+  if (!r.ok) throw new Error(r.err.trim().split("\n").pop() || "No se ha podido clonar.");
   return dir;
 }
 
-function clonar(slug, destino) {
-  return new Promise((resolve, reject) => {
-    const dir = path.join(destino, slug.split("/").pop().replace(/\.git$/, ""));
-    if (fs.existsSync(dir)) return esCerebro(dir) ? resolve(dir) : reject(new Error(`Ya existe ${dir} y no es un cerebro de Glim.`));
-    const conGh = (() => { try { execFileSync("gh", ["auth", "status"], { stdio: "ignore", timeout: 8000 }); return true; } catch { return false; } })();
-    const [cmd, args] = conGh ? ["gh", ["repo", "clone", slug, dir]] : ["git", ["clone", `https://github.com/${slug}.git`, dir]];
-    execFile(cmd, args, { timeout: 600000, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } }, (err, _o, e) => (err ? reject(new Error(String(e || err.message).trim().split("\n").pop())) : resolve(dir)));
-  });
-}
-
-// Ventana de bienvenida: elegir una carpeta, clonar un repo de GitHub o crear un cerebro nuevo.
+// Bienvenida: una sola ventana que primero carga electron/bienvenida.html (elegir o crear el cerebro, sin servidor) y,
+// cuando hay cerebro, sigue en la vista #/bienvenida de la app. Devuelve { dir, ventana } o null si se cierra.
+let ventanaBienvenida = null;
 function bienvenida() {
   return new Promise((resolve) => {
     const w = new BrowserWindow({
-      width: 560, height: 520, resizable: false, title: `Bienvenida a ${NOMBRE}`, titleBarStyle: "hiddenInset", backgroundColor: "#00000000",
+      width: 880, height: 640, resizable: false, fullscreenable: false, maximizable: false, show: false, center: true,
+      title: `Bienvenida a ${NOMBRE}`, titleBarStyle: "hiddenInset", trafficLightPosition: { x: 18, y: 18 }, backgroundColor: "#00000000",
       vibrancy: "under-window", visualEffectState: "followWindow",
-      webPreferences: { contextIsolation: true, sandbox: true, preload: path.join(AQUI, "bienvenida.cjs") },
+      webPreferences: PREFERENCIAS,
     });
+    ventanaBienvenida = w;
+    w.once("ready-to-show", () => w.show());
+    // Los enlaces de la página estática se abren en el navegador; la ventana no navega a ningún sitio por su cuenta.
+    w.webContents.setWindowOpenHandler(({ url }) => { if (/^https:/.test(url)) shell.openExternal(url); return { action: "deny" }; });
+    w.webContents.on("will-navigate", (ev) => ev.preventDefault());
+    const CANALES = ["glim:inicio", "glim:elegir", "glim:crear", "glim:repos", "glim:clonar", "glim:preparar", "glim:abrir"];
     let hecho = false;
     const terminar = (dir) => {
       if (hecho) return;
       hecho = true;
-      for (const c of ["glim:elegir", "glim:clonar", "glim:crear"]) ipcMain.removeHandler(c);
-      resolve(dir);
-      if (!w.isDestroyed()) w.close();
+      for (const c of CANALES) ipcMain.removeHandler(c);
+      if (dir) guardarConfig({ cerebro: dir });
+      resolve(dir ? { dir, ventana: w } : null);
     };
-    const preguntarCarpeta = (titulo, boton) => { const r = dialog.showOpenDialogSync(w, { title: titulo, buttonLabel: boton, properties: ["openDirectory", "createDirectory"] }); return r && r[0]; };
+    const preguntarCarpeta = (titulo, boton, defaultPath) => {
+      const r = dialog.showOpenDialogSync(w, { title: titulo, buttonLabel: boton, defaultPath, properties: ["openDirectory", "createDirectory"] });
+      return r && r[0];
+    };
+    const desarrollo = [path.join(os.homedir(), "Developer"), path.join(os.homedir(), "Projects"), os.homedir()].find((d) => fs.existsSync(d));
+    const describe = (dir) => { try { return { ok: true, ...describir(dir) }; } catch (x) { return { ok: false, error: x.message }; } };
+
+    ipcMain.handle("glim:inicio", async () => {
+      const git = await ejecutar("git", ["config", "--global", "user.name"], { timeout: 4000 });
+      let zonas = [];
+      try { zonas = Intl.supportedValuesOf("timeZone"); } catch { /* Electron viejo: solo la del equipo */ }
+      return {
+        usuario: (git.ok && git.out.trim()) || os.userInfo().username,
+        zona: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+        zonas,
+        idioma: app.getLocale().toLowerCase().startsWith("en") ? "en" : "es",
+        gh: await estadoGh(),
+      };
+    });
     ipcMain.handle("glim:elegir", () => {
-      const dir = preguntarCarpeta("Elige la carpeta de tu cerebro", "Abrir");
+      const dir = preguntarCarpeta("Elige la carpeta de tu cerebro", "Elegir", desarrollo);
+      return dir ? describe(dir) : { ok: false };
+    });
+    ipcMain.handle("glim:crear", () => {
+      const dir = preguntarCarpeta("Elige o crea una carpeta para el cerebro", "Usar esta carpeta", desarrollo);
       if (!dir) return { ok: false };
-      if (!esCerebro(dir)) return { ok: false, error: "Esa carpeta no tiene glim.config.json. Créalo o usa «Crear un cerebro nuevo»." };
-      terminar(dir);
-      return { ok: true };
+      const d = describe(dir);
+      if (d.ok && !d.vacia && !d.esCerebro) return { ...d, aviso: "La carpeta no está vacía: la convertimos sin tocar lo que ya hay." };
+      return d;
+    });
+    ipcMain.handle("glim:repos", async () => {
+      const r = await ejecutar("gh", ["repo", "list", "--limit", "100", "--json", "nameWithOwner,description,isPrivate,updatedAt"], { timeout: 30000 });
+      if (!r.ok) return { error: r.err.trim().split("\n").pop() || "gh no responde" };
+      try {
+        const lista = JSON.parse(r.out).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+        return { repos: lista.map((x) => ({ slug: x.nameWithOwner, descripcion: x.description || "", privado: !!x.isPrivate })) };
+      } catch { return { error: "Respuesta de gh no válida" }; }
     });
     ipcMain.handle("glim:clonar", async (_e, slug) => {
       if (!/^[\w.-]+\/[\w.-]+$/.test(String(slug || ""))) return { ok: false, error: "Escribe el repo como usuario/nombre." };
-      const destino = preguntarCarpeta("¿Dónde lo guardo?", "Clonar aquí");
+      const destino = preguntarCarpeta(`¿Dónde guardo ${slug}?`, "Clonar aquí", desarrollo);
       if (!destino) return { ok: false };
-      try {
-        const dir = await clonar(slug, destino);
-        if (!esCerebro(dir)) return { ok: false, error: "Clonado, pero no tiene glim.config.json en la raíz." };
-        terminar(dir);
-        return { ok: true };
-      } catch (x) { return { ok: false, error: x.message }; }
+      try { return describe(await clonar(slug, destino)); } catch (x) { return { ok: false, error: x.message }; }
     });
-    ipcMain.handle("glim:crear", () => {
-      const dir = preguntarCarpeta("Elige o crea una carpeta para el cerebro", "Crear aquí");
-      if (!dir) return { ok: false };
-      try { terminar(crearCerebro(dir)); return { ok: true }; } catch (x) { return { ok: false, error: x.message }; }
+    ipcMain.handle("glim:preparar", (_e, dir, datos) => {
+      try { prepararCerebro(dir, datos); } catch (x) { return { ok: false, error: x.message }; }
+      terminar(dir);
+      return { ok: true };
     });
-    w.on("closed", () => terminar(null));
+    ipcMain.handle("glim:abrir", (_e, dir) => {
+      if (!esCerebro(dir)) return { ok: false, error: "Esa carpeta no tiene glim.config.json." };
+      terminar(dir);
+      return { ok: true };
+    });
+    w.on("closed", () => { ventanaBienvenida = null; terminar(null); });
     w.loadFile(path.join(AQUI, "bienvenida.html"));
   });
 }
@@ -126,10 +162,27 @@ function bienvenida() {
 async function cerebro() {
   const guardado = (leerJson(CONFIG()) || {}).cerebro;
   const ok = [process.env.GLIM_BRAIN, guardado].find(esCerebro);
-  if (ok) return ok;
-  const dir = await bienvenida();
-  if (dir) guardarConfig({ cerebro: dir });
-  return dir;
+  if (ok) return { dir: ok, ventana: null };
+  return bienvenida();
+}
+
+// Fin de la bienvenida: la misma ventana crece al tamaño de la app (animado, como Arc o Dia) y carga el panel.
+function convertirEnApp(w) {
+  const { workArea } = screen.getDisplayMatching(w.getBounds());
+  const ancho = Math.min(1480, workArea.width - 40);
+  const alto = Math.min(940, workArea.height - 40);
+  const destino = { x: Math.round(workArea.x + (workArea.width - ancho) / 2), y: Math.round(workArea.y + (workArea.height - alto) / 2), width: ancho, height: alto };
+  ventanaBienvenida = null;
+  win = w;
+  w.on("closed", () => { if (win === w) win = null; });
+  w.setTitle(NOMBRE);
+  w.setResizable(true);
+  w.setMaximizable(true);
+  w.setFullScreenable(true);
+  w.setMinimumSize(900, 600);
+  w.setVibrancy(vibrancia());
+  w.setBounds(destino, true);
+  setTimeout(() => { if (!w.isDestroyed()) w.loadURL(base); }, 260);
 }
 
 // ---- Servidor ----
@@ -159,20 +212,27 @@ async function arrancarServidor(raiz) {
 // ---- Seguridad de las ventanas ----
 // Todo lo que no es la propia app se abre en el navegador; nada de webviews ni permisos que no hagan falta.
 const PERMISOS = new Set(["clipboard-sanitized-write", "notifications", "fullscreen"]);
-function blindar(base) {
+function blindarContenido(wc, base) {
   const propio = (url) => url.startsWith(base);
   const externo = (url) => { if (/^(https?:|mailto:)/.test(url)) shell.openExternal(url); };
-  app.on("web-contents-created", (_e, wc) => {
-    wc.on("will-attach-webview", (ev) => ev.preventDefault());
-    // Avisos y errores de la interfaz (CSP, excepciones) al registro, para depurar sin abrir las DevTools.
-    wc.on("console-message", (ev) => { if (ev.level === "warning" || ev.level === "error") registro.warn(`[ventana] ${ev.message}`.slice(0, 600)); });
-    // Las ventanas de lectores y copias (server/navegador.js) cargan webs de terceros a propósito, en su propia
-    // sesión: solo se blindan la navegación y las ventanas emergentes de las ventanas de la app.
-    if (wc.session !== session.defaultSession) return;
-    wc.setWindowOpenHandler(({ url }) => { externo(url); return { action: "deny" }; });
-    wc.on("will-navigate", (ev, url) => { if (!propio(url)) { ev.preventDefault(); externo(url); } });
-    wc.on("will-redirect", (ev, url) => { if (!propio(url)) ev.preventDefault(); });
-  });
+  wc.on("will-attach-webview", (ev) => ev.preventDefault());
+  // Avisos y errores de la interfaz (CSP, excepciones) al registro, para depurar sin abrir las DevTools.
+  wc.on("console-message", (ev) => { if (ev.level === "warning" || ev.level === "error") registro.warn(`[ventana] ${ev.message}`.slice(0, 600)); });
+  // Las ventanas de lectores y copias (server/navegador.js) cargan webs de terceros a propósito, en su propia
+  // sesión: solo se blindan la navegación y las ventanas emergentes de las ventanas de la app.
+  if (wc.session !== session.defaultSession) return;
+  wc.setWindowOpenHandler(({ url }) => { externo(url); return { action: "deny" }; });
+  wc.on("will-navigate", (ev, url) => { if (!propio(url)) { ev.preventDefault(); externo(url); } });
+  wc.on("will-redirect", (ev, url) => { if (!propio(url)) ev.preventDefault(); });
+}
+
+function blindar(base) {
+  app.on("web-contents-created", (_e, wc) => blindarContenido(wc, base));
+  // La ventana de bienvenida ya existía: pasa a las mismas reglas que el resto antes de cargar la app.
+  if (ventanaBienvenida && !ventanaBienvenida.isDestroyed()) {
+    ventanaBienvenida.webContents.removeAllListeners("will-navigate");
+    blindarContenido(ventanaBienvenida.webContents, base);
+  }
   const s = session.defaultSession;
   s.setPermissionRequestHandler((_wc, permiso, cb) => cb(PERMISOS.has(permiso)));
   s.setPermissionCheckHandler((_wc, permiso) => PERMISOS.has(permiso));
@@ -227,6 +287,8 @@ function abrirAjustes(seccion) {
 
 function mostrar(hash) {
   if (!base) return;
+  // Mientras dura la bienvenida, el Dock y la barra de menús la traen a ella en vez de abrir otra ventana.
+  if (ventanaBienvenida && !ventanaBienvenida.isDestroyed()) { ventanaBienvenida.show(); ventanaBienvenida.focus(); return; }
   if (!win) crearVentana();
   if (hash) win.loadURL(base + hash);
   win.show();
@@ -365,6 +427,13 @@ ipcMain.handle("abrirAjustes", (_, seccion) => abrirAjustes(seccion));
 ipcMain.handle("cambiarCerebro", () => cambiarCerebro());
 ipcMain.handle("mostrarCerebro", () => raizCerebro && shell.openPath(raizCerebro));
 ipcMain.handle("registros", () => shell.openPath(app.getPath("logs")));
+ipcMain.handle("ir", (_, hash) => mostrar(typeof hash === "string" && hash.startsWith("#/") ? hash : undefined));
+ipcMain.handle("glim:terminar", (e) => {
+  guardarConfig({ bienvenida: 1 });
+  const w = BrowserWindow.fromWebContents(e.sender);
+  if (w && w === ventanaBienvenida) { convertirEnApp(w); return { transformada: true }; }
+  return { transformada: false };
+});
 
 process.on("uncaughtException", (e) => registro.error("uncaughtException", e));
 process.on("unhandledRejection", (e) => registro.error("unhandledRejection", e));
@@ -376,8 +445,9 @@ else {
   app.on("second-instance", () => mostrar());
   app.whenReady().then(async () => {
     arreglarPath();
-    raizCerebro = await cerebro();
-    if (!raizCerebro) return app.quit();
+    const elegido = await cerebro();
+    if (!elegido) return app.quit();
+    raizCerebro = elegido.dir;
     try {
       servidor = await arrancarServidor(raizCerebro);
       base = servidor.url;
@@ -391,7 +461,11 @@ else {
     registro.info(`cerebro ${raizCerebro} · ${servidor.desarrollo ? "desarrollo" : "empaquetada"} · ${base}`);
     menu();
     aplicar();
-    if (aj.mostrarAlAbrir !== false) crearVentana();
+    // Primera vez: la ventana de bienvenida sigue con los pasos que necesitan el servidor (herramientas, agente…).
+    if (elegido.ventana && !elegido.ventana.isDestroyed()) {
+      prepararVentana(elegido.ventana);
+      elegido.ventana.loadURL(`${base}#/bienvenida`);
+    } else if (aj.mostrarAlAbrir !== false) crearVentana();
     await vigilar();
     setInterval(vigilar, 2500);
     if (app.isPackaged && !servidor.desarrollo) buscarVersionNueva({ app, shell, Notification, registro }).catch((e) => registro.warn("actualizador", e));

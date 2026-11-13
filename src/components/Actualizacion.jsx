@@ -19,6 +19,8 @@ import { t } from "../lib/i18n.js";
 const VISTA = "panel:novedadesVista";
 const leerVista = () => { try { return localStorage.getItem(VISTA); } catch { return null; } };
 const ponerVista = (v) => { try { localStorage.setItem(VISTA, v); } catch {} };
+// Tras la bienvenida no se enseñan las novedades: quien instala de cero no tiene nada de antes con qué comparar.
+export const marcarNovedadesVistas = () => fetch("/api/novedades").then((r) => r.json()).then((n) => n.version && ponerVista(n.version)).catch(() => {});
 const cmp = (a, b) => { const x = String(a).split(".").map(Number), y = String(b).split(".").map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
 
 function Hoja({ titulo, sub, onClose, children, pie, ancho = 560, cerrable = true }) {

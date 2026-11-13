@@ -13,6 +13,7 @@ import * as refs from "./referencias.js";
 import * as analisis from "./analisis.js";
 import * as lectores from "./lectores.js";
 import * as copias from "./archivo.js";
+import * as herramientas from "./herramientas.js";
 import * as nav from "./navegador.js";
 import * as lz from "./lienzos.js";
 import * as icono from "./icono.js";
@@ -190,6 +191,8 @@ const RUTAS = [
   ["POST", /^\/api\/sistema\/comprobar$/, () => vivo.estado(true)],
   ["POST", /^\/api\/sistema\/traer$/, () => vivo.traer(encargos.ocupado())],
   ["POST", /^\/api\/sistema\/npm$/, () => vivo.instalarDependencias()],
+  ["GET", /^\/api\/sistema\/herramientas$/, () => herramientas.estado(false)],
+  ["POST", /^\/api\/sistema\/herramientas$/, () => herramientas.estado(true)],
   ["GET", /^\/api\/agentes$/, async () => ({ agentes: await agentesMod.disponibles(false), elegido: aj.ajustes().agente })],
   ["POST", /^\/api\/agentes\/buscar$/, async () => ({ agentes: await agentesMod.disponibles(true), elegido: aj.ajustes().agente })],
   ["GET", /^\/api\/actualizacion$/, () => vivo.actualizacion(false)],

@@ -67,7 +67,7 @@ function Tarjetas({ value, onChange, opciones, label }) {
   );
 }
 
-function Clave({ servicio, hay, ayuda }) {
+export function Clave({ servicio, hay, ayuda }) {
   const [v, setV] = useState("");
   const [msg, setMsg] = useState(null);
   const [cargando, setCargando] = useState(false);
@@ -433,6 +433,11 @@ function Servidor({ d, a, cambiar }) {
       <Grupo titulo={t("ajustes.carpetas")}>
         <Fila label="Repo" ayuda={d.raiz}><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "repo" })}><FolderOpen size={13} aria-hidden="true" /><span>{t("ajustes.abrirFinder")}</span></button></Fila>
         <Fila label={t("ajustes.datosLocales")} ayuda={t("ajustes.datosLocalesAyuda")}><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "datos" })}><FolderOpen size={13} aria-hidden="true" /><span>{t("ajustes.abrirFinder")}</span></button></Fila>
+      </Grupo>
+      <Grupo titulo={t("bienvenida.ajustes.titulo")}>
+        <Fila label={t("bienvenida.ajustes.volver")} ayuda={t("bienvenida.ajustes.ayuda")}>
+          <button type="button" className="btn small" onClick={() => (window.panelApp && window.panelApp.ir ? window.panelApp.ir("#/bienvenida") : (window.location.hash = "#/bienvenida"))}>{t("bienvenida.ajustes.ver")}</button>
+        </Fila>
       </Grupo>
       <Grupo titulo={t("ajustes.restablecer")}>
         <Fila label={t("ajustes.volverDefecto")} ayuda={t("ajustes.volverDefectoAyuda")}>

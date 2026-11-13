@@ -26,6 +26,7 @@ import Ogs from "./views/Ogs.jsx";
 import Brands from "./views/Brands.jsx";
 import MediaView from "./views/MediaView.jsx";
 import Library from "./views/Library.jsx";
+import Bienvenida from "./views/Bienvenida.jsx";
 
 const MCP = "http://localhost:4747";
 const REGLAS = "AGENTS.md"; // marcador; nav() lo cambia por el archivo de reglas del cerebro
@@ -146,6 +147,20 @@ export default function App() {
   const post = data && route.params.ver && route.path !== "encargos" ? data.posts.find((p) => p.id === route.params.ver) : null;
   const trabajando = enc.ocupado && enc.lista.find((e) => e.id === enc.ocupado);
 
+  // Bienvenida (primera vez o desde Ajustes): pantalla completa, sin barra lateral ni avisos de novedades.
+  if (route.path === "bienvenida") {
+    return (
+      <I18nProvider idioma={idioma}>
+      <RouteContext.Provider value={route}>
+        <DataContext.Provider value={data}>
+          <EncargosContext.Provider value={enc}>
+            {data ? <Bienvenida /> : <p className="muted pad">{t("app.leyendo")}</p>}
+          </EncargosContext.Provider>
+        </DataContext.Provider>
+      </RouteContext.Provider>
+      </I18nProvider>
+    );
+  }
   // Ventana de Ajustes de la app (⌘,): solo los ajustes, sin la barra lateral del panel.
   if (route.path === "ajustes" && route.params.ventana === "1") {
     return (
