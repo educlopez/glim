@@ -338,9 +338,11 @@ html.is-app:has(.scrim, .quicklook, [role="dialog"]) .side::before { -webkit-app
 .agente:disabled { opacity: 0.45; cursor: default; }
 .agente code { font-size: 11px; }
 
-/* Fila del cerebro (primera de la barra lateral) y su menú, como el de Pond. */
+/* Fila del cerebro (primera de la barra lateral) y su menú, como el de Pond. El relleno izquierdo de 10 deja el borde
+   visible del icono (escalado 1.22) en x≈19, en línea con el botón rojo de la ventana (trafficLightPosition x 18)
+   y con los iconos y etiquetas de la navegación. */
 .cerebrobar { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-.cerebrobtn { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; height: 32px; padding: 0 8px 0 5px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; cursor: default; transition: background-color 120ms var(--ease-out); }
+.cerebrobtn { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; height: 32px; padding: 0 8px 0 10px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; cursor: default; transition: background-color 120ms var(--ease-out); }
 .cerebrobtn:hover, .cerebrobtn[aria-expanded="true"] { background: var(--hover); }
 .cerebrobtn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
 .cerebronombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
