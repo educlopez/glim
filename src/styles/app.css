@@ -101,6 +101,7 @@ button { font: inherit; color: inherit; }
 .e-pendiente-ok::before { background: var(--st-ok); }
 .e-programado::before { background: var(--st-prog); }
 .e-publicado::before, .e-activa::before { background: var(--st-pub); }
+.e-por-revisar::before { background: var(--st-ok); }
 .e-descartado::before, .e-retirada::before { background: var(--st-desc); }
 .e-desaconsejada::before { background: #c28a00; }
 .e-aviso::before { background: var(--warn); }

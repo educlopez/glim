@@ -1,6 +1,6 @@
 // Índice de plantillas como catálogo: miniatura del render real, para qué sirve y su estado.
 import { useMemo } from "react";
-import { BookOpen, PenTool, FolderX, SearchX } from "lucide-react";
+import { BookOpen, PenTool, FolderX, SearchX, CheckCircle2, CircleDashed, Wrench } from "lucide-react";
 import { useData } from "../lib/data.js";
 import { PageHeader, Segmented, SearchBox, Empty, Estado, Fields, CopyButton } from "../components/ui.jsx";
 import { Thumb, Player } from "../components/Media.jsx";
@@ -12,8 +12,8 @@ import { t } from "../lib/i18n.js";
 // Tipo y estado vienen del índice de plantillas (identificadores); aquí solo se traduce la etiqueta.
 const TIPOS = ["carrusel", "video", "imagen", "componente"];
 const tipoLabel = (tipo) => (TIPOS.includes(tipo) ? t(`plantillas.tipo.${tipo}`) : tipo);
-const estadoPl = (e) => (["activa", "desaconsejada", "retirada"].includes(e) ? t(`plantillas.estado.${e}`) : e);
-const ESTADOS = ["activa", "desaconsejada", "retirada", "todas"].map((id) => ({ id, get label() { return t(`plantillas.filtro.${id}`); } }));
+const estadoPl = (e) => (["activa", "por-revisar", "desaconsejada", "retirada"].includes(e) ? t(`plantillas.estado.${e}`) : e);
+const ESTADOS = ["activa", "por-revisar", "desaconsejada", "retirada", "todas"].map((id) => ({ id, get label() { return t(`plantillas.filtro.${id}`); } }));
 
 function TemplateCard({ pl, href }) {
   const prev = pl.previews[0];
@@ -26,6 +26,10 @@ function TemplateCard({ pl, href }) {
         <div className="cardtitle"><span className="mono">{pl.id}</span><Estado id={pl.estado} label={estadoPl(pl.estado)} /></div>
         <p className="cardtext clamp3">{pl.para}</p>
         <div className="cardmeta">
+          {pl.estado === "activa" && (pl.revisada_el || pl.aprobada_el)
+            ? <span className="tag"><CheckCircle2 size={12} aria-hidden="true" /> {t("plantillas.revisada", { fecha: (pl.revisada_el || pl.aprobada_el).slice(5) })}</span> : null}
+          {pl.estado === "por-revisar" ? <span className="tag warn"><CircleDashed size={12} aria-hidden="true" /> {t("plantillas.sinRevisar")}</span> : null}
+          {pl.rehacer ? <span className="tag warn"><Wrench size={12} aria-hidden="true" /> {t("plantillas.aRehacer")}</span> : null}
           {pl.requiere_firma ? <span className="tag"><PenTool size={12} aria-hidden="true" /> {t("composer.firma")}</span> : null}
           {pl.ubicacion ? <span className="tag">{t("plantillas.enOtroSitio", { donde: pl.ubicacion })}</span>
             : !pl.existe ? <span className="tag warn"><FolderX size={12} aria-hidden="true" /> {t("plantillas.fueraRepo")}</span> : null}
@@ -73,18 +77,20 @@ export default function Templates() {
   const r = useRouteCtx();
   const estado = r.params.estado || "activa";
   const q = (r.params.q || "").toLowerCase();
-  const list = useMemo(() => d.plantillas.list.filter((t) => (estado === "todas" || t.estado === estado) && (!q || (t.id + " " + t.para).toLowerCase().includes(q))), [d, estado, q]);
+  const social = useMemo(() => d.plantillas.list.filter((t) => t.ambito !== "og-web"), [d]);
+  const list = useMemo(() => social.filter((t) => (estado === "todas" || t.estado === estado) && (!q || (t.id + " " + t.para).toLowerCase().includes(q))), [d, estado, q]);
   const abierta = r.params.ver && d.plantillas.list.find((t) => t.id === r.params.ver);
-  const tipos = [...new Set(d.plantillas.list.map((t) => t.tipo))];
+  const tipos = [...new Set(social.map((t) => t.tipo))];
 
   return (
     <>
       <PageHeader title={t("nav.plantillas")} sub={t("plantillas.sub", { version: d.plantillas.meta.version || "" })}
         actions={<a className="btn ghost small" href={hrefOf("biblioteca", { doc: "estrategia/indice-recursos.md" })}><BookOpen size={14} aria-hidden="true" /><span>{t("plantillas.indiceCompleto")}</span></a>}>
         <Segmented label={t("postDetalle.estado")} value={estado} onChange={(v) => r.set({ estado: v === "activa" ? null : v })}
-          options={ESTADOS.map((e) => ({ ...e, count: e.id === "todas" ? d.plantillas.list.length : d.plantillas.list.filter((t) => t.estado === e.id).length }))} />
+          options={ESTADOS.map((e) => ({ ...e, count: e.id === "todas" ? social.length : social.filter((t) => t.estado === e.id).length }))} />
         <SearchBox value={r.params.q || ""} onChange={(v) => r.set({ q: v || null }, true)} placeholder={t("plantillas.buscar")} />
       </PageHeader>
+      {d.plantillas.list.some((t) => t.ambito === "og-web") ? <p className="small muted"><a className="link" href={hrefOf("og")}>{t("plantillas.ogAparte")}</a></p> : null}
       {list.length ? tipos.map((tipo) => {
         const items = list.filter((t) => t.tipo === tipo);
         return items.length ? (
