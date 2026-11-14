@@ -36,13 +36,39 @@ export function resumen(name, input = {}) {
   return { icono: "herramienta", texto: name };
 }
 
+// ---- MCP del cerebro (opcional, solo Claude Code) ----
+// glim.config.json → agentes.usarMcpDelCerebro (false por defecto) y agentes.mcp (por defecto .mcp.json si existe).
+// El archivo se versiona en el cerebro, así que no puede llevar secretos: si algún servidor trae valores literales en
+// env o headers (en vez de ${VARIABLE}), no se usa y el encargo sale sin MCP, con el motivo en `error`.
+const REFERENCIA = /^\$\{[A-Za-z_][A-Za-z0-9_]*\}$/;
+export function mcpDelCerebro(root, agentesCfg = {}) {
+  if (!agentesCfg.usarMcpDelCerebro) return null;
+  const rel = agentesCfg.mcp || ".mcp.json";
+  const abs = path.join(root, rel);
+  if (!abs.startsWith(root + path.sep) || !fs.existsSync(abs)) return agentesCfg.mcp ? { ruta: null, servidores: [], error: `No existe ${rel}` } : null;
+  let j;
+  try { j = JSON.parse(fs.readFileSync(abs, "utf8")); } catch (e) { return { ruta: null, servidores: [], error: `${rel} no es JSON válido: ${e.message}` }; }
+  const servidores = j && typeof j.mcpServers === "object" && j.mcpServers ? j.mcpServers : {};
+  const nombres = Object.keys(servidores).filter((n) => /^[\w-]+$/.test(n)).sort();
+  for (const n of nombres) {
+    const s = servidores[n] || {};
+    for (const campo of ["env", "headers"]) {
+      const literales = Object.entries(s[campo] || {}).filter(([, v]) => v != null && v !== "" && !REFERENCIA.test(String(v)));
+      if (literales.length) return { ruta: null, servidores: [], error: `${rel}: el servidor «${n}» lleva valores en ${campo} (${literales.map(([k]) => k).join(", ")}). Usa OAuth o \${VARIABLE}; Glim no pasa secretos versionados a los encargos.` };
+    }
+  }
+  return { ruta: abs, rel, servidores: nombres, error: null };
+}
+
 // ---- Claude Code ----
 const claude = {
   id: "claude", nombre: "Claude Code", bins: ["claude"], web: "https://docs.anthropic.com/claude-code",
   sesionLogin: "claude", permisos: "Lista de permitidas y prohibidas (sin commit, push, gh, rm ni curl).",
-  args({ sistema, sesion, modelo, permitidas, prohibidas }) {
-    const a = ["-p", "--output-format", "stream-json", "--verbose", "--strict-mcp-config", "--setting-sources", "project,local",
-      "--permission-mode", "acceptEdits", "--append-system-prompt", sistema, "--allowedTools", ...permitidas, "--disallowedTools", ...prohibidas];
+  // mcp: { ruta, servidores } de mcpDelCerebro(). Con --strict-mcp-config solo se carga ese archivo; sin él, ningún MCP.
+  args({ sistema, sesion, modelo, permitidas, prohibidas, mcp }) {
+    const conMcp = mcp && mcp.ruta && !mcp.error;
+    const a = ["-p", "--output-format", "stream-json", "--verbose", "--strict-mcp-config", ...(conMcp ? ["--mcp-config", mcp.ruta] : []), "--setting-sources", "project,local",
+      "--permission-mode", "acceptEdits", "--append-system-prompt", sistema, "--allowedTools", ...permitidas, ...(conMcp ? mcp.servidores.map((s) => `mcp__${s}`) : []), "--disallowedTools", ...prohibidas];
     if (modelo) a.push("--model", modelo);
     if (sesion) a.push("--resume", sesion);
     return { args: a, stdin: true };

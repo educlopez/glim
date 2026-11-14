@@ -2,8 +2,8 @@
 // él salvo lo que diga su `glim.config.json`: rutas, reglas, zona horaria, comprobaciones al publicar y qué
 // módulos enseñar. Así la app no lleva datos personales y cualquiera puede apuntarla a su propio repo.
 //
-// Dónde se busca el cerebro, por orden: GLIM_BRAIN, la ruta guardada por la app (config.json en la carpeta de
-// datos de Glim) y la carpeta actual si tiene glim.config.json. El estado local (encargos, ajustes, cachés)
+// Dónde se busca el cerebro, por orden: GLIM_BRAIN (la app lo pone siempre) y la carpeta actual si tiene
+// glim.config.json. La ruta guardada por la app solo con GLIM_USAR_GUARDADO=1; en los tests, solo GLIM_BRAIN. El estado local (encargos, ajustes, cachés)
 // vive en `<cerebro>/.glim/`, que el cerebro ignora en git.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -25,9 +25,12 @@ export function carpetaApp() {
 
 export const esCerebro = (p) => !!p && fs.existsSync(path.join(p, CONFIG));
 
+// La ruta guardada por la app NO se usa por defecto: la app la pasa ella misma en GLIM_BRAIN (electron/main.mjs). Así
+// un `npm run dev`, un script o un test sin GLIM_BRAIN nunca abren (ni escriben en) el cerebro real. Para usarla a
+// propósito: GLIM_USAR_GUARDADO=1. En los tests (VITEST) solo vale GLIM_BRAIN.
 export function buscarCerebro() {
-  const guardada = (() => { try { return JSON.parse(fs.readFileSync(path.join(carpetaApp(), "config.json"), "utf8")).cerebro; } catch { return null; } })();
-  const candidatas = [process.env.GLIM_BRAIN, guardada, process.cwd()].filter(Boolean).map((p) => path.resolve(p.replace(/^~(?=\/|$)/, os.homedir())));
+  const guardada = process.env.GLIM_USAR_GUARDADO === "1" && !process.env.VITEST ? (() => { try { return JSON.parse(fs.readFileSync(path.join(carpetaApp(), "config.json"), "utf8")).cerebro; } catch { return null; } })() : null;
+  const candidatas = (process.env.VITEST ? [process.env.GLIM_BRAIN] : [process.env.GLIM_BRAIN, guardada, process.cwd()]).filter(Boolean).map((p) => path.resolve(p.replace(/^~(?=\/|$)/, os.homedir())));
   return candidatas.find(esCerebro) || null;
 }
 

@@ -50,7 +50,7 @@ describe("prepararCerebro", () => {
     fs.writeFileSync(path.join(dir, ".gitignore"), "node_modules");
     const antes = describir(dir);
     expect(antes).toMatchObject({ esCerebro: false, vacia: false, reglas: "CLAUDE.md" });
-    expect(antes.crear).toEqual(["glim.config.json", "borradores/", "aprendizajes.md"]);
+    expect(antes.crear).toEqual(["glim.config.json", "borradores/", "aprendizajes.md", "skills/glim/"]);
     prepararCerebro(dir, { nombre: "repo" });
     const cfg = JSON.parse(fs.readFileSync(path.join(dir, "glim.config.json"), "utf8"));
     expect(cfg.reglas).toBe("CLAUDE.md");

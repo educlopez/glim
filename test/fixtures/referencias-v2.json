@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "actualizado": "2026-11-14",
+  "items": [
+    {
+      "id": "ref-abc",
+      "creado": "2026-11-01",
+      "titulo": "Mía",
+      "url": "https://ejemplo.com/a",
+      "archivo": null,
+      "thumb": null,
+      "notas": "",
+      "etiquetas": [
+        "web"
+      ],
+      "fuente": "https://ejemplo.com/original",
+      "que_robar": "Ritmo de cortes",
+      "plantilla_ids": [
+        "carrusel-ui-ux"
+      ],
+      "campo_futuro": {
+        "x": 1
+      }
+    }
+  ],
+  "valoraciones": {
+    "pd-00-firecrawl": 4
+  },
+  "vistas": [],
+  "anotaciones": {
+    "pd-00-firecrawl": {
+      "tipo_post": "hito",
+      "etiquetas": [
+        "dev-tools"
+      ],
+      "titulo": "Firecrawl: 200K stars",
+      "fuente": "https://x.com/firecrawl/status/2119834677775126850",
+      "posts_design": "https://posts.design/firecrawl-we-hit-200k",
+      "media_local": "media/referencias/posts-design-2026-11-10/00-firecrawl.mp4",
+      "publicado": "2026-11-09",
+      "que_robar": "La cifra hecha de lo que cuenta",
+      "estudio": "estrategia/referentes/posts-hito.md",
+      "valoracion": null,
+      "plantilla_ids": [
+        "video-hito"
+      ],
+      "usada_en": [
+        "borradores/2026-11-12-x-hito.md"
+      ]
+    },
+    "pd-01-sin-estudiar": {
+      "tipo_post": "funcion",
+      "etiquetas": [],
+      "publicado": "2026-10-01"
+    }
+  }
+}

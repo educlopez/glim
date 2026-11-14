@@ -7,7 +7,7 @@ import { Player, SlideStrip } from "./Media.jsx";
 import { fechaLarga, TIPO_FECHA } from "../lib/format.js";
 import { hrefOf } from "../lib/route.js";
 import { PedirCambio } from "./Composer.jsx";
-import { BufferReal } from "./BufferUI.jsx";
+import { BufferReal, Instantanea } from "./BufferUI.jsx";
 import { EnlacesCortos, conCortos } from "./Enlaces.jsx";
 import { Revision, TextoAnotable } from "./Revision.jsx";
 import { useData } from "../lib/data.js";
@@ -169,6 +169,8 @@ export function PostDetail({ post, onClose }) {
               [t("postDetalle.enlaces"), post.publicado.length ? <span className="links">{post.publicado.map((u) => <a key={u} href={u} target="_blank" rel="noreferrer">{u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 38)}<ExternalLink size={12} aria-hidden="true" /></a>)}</span> : null],
               [t("postDetalle.primerComentario"), post.primerComentario],
               [t("postDetalle.metricas"), post.metricas],
+              [t("postDetalle.metricas48h"), post.instantaneas && post.instantaneas["48h"] ? <Instantanea foto={post.instantaneas["48h"]} /> : null],
+              [t("postDetalle.metricas7d"), post.instantaneas && post.instantaneas["7d"] ? <Instantanea foto={post.instantaneas["7d"]} /> : null],
             ]} />
           </section>
           <section className="detailsection">

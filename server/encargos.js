@@ -5,7 +5,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import * as aislada from "./aislada.js";
-import { ROOT, hoyLocal, mtime } from "./repo.js";
+import { ROOT, hoyLocal, mtime, exists } from "./repo.js";
+import { registro } from "./registro.js";
+import { contextoPrevio } from "./contexto.js";
+import { carpetaSkillsGlim } from "./paquete-skills.js";
 import { posts } from "./posts.js";
 import { media, plantillas, carruseles, marcas, ogs } from "./catalog.js";
 import { referencias } from "./referencias.js";
@@ -36,7 +39,9 @@ const SISTEMA = [
   "- Nunca publiques ni programes nada. No hagas commit, push ni PR.",
   `- Edita archivos del repo y genera renders en ${rutas.media}/. Revisa el resultado (PNG o fotogramas) antes de darlo por bueno.`,
   `- No cambies el estado de un borrador a pendiente-ok, programado ni publicado: eso lo decide ${P}.`,
-  rutas.aprendizajes ? `- No escribas en ${rutas.aprendizajes}: ${P} registra las decisiones desde el panel.` : null,
+  // Regla única sobre el registro de aprendizajes (docs/cerebro.md, «Aprendizajes»): solo se escribe en él cuando el
+  // encargo es feedback o un rechazo de la persona; lo demás va como propuesta (DECISIÓN: o informe semanal).
+  rutas.aprendizajes ? `- Escribe en ${rutas.aprendizajes} solo si el encargo es feedback de ${P} o un rechazo (algo que no le gusta, que no vale o que hay que dejar de hacer): añade arriba una entrada con su formato y lo que dijo, sin inventar. En cualquier otro caso no lo toques: deja la propuesta como línea DECISIÓN: al final de tu respuesta (o en el informe semanal de ${rutas.informes}/) y ${P} la aprueba.` : null,
   cfg.privadas.length ? `- No leas ni toques: ${cfg.privadas.join(", ")}.` : null,
   ...cfg.agentes.reglas.map((r) => `- ${r}`),
   cfg.idioma === "es" ? "- Responde siempre en castellano." : `- Responde siempre en el idioma «${cfg.idioma}».`,
@@ -180,6 +185,14 @@ const FORMATO_LUMI = `## Cómo responder
 - Si solo era una pregunta: la respuesta, directa y corta.
 - Si has cambiado algo: **Hecho** (qué), **Archivos** (rutas creadas o editadas) y **Revisa** (qué mirar en el panel; una sección nueva sale sola en el menú).`;
 
+// Lecturas previas (glim.config.json → contexto.leerAntes), últimas entradas de aprendizajes y métricas de las 5
+// piezas publicadas más parecidas (solo si el objeto es un post). Acotado en contexto.js.
+function contextoDe(e, cat) {
+  const leerAntes = cfg.contexto.leerAntes.filter((r) => exists(r));
+  const post = e.objetivo.tipo === "post" ? cat.posts.find((x) => x.id === e.objetivo.id) : null;
+  return contextoPrevio({ leerAntes, entradas: rutas.aprendizajes ? registro() : [], aprendizajes: rutas.aprendizajes || null, post, posts: post ? cat.posts : [] });
+}
+
 export function prompt(e, cat = catalogo()) {
   const obj = resolver(e.objetivo, cat) || { contexto: `Objetivo ${e.objetivo.tipo} ${e.objetivo.id} (ya no se encuentra en el repo).` };
   const t = e.plantilla ? cat.plantillas.find((x) => x.id === e.plantilla) : null;
@@ -192,15 +205,30 @@ export function prompt(e, cat = catalogo()) {
     obj.contexto,
   ];
   if (t) partes.push("## Plantilla que quiere usar", [`${t.id} (${t.tipo}, estado ${t.estado}).`, `- Carpeta: ${t.ruta || t.dir}`, t.readme ? `- Guía: ${t.readme}. Léela antes de usarla.` : null, t.previews.length ? `- Así se ve: ${t.previews.slice(0, 2).map((m) => m.path).join(", ")}` : null].filter(Boolean).join("\n"));
-  if (refs.length) partes.push("## Referencias que adjunta", refs.map((r) => `- ${r.titulo || r.url || r.archivo}${r.url ? ` · ${r.url}` : ""}${r.archivo ? ` · archivo local ${r.archivo} (ábrelo con Read para verlo)` : ""}${r.thumb && r.thumb !== r.archivo ? ` · vista previa ${r.thumb}` : ""}${r.notas ? `\n  Notas de ${P}: ${r.notas}` : ""}`).join("\n") + "\n\nSon referencias de estilo internas: nunca las nombres en una pieza pública.");
+  // Por referencia: fuente pública (sirve aunque el medio no esté en este equipo), página de posts.design, archivo
+  // local si existe y qué robar de ella (referencias.json v2).
+  if (refs.length) partes.push("## Referencias que adjunta", refs.map((r) => {
+    const fuenteUrl = r.fuenteUrl || r.url;
+    return [
+      `- ${r.titulo || fuenteUrl || r.archivo}`,
+      fuenteUrl ? ` · fuente ${fuenteUrl}` : "",
+      r.posts_design ? ` · posts.design ${r.posts_design}` : "",
+      r.archivo && r.existe !== false ? ` · archivo local ${r.archivo} (ábrelo con Read para verlo)` : r.sinMedio || r.existe === false ? " · sin medio en este equipo: mírala en la fuente" : "",
+      r.thumb && r.thumb !== r.archivo ? ` · vista previa ${r.thumb}` : "",
+      r.que_robar ? `\n  Qué robar: ${r.que_robar}` : "",
+      r.notas ? `\n  Notas de ${P}: ${r.notas}` : "",
+    ].join("");
+  }).join("\n") + "\n\nSon referencias de estilo internas: nunca las nombres en una pieza pública. Toma solo la técnica (lo de «qué robar»), nunca la estética, los assets ni las frases.");
   const kc = kitContexto(e.preset, e.firma);
   if (kc) partes.push(kc);
   if (e.objetivo.tipo === "lumi") {
     partes.push("## Cómo trabajar", PASOS_LUMI, FORMATO_LUMI);
     return partes.join("\n\n");
   }
+  const previo = contextoDe(e, cat);
+  if (previo) partes.push("## Antes de empezar", previo);
   partes.push("## Cómo trabajar", [
-    `1. Lee ${cfg.reglas}${rutas.skills ? ` y la guía o skill de ${rutas.skills}/ que toque` : " y la guía que toque"} antes de cambiar nada.`,
+    `1. Lee ${cfg.reglas}${rutas.skills ? ` y la guía o skill de ${rutas.skills}/ que toque` : " y la guía que toque"} antes de cambiar nada.${exists(`${carpetaSkillsGlim(rutas)}/glim-encargos/SKILL.md`) ? ` Cómo funciona este cerebro en Glim: ${carpetaSkillsGlim(rutas)}/glim-cerebro y glim-encargos.` : ""}`,
     `2. Haz el cambio en los archivos del repo. Si hay render, genéralo en ${rutas.media}/ y míralo antes de darlo por bueno.`,
     "3. Si cambias el visual de un post, actualiza en su borrador las rutas de media, sin tocar el estado.",
     "4. No publiques, no programes y no hagas commit.",
@@ -352,9 +380,13 @@ function ejecutar(e) {
   let bin;
   // Los agentes sin «system prompt» propio reciben las reglas al principio del mensaje.
   const conSistema = `${SISTEMA}\n\n${texto}`;
+  // MCP del cerebro: opt-in en glim.config.json (agentes.usarMcpDelCerebro). Si el archivo no vale, se avisa y sigue sin MCP.
+  const mcp = ad.id === "claude" ? agentes.mcpDelCerebro(ROOT, cfg.agentes) : null;
+  if (mcp && mcp.error) evento(e.id, { ronda: n, tipo: "sistema", texto: `Sin MCP: ${mcp.error}` });
+  else if (mcp) evento(e.id, { ronda: n, tipo: "sistema", texto: `MCP del cerebro (${mcp.rel}): ${mcp.servidores.join(", ") || "ninguno"}` });
   try {
     bin = ad.id === "claude" ? claudeBin() : null;
-    lanzamiento = ad.args({ sistema: SISTEMA, sesion, modelo, permitidas: PERMITIDAS, prohibidas: PROHIBIDAS, prompt: conSistema, comando: aj.comandoPropio, cwd });
+    lanzamiento = ad.args({ sistema: SISTEMA, sesion, modelo, permitidas: PERMITIDAS, prohibidas: PROHIBIDAS, prompt: conSistema, comando: aj.comandoPropio, cwd, mcp });
   } catch (x) { return fallarAntes(e, n, x.message); }
   const arrancar = (b) => {
     const cmd = lanzamiento.cmd || b;

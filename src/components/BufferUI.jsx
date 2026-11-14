@@ -10,6 +10,26 @@ const RED = { twitter: "X", threads: "Threads", linkedin: "LinkedIn" };
 // Etiquetas en el idioma activo: claves de src/locales/*.js.
 const METRICAS = ["reactions", "comments", "reposts", "impressions", "views", "reach", "clicks", "engagementRate", "quotes", "saves", "shares", "follows"];
 const metrica = (m) => (METRICAS.includes(m.tipo) ? t(`buffer.metrica.${m.tipo}`) : m.nombre);
+// Campos de las fotos fijas del borrador (metricas_48h / metricas_7d, server/metricas.js) → etiqueta de Buffer.
+const CAMPO_FOTO = { impresiones: "impressions", reacciones: "reactions", comentarios: "comments", compartidos: "reposts", engagement: "engagementRate" };
+
+// Una foto fija de métricas: por red, los mismos chips que las métricas en vivo de Buffer.
+export function Instantanea({ foto }) {
+  if (!foto || !foto.redes) return null;
+  return (
+    <span className="stack" title={foto.tomadas ? t("postDetalle.tomadas", { fecha: fmtFechaHora(foto.tomadas) }) : undefined}>
+      {Object.entries(foto.redes).map(([red, m]) => (
+        <span key={red} className="metricas">
+          <RedIcon red={red} size={12} />
+          {Object.keys(CAMPO_FOTO).filter((k) => m[k] != null).map((k) => (
+            <span key={k} className="metrica"><strong>{k === "engagement" ? `${m[k].toFixed(1)} %` : fmtNumero(Math.round(m[k]))}</strong>{t(`buffer.metrica.${CAMPO_FOTO[k]}`)}</span>
+          ))}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 const ESTADOS_BUFFER = ["draft", "scheduled", "sending", "sent", "error", "needs_approval"];
 export const estadoBuffer = (e) => (ESTADOS_BUFFER.includes(e) ? t(`buffer.estado.${e}`) : e);
 const cmd = (llavero) => `security add-generic-password -U -a buffer -s ${llavero || "glim"}-buffer -w "$(pbpaste)"`;

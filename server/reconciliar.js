@@ -4,12 +4,14 @@
 //      borrador, se crea uno (origen: buffer). Las piezas de varias redes creadas a la vez van juntas.
 //   2. En un borrador enlazado mandan Buffer: estado, programado_para, publicado_el, publicado_url y los ids.
 //   3. Un borrador «programado» cuyo post ya no está en Buffer vuelve a «pendiente-ok», con nota.
+//   3b. En un borrador enlazado y ya enviado, fotos fijas de métricas a las 48 h y a los 7 días (metricas.js).
 //   4. El calendario del cerebro (rutas.calendario) se reescribe entre las marcas <!-- panel:inicio --> y <!-- panel:fin -->.
 // Solo lee Buffer: nunca crea, edita ni programa nada allí (reglas 1 y 2). Solo escribe un archivo si cambia.
 import fs from "node:fs";
 import path from "node:path";
 import { ROOT } from "./repo.js";
 import { cfg, rutas, enZona } from "./cerebro.js";
+import { tomarInstantaneas } from "./metricas.js";
 
 const DIR = path.join(ROOT, rutas.borradores);
 const CAL = rutas.calendario ? path.join(ROOT, rutas.calendario) : null;
@@ -129,7 +131,7 @@ function crearBorrador(grupo, hoy) {
 const INI = "<!-- panel:inicio -->";
 const FIN = "<!-- panel:fin -->";
 function calendario(docs, b) {
-  if (!fs.existsSync(CAL)) return false;
+  if (!CAL || !fs.existsSync(CAL)) return false;
   const porId = new Map(b.posts.map((x) => [x.id, x]));
   const prog = b.posts.filter((x) => ["scheduled", "sending", "error"].includes(x.estado)).sort((a, z) => (a.dueAt || "").localeCompare(z.dueAt || ""));
   const docDe = (id) => docs.find((d) => idsDe(d.campo("buffer")).includes(id));
@@ -174,7 +176,7 @@ function calendario(docs, b) {
 
 // ---- Entrada ----
 export function reconciliar(b) {
-  const r = { enlazados: 0, actualizados: [], creados: [], devueltos: [], calendario: false, avisos: [] };
+  const r = { enlazados: 0, actualizados: [], creados: [], devueltos: [], metricas: [], calendario: false, avisos: [] };
   if (!b || !b.conectado || !b.completo || !b.posts) return { ...r, omitido: "sin una descarga completa de Buffer" };
   const hoy = madrid(new Date().toISOString()).dia;
   const canales = new Set((b.canales || []).map((c) => c.id));
@@ -207,6 +209,9 @@ export function reconciliar(b) {
     if (e.reales.length) {
       r.enlazados++;
       aplicarBuffer(d, e.reales, hoy);
+      // Fotos fijas de métricas a las 48 h y a los 7 días (metricas.js). Nunca pisan una que ya exista.
+      const fotos = tomarInstantaneas(d, e.reales);
+      if (fotos.length) r.metricas.push({ path: d.f, claves: fotos });
     } else if (est === "programado" && e.ids.length && e.ids.every((id) => !porId.has(id))) {
       d.poner("estado", "pendiente-ok");
       nota(d, `sincronizado con Buffer el ${hoy}: sus posts (${e.ids.join(", ")}) ya no están en Buffer; vuelve a pendiente`);

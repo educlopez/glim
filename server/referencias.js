@@ -17,8 +17,10 @@ const EXT_OK = /\.(png|jpe?g|webp|gif|avif|mp4|webm|mov)$/i;
 function cargar() {
   try { return JSON.parse(read(JSON_PATH)) || { items: [] }; } catch { return { version: 1, items: [] }; }
 }
+// La versión del archivo la decide el cerebro (v2 en marca-personal, ver estrategia/referencias.schema.json): Glim
+// conserva la que tenga y todos los campos que no conoce.
 function guardar(d) {
-  d.version = 1;
+  d.version = d.version || 1;
   d.actualizado = hoyLocal();
   fs.writeFileSync(path.join(ROOT, JSON_PATH), JSON.stringify(d, null, 2) + "\n");
 }
@@ -64,11 +66,30 @@ function postsDesign() {
 
 // Anotaciones de las referencias que no son tuyas (posts.design): título bueno, enlace, autor, tipo de post y
 // etiquetas. Viven en referencias.json → anotaciones, por id; las propias llevan tipo_post en su propia entrada.
-const ANOTABLES = ["titulo", "url", "handle", "tipo_post", "etiquetas", "notas"];
+// v2 añade: fuente (URL pública del original), posts_design, media_local, publicado, que_robar, estudio, valoracion,
+// plantilla_ids y usada_en. El `fuente` del JSON es una URL y choca con r.fuente de Glim («posts.design» / «propia»,
+// que usan los filtros y las vistas guardadas): en la referencia va como r.fuenteUrl y manda sobre la URL que se
+// deduce del nombre de archivo (esa deducción falla con muchos nombres).
+const ANOTABLES = ["titulo", "url", "handle", "tipo_post", "etiquetas", "notas", "que_robar", "posts_design", "media_local", "publicado", "estudio", "valoracion", "plantilla_ids", "usada_en"];
 function anotar(r, a) {
   if (!a) return r;
-  for (const k of ANOTABLES) if (a[k] !== undefined && a[k] !== null && a[k] !== "") r[k] = k === "etiquetas" ? limpiarEtiquetas([...(r.etiquetas || []), ...a[k]]) : a[k];
+  for (const k of ANOTABLES) {
+    if (a[k] === undefined || a[k] === null || a[k] === "") continue;
+    if (k === "etiquetas") r.etiquetas = limpiarEtiquetas([...(r.etiquetas || []), ...a[k]]);
+    else if (Array.isArray(a[k]) && !a[k].length) continue;
+    else r[k] = a[k];
+  }
+  if (a.fuente) { r.fuenteUrl = a.fuente; r.url = a.fuente; }
+  else r.fuenteUrl = r.url || null;
   return r;
+}
+
+// Anotaciones sin medio en este equipo (otro Mac, la nube): salen igual, sin archivo, con su enlace a la fuente.
+function soloAnotadas(anot, vistos) {
+  return Object.entries(anot).filter(([id, a]) => /^pd-/.test(id) && !vistos.has(id) && a && typeof a === "object").map(([id, a]) => anotar({
+    id, fuente: "posts.design", titulo: a.titulo || id.slice(3).replace(/-/g, " "), handle: null, tipo: "post", archivo: null, thumb: null, existe: false, sinMedio: true,
+    url: null, grupo: "Sin medio aquí", etiquetas: [], creado: a.publicado || null,
+  }, a));
 }
 
 // Archivo que se analiza: el propio (imagen o vídeo) o, si es un enlace, la imagen de vista previa descargada.
@@ -77,9 +98,10 @@ const fuenteAnalisis = (r) => (r.archivo && r.existe !== false ? r.archivo : r.t
 export function referencias() {
   const d = cargar();
   const val = d.valoraciones || {};
-  const propias = (d.items || []).map((r) => ({ ...r, fuente: "propia", tipo: tipoDe(r), dominio: dominio(r.url), existe: r.archivo ? exists(r.archivo) : true, thumb: r.archivo && kindOf(r.archivo) === "image" ? r.archivo : r.thumb || null }));
+  const propias = (d.items || []).map(({ fuente: fuenteUrl, ...r }) => ({ ...r, fuente: "propia", fuenteUrl: fuenteUrl || r.url || null, tipo: tipoDe(r), dominio: dominio(r.url), existe: r.archivo ? exists(r.archivo) : true, thumb: r.archivo && kindOf(r.archivo) === "image" ? r.archivo : r.thumb || null }));
   const anot = d.anotaciones || {};
-  const todas = [...propias.sort((a, b) => (b.creado || "").localeCompare(a.creado || "")), ...postsDesign().map((r) => anotar(r, anot[r.id]))];
+  const descargadas = postsDesign().map((r) => anotar(r, anot[r.id]));
+  const todas = [...propias.sort((a, b) => (b.creado || "").localeCompare(a.creado || "")), ...descargadas, ...soloAnotadas(anot, new Set(descargadas.map((r) => r.id)))];
   const pendientes = [];
   for (const r of todas) {
     r.valoracion = val[r.id] || r.valoracion || 0;
@@ -247,8 +269,37 @@ export function editar(id, patch) {
   if ("notas" in patch) r.notas = String(patch.notas || "").trim();
   if ("etiquetas" in patch) r.etiquetas = limpiarEtiquetas(patch.etiquetas);
   if (Array.isArray(patch.anadirEtiquetas)) r.etiquetas = limpiarEtiquetas([...(r.etiquetas || []), ...patch.anadirEtiquetas]);
+  ponerV2(r, patch);
   guardar(d);
   return r;
+}
+
+// Campos v2 que se editan desde el panel, en una referencia propia o en una anotación de posts.design.
+export const TIPOS_POST = ["lanzamiento", "funcion", "hito", "evento", "marca", "tipografia", "comunidad", "proceso", "teaser"];
+const limpiarIds = (v) => [...new Set((Array.isArray(v) ? v : String(v || "").split(",")).map((x) => String(x).trim()).filter((x) => /^[\w.-]{1,80}$/.test(x)))].slice(0, 20);
+function ponerV2(r, patch) {
+  if ("que_robar" in patch) { const q = String(patch.que_robar || "").replace(/\s+/g, " ").trim().slice(0, 280); r.que_robar = q || null; }
+  if ("plantilla_ids" in patch) r.plantilla_ids = limpiarIds(patch.plantilla_ids);
+  if ("tipo_post" in patch) {
+    if (patch.tipo_post && !TIPOS_POST.includes(patch.tipo_post)) throw new Error(`Tipo de post no válido: ${patch.tipo_post}`);
+    if (patch.tipo_post) r.tipo_post = patch.tipo_post; else delete r.tipo_post;
+  }
+}
+
+// Edita la anotación de una referencia de posts.design (estrategia/referencias.json → anotaciones[id]): qué robar,
+// plantillas, etiquetas y tipo de post. Crea la anotación si no existía. El resto de campos se conserva.
+export function editarAnotacion(id, patch) {
+  if (!/^pd-/.test(id)) throw new Error("Solo se anotan referencias de posts.design");
+  const d = cargar();
+  if (!(d.anotaciones && d.anotaciones[id]) && !postsDesign().some((x) => x.id === id)) throw new Error("No existe");
+  d.anotaciones = d.anotaciones || {};
+  const a = d.anotaciones[id] || { tipo_post: null, etiquetas: [] };
+  if ("etiquetas" in patch) a.etiquetas = limpiarEtiquetas(patch.etiquetas);
+  if ("notas" in patch) a.notas = String(patch.notas || "").trim();
+  ponerV2(a, patch);
+  d.anotaciones[id] = a;
+  guardar(d);
+  return a;
 }
 
 // Valoración de 0 a 5 de cualquier referencia (también las de posts.design, sin tener que guardarlas como tuyas).
@@ -285,7 +336,7 @@ export function fusionar(idQueda, idSale) {
 }
 
 // Vistas guardadas: una combinación de búsqueda, fuente, etiquetas, color y orden con nombre.
-const CAMPOS_VISTA = ["q", "fuente", "tp", "tags", "color", "orden", "diseno"];
+const CAMPOS_VISTA = ["q", "fuente", "tp", "tags", "color", "pl", "estudiar", "orden", "diseno"];
 export function guardarVista({ nombre, params }) {
   const n = String(nombre || "").trim().slice(0, 40);
   if (!n) throw new Error("Ponle un nombre");
@@ -316,7 +367,13 @@ export function fijar(id, notas) {
   const d = cargar();
   const pd = postsDesign().map((r) => anotar(r, (d.anotaciones || {})[r.id])).find((x) => x.id === id);
   if (!pd) throw new Error("No existe");
-  const item = { id: `ref-${Date.now().toString(36)}`, creado: hoyLocal(), titulo: pd.titulo, url: pd.url, archivo: pd.archivo, galeria: pd.galeria, thumb: pd.thumb, tipo_post: pd.tipo_post, notas: [pd.notas, String(notas || "").trim()].filter(Boolean).join("\n\n"), etiquetas: limpiarEtiquetas(["posts.design", ...(pd.etiquetas || [])]) };
+  const item = {
+    id: `ref-${Date.now().toString(36)}`, creado: hoyLocal(), titulo: pd.titulo, url: pd.url, archivo: pd.archivo, galeria: pd.galeria, thumb: pd.thumb, tipo_post: pd.tipo_post,
+    notas: [pd.notas, String(notas || "").trim()].filter(Boolean).join("\n\n"), etiquetas: limpiarEtiquetas(["posts.design", ...(pd.etiquetas || [])]),
+    // Campos v2 que siguen valiendo en la copia propia (`fuente` vuelve a ser la URL pública, como en el JSON).
+    fuente: pd.fuenteUrl || undefined, posts_design: pd.posts_design || undefined, que_robar: pd.que_robar || undefined,
+    plantilla_ids: pd.plantilla_ids && pd.plantilla_ids.length ? pd.plantilla_ids : undefined, publicado: pd.publicado || undefined,
+  };
   d.items = [item, ...(d.items || [])];
   guardar(d);
   return item;

@@ -18,7 +18,7 @@ import { Thumb, Player, HoverVideo } from "../components/Media.jsx";
 // Etiquetas con getter: se leen al pintar, en el idioma activo.
 const FUENTES = [{ id: "todas", get label() { return t("refs.fuente.todas"); } }, { id: "propia", get label() { return t("refs.fuente.propia"); } }, { id: "posts.design", label: "posts.design" }, { id: "estudios", get label() { return t("refs.fuente.estudios"); } }];
 const DISENOS = [{ id: "mosaico", get label() { return t("refs.diseno.mosaico"); }, icon: Columns3 }, { id: "rejilla", get label() { return t("posts.rejilla"); }, icon: LayoutGrid }, { id: "lista", get label() { return t("refs.diseno.lista"); }, icon: List }];
-const ORDENES = [{ id: "recientes", get label() { return t("refs.orden.recientes"); } }, { id: "valoradas", get label() { return t("refs.orden.valoradas"); } }, { id: "titulo", get label() { return t("registro.titulo"); } }];
+const ORDENES = [{ id: "recientes", get label() { return t("refs.orden.recientes"); } }, { id: "valoradas", get label() { return t("refs.orden.valoradas"); } }, { id: "titulo", get label() { return t("registro.titulo"); } }, { id: "publicado", get label() { return t("refs.orden.publicado"); } }];
 // Tipo de post de la referencia (referencias.json → anotaciones o la propia entrada): qué clase de pieza es.
 const TIPOS_POST = ["lanzamiento", "funcion", "hito", "tipografia", "marca", "proceso", "evento", "teaser", "comunidad"];
 const tipoPostLabel = (id) => (TIPOS_POST.includes(id) ? t(`refs.tipoPost.${id}`) : id);
@@ -181,8 +181,11 @@ function Preview({ r, big }) {
   if (big && src) return <Player path={src} kind={r.tipo === "video" ? "video" : "image"} />;
   if (r.tipo === "video" && src) return r.thumb ? <HoverVideo path={r.previa || src} poster={r.thumb} badge={r.analisis && r.analisis.duracion ? `${Math.round(r.analisis.duracion)} s` : null} /> : <HoverVideo path={src} />;
   if (r.thumb || src) return <Thumb path={r.thumb || src} kind="image" />;
-  return <div className="webcard"><Link2 size={18} aria-hidden="true" /><span>{r.dominio || t("lienzos.enlace")}</span></div>;
+  return <div className="webcard"><Link2 size={18} aria-hidden="true" /><span>{r.sinMedio ? t("refs.sinMedio") : r.dominio || t("lienzos.enlace")}</span></div>;
 }
+
+// Plantillas a las que informa la referencia (referencias.json v2 → plantilla_ids).
+const Plantillas = ({ ids }) => (ids || []).map((id) => <span key={id} className="tag tipopost" title={t("refs.plantillas")}>{id}</span>);
 
 function Tarjeta({ x, modo, dup, onFoco, onColor }) {
   const r = useRouteCtx();
@@ -196,10 +199,12 @@ function Tarjeta({ x, modo, dup, onFoco, onColor }) {
       </div>
       <div className="cardbody">
         <span className="cardtitle"><span>{x.titulo}</span><Estrellas valor={x.valoracion} size={11} /></span>
+        {x.que_robar ? <span className="cardtext clamp2" title={t("refs.queRobar")}>{x.que_robar}</span> : null}
         {x.notas && modo !== "mosaico" ? <span className="cardtext clamp2">{x.notas}</span> : null}
         <span className="cardmeta">
           <Paleta r={x} onColor={onColor} />
           {x.tipo_post ? <span className="tag tipopost">{tipoPostLabel(x.tipo_post)}</span> : null}
+          <Plantillas ids={x.plantilla_ids} />
           {x.fuente !== "propia" ? <span className="tag">{x.fuente}</span> : null}
           {(x.etiquetas || []).slice(0, modo === "lista" ? 6 : 3).map((et) => <span key={et} className="tag">{et}</span>)}
           {x.dominio ? <span className="tag">{x.dominio}</span> : null}
@@ -272,7 +277,7 @@ function VistaRapida({ lista, indice, onIndice, onClose, onAbrir, onValorar, onC
         <Estrellas valor={r.valoracion} onChange={(n) => onValorar(r, n)} size={15} />
         <div className="row gap-s">
           <button type="button" className={`iconbtn${gris ? " on" : ""}`} onClick={() => setGris((g) => !g)} aria-pressed={gris} title={t("refs.grisesAtajo")}><Contrast size={15} aria-hidden="true" /><span className="sr">{t("refs.grises")}</span></button>
-          {r.url ? <a className="btn ghost small" href={r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("refs.abrir")}</span></a> : null}
+          {r.fuenteUrl || r.url ? <a className="btn ghost small" href={r.fuenteUrl || r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("refs.abrirFuente")}</span></a> : null}
           <button type="button" className="btn small" onClick={() => onAbrir(r.id)}>{t("refs.ficha")}</button>
           <button type="button" className="iconbtn" onClick={onClose} aria-label={t("comun.cerrar")}><Close size={15} aria-hidden="true" /></button>
         </div>
@@ -295,7 +300,8 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
   return (
     <Drawer open onClose={onClose} width={900} title={r.titulo} kicker={<span className="muted">{r.fuente === "propia" ? t("refs.tuya") : r.fuente}{r.handle ? ` · @${r.handle}` : ""} · {r.creado}</span>}
       actions={<>
-        {r.url ? <a className="btn ghost small" href={r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("refs.abrir")}</span></a> : null}
+        {r.fuenteUrl || r.url ? <a className="btn ghost small" href={r.fuenteUrl || r.url} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>{t("refs.abrirFuente")}</span></a> : null}
+        {r.posts_design ? <a className="btn ghost small" href={r.posts_design} target="_blank" rel="noreferrer"><ExternalLink size={14} aria-hidden="true" /><span>posts.design</span></a> : null}
         <button type="button" className="btn small primary" onClick={() => ro.set({ pedir: "general", ref: r.id })}><GlimMark size={14} /><span>{t("lienzos.usarEncargo")}</span></button>
       </>}>
       <div className="detailgrid" data-referencia={r.id} data-path={r.archivo || undefined}>
@@ -333,6 +339,15 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
             <h3>{t("refs.valoracion")}</h3>
             <Estrellas valor={r.valoracion} onChange={(n) => onValorar(r, n)} size={16} />
           </section>
+          <Anotacion r={r} onChanged={onChanged} />
+          {(r.usada_en || []).length ? (
+            <section className="detailsection stack">
+              <h3>{t("refs.usadaEn")}</h3>
+              <ul className="stack small">
+                {r.usada_en.map((b) => <li key={b}><a href={hrefOf("posts", { ver: b.split("/").pop().replace(/\.md$/, "") })}>{b.split("/").pop()}</a></li>)}
+              </ul>
+            </section>
+          ) : null}
           {parecidas.length ? (
             <section className="detailsection stack">
               <h3>{t("refs.parecidas")} <span className="muted small">({parecidas.length})</span></h3>
@@ -384,6 +399,8 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
               [t("postDetalle.tipo"), ["imagen", "video", "web", "post"].includes(r.tipo) ? t(`refs.tipo.${r.tipo}`) : r.tipo],
               [t("refs.tamano"), a && a.w ? `${a.w}×${a.h}${a.duracion ? ` · ${a.duracion} s` : ""}` : null],
               [t("refs.tipoPost"), r.tipo_post ? tipoPostLabel(r.tipo_post) : null],
+              [t("refs.publicado"), r.publicado || null],
+              [t("refs.estudio"), r.estudio ? <a href={hrefOf("biblioteca", { doc: r.estudio })}>{r.estudio.split("/").pop()}</a> : null],
               [t("refs.colores"), familias(r).length ? familias(r).map((c) => t(`refs.color.${c}`)).join(", ") : null],
               [t("refs.etiquetas"), (r.etiquetas || []).length ? r.etiquetas.join(", ") : null],
               [t("postDetalle.archivo"), r.archivo ? <code className="small">{r.archivo}</code> : null],
@@ -393,6 +410,41 @@ function Detalle({ r, dups, onClose, onChanged, onValorar, onColor }) {
         </div>
       </div>
     </Drawer>
+  );
+}
+
+// Anotación v2 (qué robar, plantillas, tipo de post y etiquetas). Las propias se guardan en su entrada; las de
+// posts.design, en referencias.json → anotaciones (server/referencias.js → editarAnotacion).
+function Anotacion({ r, onChanged }) {
+  const propia = r.fuente === "propia";
+  const inicial = () => ({ que_robar: r.que_robar || "", plantilla_ids: (r.plantilla_ids || []).join(", "), tipo_post: r.tipo_post || "", etiquetas: (r.etiquetas || []).join(", ") });
+  const [f, setF] = useState(inicial);
+  const [err, setErr] = useState(null);
+  const [ok, setOk] = useState(false);
+  useEffect(() => { setF(inicial()); }, [r.id]);
+  const guardar = async () => {
+    setErr(null);
+    const patch = { que_robar: f.que_robar, plantilla_ids: f.plantilla_ids, tipo_post: f.tipo_post || null, ...(propia ? {} : { etiquetas: f.etiquetas }) };
+    try {
+      await post(propia ? `/api/referencias/${r.id}` : `/api/referencias/${encodeURIComponent(r.id)}/anotar`, patch);
+      setOk(true); setTimeout(() => setOk(false), 1500); onChanged();
+    } catch (x) { setErr(x.message); }
+  };
+  return (
+    <section className="detailsection stack">
+      <h3>{t("refs.queRobar")}</h3>
+      <textarea rows={3} maxLength={280} value={f.que_robar} placeholder={t("refs.queRobarPlaceholder")} onChange={(e) => setF({ ...f, que_robar: e.target.value })} />
+      <label className="field"><span className="fieldlabel">{t("refs.plantillas")}</span><input value={f.plantilla_ids} placeholder={t("refs.plantillasPlaceholder")} onChange={(e) => setF({ ...f, plantilla_ids: e.target.value })} /></label>
+      <label className="field"><span className="fieldlabel">{t("refs.tipoPost")}</span>
+        <span className="selectbox"><select value={f.tipo_post} onChange={(e) => setF({ ...f, tipo_post: e.target.value })}>
+          <option value="">{t("postDetalle.ninguno")}</option>
+          {TIPOS_POST.map((id) => <option key={id} value={id}>{tipoPostLabel(id)}</option>)}
+        </select></span>
+      </label>
+      {!propia ? <label className="field"><span className="fieldlabel">{t("refs.etiquetas")}</span><input value={f.etiquetas} onChange={(e) => setF({ ...f, etiquetas: e.target.value })} /></label> : null}
+      <div className="row gap-s"><button type="button" className="btn small" onClick={guardar}>{ok ? t("lienzos.guardado") : t("comun.guardar")}</button></div>
+      {err ? <p className="formerror">{err}</p> : null}
+    </section>
   );
 }
 
@@ -485,6 +537,8 @@ export default function Referencias() {
   const tags = r.params.tags ? r.params.tags.split(",") : [];
   const tp = r.params.tp || null;
   const color = r.params.color || null;
+  const pl = r.params.pl || null;
+  const estudiar = r.params.estudiar === "1";
   const orden = r.params.orden || "recientes";
   const diseno = r.params.diseno || "mosaico";
   const nueva = r.params.nueva === "1";
@@ -497,6 +551,8 @@ export default function Referencias() {
   const todasTags = useMemo(() => [...new Set(todas.flatMap((x) => x.etiquetas || []))].sort(), [d.referencias]);
   const temas = useMemo(() => (tp ? [...new Set(todas.filter((x) => x.tipo_post === tp).flatMap((x) => x.etiquetas || []))].sort() : todasTags), [todas, tp, todasTags]);
   const tiposPost = useMemo(() => TIPOS_POST.map((id) => ({ id, n: todas.filter((x) => x.tipo_post === id).length })).filter((x) => x.n), [d.referencias]);
+  const plantillasRef = useMemo(() => { const n = {}; for (const x of todas) for (const id of x.plantilla_ids || []) n[id] = (n[id] || 0) + 1; return Object.entries(n).sort((a, b) => a[0].localeCompare(b[0])).map(([id, c]) => ({ id, label: id, count: c })); }, [todas]);
+  const sinEstudiar = useMemo(() => todas.filter((x) => !x.que_robar).length, [todas]);
   const dups = useMemo(() => duplicadas(d.referencias), [d.referencias]);
   const dupCount = Object.keys(dups).length;
   const sinAnalizar = d.referencias.filter((x) => !x.analisis && (x.archivo || x.thumb)).length;
@@ -506,16 +562,19 @@ export default function Referencias() {
       && (!tp || x.tipo_post === tp)
       && (!tags.length || tags.every((t) => (x.etiquetas || []).includes(t)))
       && (!color || familias(x).includes(color))
+      && (!pl || (x.plantilla_ids || []).includes(pl))
+      && (!estudiar || !x.que_robar)
       && coincide(x));
     if (orden === "valoradas") l.sort((a, b) => (b.valoracion || 0) - (a.valoracion || 0));
+    else if (orden === "publicado") l.sort((a, b) => (b.publicado || "").localeCompare(a.publicado || ""));
     else if (orden === "titulo") l.sort((a, b) => a.titulo.localeCompare(b.titulo, "es"));
     return l.slice(0, 300);
-  }, [todas, fuente, tp, tags.join(), color, coincide, orden]);
+  }, [todas, fuente, tp, tags.join(), color, pl, estudiar, coincide, orden]);
   const abierta = r.params.ver && todas.find((x) => x.id === r.params.ver);
-  const params = { q: q.trim() || null, fuente: fuente === "todas" ? null : fuente, tp, tags: tags.join(",") || null, color, orden: orden === "recientes" ? null : orden, diseno: diseno === "mosaico" ? null : diseno };
-  const hayFiltro = !!(params.q || params.fuente || params.tp || params.tags || params.color || params.orden);
+  const params = { q: q.trim() || null, fuente: fuente === "todas" ? null : fuente, tp, tags: tags.join(",") || null, color, pl, estudiar: estudiar ? "1" : null, orden: orden === "recientes" ? null : orden, diseno: diseno === "mosaico" ? null : diseno };
+  const hayFiltro = !!(params.q || params.fuente || params.tp || params.tags || params.color || params.pl || params.estudiar || params.orden);
   const vistas = d.vistasRef || [];
-  const activa = (vistas.find((v) => ["q", "fuente", "tp", "tags", "color", "orden"].every((k) => (v.params[k] || null) === params[k])) || {}).id;
+  const activa = (vistas.find((v) => ["q", "fuente", "tp", "tags", "color", "pl", "estudiar", "orden"].every((k) => (v.params[k] || null) === params[k])) || {}).id;
 
   const valorar = async (x, n) => {
     setVal((m) => ({ ...m, [x.id]: n }));
@@ -573,6 +632,11 @@ export default function Referencias() {
         ) : null}
         {tiposPost.length && fuente !== "estudios" ? <Toggles filtro label={t("refs.tipoPost")} value={tp ? [tp] : []} onChange={(v) => r.set({ tp: v.filter((x) => x !== tp)[0] || null, tags: null })}
           options={tiposPost.map((x) => ({ id: x.id, label: tipoPostLabel(x.id), count: x.n }))} /> : null}
+        {fuente !== "estudios" && (plantillasRef.length || sinEstudiar) ? (
+          <Toggles filtro label={t("refs.plantillas")} value={[pl, estudiar ? "__sin" : null].filter(Boolean)}
+            onChange={(v) => { const nuevo = v.filter((x) => x !== pl && x !== "__sin")[0]; r.set(v.includes("__sin") !== estudiar && !nuevo ? { estudiar: estudiar ? null : "1" } : { pl: nuevo || (v.includes(pl) ? pl : null) }); }}
+            options={[...(sinEstudiar ? [{ id: "__sin", label: t("refs.sinEstudiar"), count: sinEstudiar }] : []), ...plantillasRef]} />
+        ) : null}
         {/* Los temas salen al elegir un tipo (o si ya hay alguno marcado): con todos a la vez son demasiados. */}
         {temas.length && fuente !== "estudios" && (tp || tags.length || !tiposPost.length) ? <Toggles filtro label={t("refs.etiquetas")} value={tags} onChange={(v) => r.set({ tags: v.length ? v.join(",") : null })} options={temas.map((t) => ({ id: t, label: t }))} /> : null}
       </PageHeader>
@@ -580,7 +644,7 @@ export default function Referencias() {
         {nueva ? <Nueva onClose={() => r.set({ nueva: null })} onSaved={(ref) => { recargar(); r.set({ nueva: null, fuente: "propia", ver: ref.id }); }} /> : null}
         {fuente !== "estudios" ? (
           <Vistas vistas={vistas} activa={activa} hayFiltro={hayFiltro} params={params} ids={lista.map((x) => x.id)} dupCount={dupCount}
-            onAplicar={(v) => { setQ(v.params.q || ""); r.set({ q: null, fuente: null, tp: null, tags: null, color: null, orden: null, ...v.params }); }} />
+            onAplicar={(v) => { setQ(v.params.q || ""); r.set({ q: null, fuente: null, tp: null, tags: null, color: null, pl: null, estudiar: null, orden: null, ...v.params }); }} />
         ) : null}
 
         {fuente === "estudios" ? (

@@ -2,6 +2,7 @@
 import { medir } from "../src/lib/conteo.js";
 import { read, ls, exists, isDir, readJson, frontmatter, kindOf } from "./repo.js";
 import { rutas as rc, cfg as cfgCerebro } from "./cerebro.js";
+import { parsear } from "./metricas.js";
 
 const cfgTitulos = cfgCerebro.titulos;
 
@@ -89,6 +90,15 @@ function visualDe(fm) {
   return { tipo, archivos, falta, drive, formato: fm.formato || null, descripcion: media || null, alt: fm.alt_text_media || null };
 }
 
+// Id de la plantilla del visual: `plantilla:` (id o ruta a un JSON/carpeta) u `origen_visual: plantilla:<id>`.
+export function plantillaDe(fm) {
+  const o = /plantilla:\s*([\w.-]+)/.exec(fm.origen_visual || "");
+  if (o) return o[1];
+  const p = String(fm.plantilla || "").trim().split(/\s/)[0];
+  if (!p) return null;
+  return p.replace(/\/$/, "").split("/").pop().replace(/\.(json|md|html)$/, "") || null;
+}
+
 function bufferDe(v) {
   const s = String(v || "");
   const ids = s.match(/\b[0-9a-f]{24}\b/g) || [];
@@ -154,6 +164,9 @@ export function posts(hoy) {
       buffer: bufferDe(fm.buffer),
       publicado: (String(fm.publicado_url || "").match(/https?:\/\/[^\s)·]+/g) || []),
       metricas: fm.metricas || null,
+      // Fotos fijas que escribe la reconciliación con Buffer (metricas.js): { redes: { X: {...} }, tomadas }.
+      instantaneas: { "48h": parsear(fm.metricas_48h), "7d": parsear(fm.metricas_7d) },
+      plantilla: plantillaDe(fm),
       checklist: fm.checklist || null,
       fuente: fm.fuente || null,
       repo: fm.repo || null,

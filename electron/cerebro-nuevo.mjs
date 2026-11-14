@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { instalarSkills } from "../server/paquete-skills.js";
 
 export const REDES = ["X", "LinkedIn", "Threads"];
 const DIAS = 7;
@@ -31,7 +32,7 @@ export function describir(dir) {
     vacia: entradas.length === 0,
     reglas,
     // Lo que se crearía al convertirla, en el orden en que se enseña.
-    crear: ["glim.config.json", reglas ? null : "AGENTS.md", hay("borradores") ? null : "borradores/", hay("aprendizajes.md") ? null : "aprendizajes.md"].filter(Boolean),
+    crear: ["glim.config.json", reglas ? null : "AGENTS.md", hay("borradores") ? null : "borradores/", hay("aprendizajes.md") ? null : "aprendizajes.md", hay("skills/glim") ? null : "skills/glim/"].filter(Boolean),
   };
 }
 
@@ -59,7 +60,7 @@ export function configNueva(datos, { reglas = null } = {}) {
     zonaHoraria: limpio(d.zonaHoraria, 64) || undefined,
     idioma: d.idioma === "en" ? "en" : "es",
     reglas: reglas || "AGENTS.md",
-    rutas: { borradores: "borradores", aprendizajes: "aprendizajes.md" },
+    rutas: { borradores: "borradores", aprendizajes: "aprendizajes.md", skills: "skills" },
     privadas: ["privado/"],
     redes: redes.length ? redes : ["X", "LinkedIn"],
     cadencia: cadenciaDe(redes, d.cadencia),
@@ -93,6 +94,12 @@ export function prepararCerebro(dir, datos) {
   const gi = fs.existsSync(f(".gitignore")) ? fs.readFileSync(f(".gitignore"), "utf8") : "";
   const faltan = faltanEnGitignore(gi);
   if (faltan.length) fs.writeFileSync(f(".gitignore"), `${gi}${gi && !gi.endsWith("\n") ? "\n" : ""}${faltan.join("\n")}\n`);
+  // Skills de la plataforma (plantilla-cerebro/skills): cómo usar este cerebro desde cualquier agente. Nunca pisa una
+  // carpeta que ya exista con el mismo nombre; lo saltado se avisa en el registro de la app.
+  try {
+    const r = instalarSkills(dir, { rutas: cfg.rutas });
+    for (const s of r.skills.filter((x) => x.motivo)) console.warn(`[glim] skill ${s.nombre}: ${s.motivo}`);
+  } catch (x) { console.warn("[glim] skills de Glim:", x.message); }
   if (!fs.existsSync(f(".git"))) { try { execFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir, stdio: "ignore" }); } catch { /* sin git: funciona igual, sin publicar */ } }
   return dir;
 }

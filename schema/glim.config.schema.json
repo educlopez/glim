@@ -116,6 +116,30 @@
             "avatar": {
               "type": "string",
               "minLength": 1
+            },
+            "informes": {
+              "type": "string",
+              "minLength": 1,
+              "default": "informes"
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "contexto": {
+          "type": "object",
+          "properties": {
+            "leerAntes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "maxItems": 12,
+              "default": [
+                "estrategia/algoritmos/README.md",
+                "estrategia/aprendizajes.md"
+              ]
             }
           },
           "additionalProperties": false,
@@ -236,6 +260,14 @@
                 "minLength": 1
               },
               "default": []
+            },
+            "usarMcpDelCerebro": {
+              "type": "boolean",
+              "default": false
+            },
+            "mcp": {
+              "type": "string",
+              "minLength": 1
             }
           },
           "additionalProperties": false,

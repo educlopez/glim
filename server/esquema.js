@@ -36,6 +36,13 @@ export const Esquema = z.object({
     marcas: opcional,
     ogs: opcional,
     avatar: opcional,
+    // Informes semanales de resultados (server/informe.js): <informes>/AAAA-Www.md.
+    informes: ruta.default("informes"),
+  }).default({}),
+  // Contexto que cada encargo pasa al agente antes del texto de la persona (server/encargos.js).
+  contexto: z.object({
+    // Archivos que el agente lee antes de empezar. Solo se citan los que existen.
+    leerAntes: z.array(ruta).max(12).default(["estrategia/algoritmos/README.md", "estrategia/aprendizajes.md"]),
   }).default({}),
   // Redes del calendario y posts por red y día de la semana (lunes primero): { "X": [2,2,2,2,2,0,0] }.
   redes: z.array(z.string().min(1).max(20)).default(["X", "LinkedIn"]),
@@ -57,6 +64,11 @@ export const Esquema = z.object({
     comandos: z.array(z.string().regex(/^[\w .@/:-]+$/)).default([]),
     // Carpetas que git ignora y que las copias aisladas de los encargos comparten con el repo (medios, node_modules).
     compartidas: z.array(ruta).default([]),
+    // MCP en los encargos (solo Claude Code). Por defecto los encargos van sin MCP (--strict-mcp-config). Con
+    // usarMcpDelCerebro: true cargan solo este archivo del cerebro (por defecto .mcp.json si existe). El archivo no
+    // puede llevar secretos: Glim lo rechaza si trae valores en env o cabeceras (usa OAuth o ${VARIABLE}).
+    usarMcpDelCerebro: z.boolean().default(false),
+    mcp: ruta.optional(),
   }).default({}),
   publicar: z.object({
     rama: z.string().default("main"),

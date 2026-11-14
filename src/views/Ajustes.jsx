@@ -393,6 +393,39 @@ function Integraciones({ a, cambiar, d }) {
   );
 }
 
+// Skills de Glim en el cerebro (server/paquete-skills.js): estado y botón para instalarlas o actualizarlas.
+function SkillsGlim() {
+  const [s, setS] = useState(null);
+  const [res, setRes] = useState(null);
+  const [ocupado, setOcupado] = useState(false);
+  const [err, setErr] = useState(null);
+  useEffect(() => { fetch("/api/skills-glim").then((r) => r.json()).then(setS).catch(() => {}); }, []);
+  const actualizar = async () => {
+    setOcupado(true); setErr(null);
+    try { const j = await post("/api/skills-glim/actualizar"); setRes(j); setS({ ...j, pendientes: 0 }); recargar(); } catch (x) { setErr(x.message); } finally { setOcupado(false); }
+  };
+  const lista = res || s;
+  const ayuda = !s ? null : s.pendientes ? t("skillsGlim.pendientes", { n: s.pendientes }) : t("skillsGlim.alDia");
+  return (
+    <Grupo titulo={t("skillsGlim.titulo")} sub={t("skillsGlim.sub")}>
+      <Fila label={t("skillsGlim.actualizar")} ayuda={[ayuda, s && s.saltadas ? t("skillsGlim.saltadas", { n: s.saltadas }) : null].filter(Boolean).join(" · ") || null}>
+        <button type="button" className="btn small" onClick={actualizar} disabled={ocupado}><RefreshCw size={13} aria-hidden="true" /><span>{ocupado ? t("skillsGlim.actualizando") : t("skillsGlim.actualizar")}</span></button>
+      </Fila>
+      {lista && lista.skills && lista.skills.length ? (
+        <Fila label={t("skillsGlim.estado")} ancho>
+          <ul className="small stack" role="status">
+            {lista.skills.map((x) => (
+              <li key={x.nombre}><code>{x.nombre}</code> {x.version} · {t(`skillsGlim.accion.${x.accion}`)}{x.motivo ? <span className="muted"> · {x.motivo}</span> : null}</li>
+            ))}
+            {(lista.enlaces || []).filter((x) => x.estado === "ocupado" || x.estado === "omitido").map((x) => <li key={x.enlace} className="muted">{t("skillsGlim.enlaceOcupado", { enlace: x.enlace })} · {x.motivo}</li>)}
+          </ul>
+        </Fila>
+      ) : null}
+      {err ? <p className="small formerror">{err}</p> : null}
+    </Grupo>
+  );
+}
+
 function Servidor({ d, a, cambiar }) {
   const [s, setS] = useState(null);
   const [msg, setMsg] = useState(null);
@@ -434,6 +467,7 @@ function Servidor({ d, a, cambiar }) {
         <Fila label="Repo" ayuda={d.raiz}><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "repo" })}><FolderOpen size={13} aria-hidden="true" /><span>{t("ajustes.abrirFinder")}</span></button></Fila>
         <Fila label={t("ajustes.datosLocales")} ayuda={t("ajustes.datosLocalesAyuda")}><button type="button" className="btn small" onClick={() => accion("/api/sistema/abrir", { que: "datos" })}><FolderOpen size={13} aria-hidden="true" /><span>{t("ajustes.abrirFinder")}</span></button></Fila>
       </Grupo>
+      <SkillsGlim />
       <Grupo titulo={t("bienvenida.ajustes.titulo")}>
         <Fila label={t("bienvenida.ajustes.volver")} ayuda={t("bienvenida.ajustes.ayuda")}>
           <button type="button" className="btn small" onClick={() => (window.panelApp && window.panelApp.ir ? window.panelApp.ir("#/bienvenida") : (window.location.hash = "#/bienvenida"))}>{t("bienvenida.ajustes.ver")}</button>

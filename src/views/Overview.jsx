@@ -29,6 +29,14 @@ export default function Overview() {
       <PageHeader title={t("nav.resumen")} sub={fechaLarga(d.hoy)}
         actions={<button type="button" className="btn primary" onClick={() => r.set({ pedir: "general" })}><GlimMark size={14} /><span>{t("app.pedirCambio")}</span></button>} />
 
+      {d.skillsGlim && d.skillsGlim.pendientes ? (
+        <p className="small muted row gap-s" role="status">
+          <Info size={14} aria-hidden="true" />
+          <span>{t("skillsGlim.aviso")}</span>
+          <a href={hrefOf("ajustes", { seccion: "servidor" })}>{t("skillsGlim.verAjustes")}</a>
+        </p>
+      ) : null}
+
       {encargos.length ? (
         <Section id="h-encargos" title={t("resumen.encargos")} count={encargos.length} actions={<a className="btn ghost small" href={hrefOf("encargos", {})}><span>{t("comun.verTodos")}</span><ArrowRight size={14} aria-hidden="true" /></a>}>
           <div className="cardgrid posts">{encargos.slice(0, 6).map((e) => <EncargoCard key={e.id} e={e} href={hrefOf("encargos", { ver: e.id })} />)}</div>

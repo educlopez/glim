@@ -1,6 +1,7 @@
 // API local de Glim. Lee el cerebro en cada petición, sin caché, para reflejar siempre el disco.
 // Escribe solo en: <cerebro>/.glim/ (estado local), las referencias, los lienzos y los aprendizajes del cerebro, y las
-// carpetas de medios de referencias (subidas, previas y copias de páginas). Rutas en glim.config.json.
+// carpetas de medios de referencias (subidas, previas y copias de páginas). Rutas en glim.config.json. A petición
+// (botones del panel) también escribe el informe semanal (rutas.informes) y las skills de Glim (skills/glim/).
 // Se monta igual en el servidor de Vite (desarrollo) y en el servidor propio de la app (server/servidor.js).
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -29,6 +30,8 @@ import * as kitMod from "./kit.js";
 import * as aj from "./ajustes.js";
 import * as dub from "./dub.js";
 import * as cerebro from "./cerebro.js";
+import * as informe from "./informe.js";
+import * as skillsGlim from "./skills-glim.js";
 
 const FEEDBACK = path.join(cerebro.ESTADO, "feedback");
 
@@ -73,6 +76,7 @@ async function overview() {
     claves: await claves(),
     cerebro: cerebro.resumen(),
     secciones: secciones.resumen(),
+    skillsGlim: skillsGlim.estado(),
   };
 }
 
@@ -153,6 +157,8 @@ const RUTAS = [
   ["POST", /^\/api\/referencias\/vistas$/, (b) => ({ vista: refs.guardarVista(b) })],
   ["POST", /^\/api\/referencias\/vistas\/(vista-[a-z0-9]+)\/quitar$/, (_, [id]) => (refs.quitarVista(id), { ok: true })],
   ["POST", /^\/api\/referencias\/(pd-[^/]+)\/fijar$/, (b, [id]) => ({ referencia: refs.fijar(decodeURIComponent(id), b.notas) })],
+  // Anotación v2 de una referencia de posts.design: que_robar, plantilla_ids, etiquetas, tipo_post, notas.
+  ["POST", /^\/api\/referencias\/(pd-[^/]+)\/anotar$/, (b, [id]) => ({ anotacion: refs.editarAnotacion(decodeURIComponent(id), b) })],
   ["POST", /^\/api\/referencias\/(ref-[a-z0-9-]+)$/, (b, [id]) => ({ referencia: refs.editar(id, b) })],
   ["POST", /^\/api\/referencias\/(ref-[a-z0-9-]+)\/quitar$/, (_, [id]) => (refs.quitar(id), { ok: true })],
   ["POST", /^\/api\/buffer\/sincronizar$/, async () => { const b = await buffer.sincronizar(); return { conectado: b.conectado, error: b.error || null, motivo: b.motivo || null, total: (b.posts || []).length }; }],
@@ -207,6 +213,11 @@ const RUTAS = [
   ["POST", /^\/api\/publicar\/comprobar$/, () => pub.comprobarAntes()],
   ["POST", /^\/api\/publicar\/cancelar$/, () => pub.cancelarFusion()],
   ["POST", /^\/api\/sistema\/app$/, () => vivo.reinstalarApp(encargos.ocupado())],
+  // Informe semanal de resultados (server/informe.js). Escribe <rutas.informes>/AAAA-Www.md; nunca toca aprendizajes.
+  ["POST", /^\/api\/informe$/, async (b) => informe.generar({ semana: b.semana ? String(b.semana) : undefined })],
+  // Skills de Glim: comprobar sin escribir y actualizar (nunca pisa una skill editada a mano).
+  ["GET", /^\/api\/skills-glim$/, () => skillsGlim.comprobar()],
+  ["POST", /^\/api\/skills-glim\/actualizar$/, () => skillsGlim.actualizar()],
   ["POST", /^\/api\/registro$/, (b) => {
     const entrada = reg.anadir(b);
     if (b.encargo && b.decision !== undefined) encargos.registrada(b.encargo, b.decision);
@@ -290,6 +301,8 @@ export function arrancar({ reiniciar } = {}) {
   t.unref?.();
   analisis.alAcabar(() => emitir("repo:cambio", { archivos: ["analisis"] }));
   buffer.arrancar(() => emitir("repo:cambio", { archivos: ["buffer"] }));
+  // Al arrancar, solo mira (sin escribir) si hay skills de Glim nuevas o actualizadas; el panel lo enseña sin avisos.
+  try { skillsGlim.comprobar(); } catch (e) { console.warn("[glim] skills de Glim:", e.message); }
   return () => { parar(); clearTimeout(t); for (const r of clientes) r.end(); clientes.clear(); };
 }
 
