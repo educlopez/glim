@@ -37,10 +37,9 @@ export function plantillas(mediaGroups) {
 
 export function carruseles() {
   const out = [];
-  if (!rutas.seriesCarrusel) return out;
   const raiz = rutas.seriesCarrusel;
-  const render = `${raiz.split("/").slice(0, -1).join("/") || "."}/render.py`;
-  for (const serie of ls(raiz).filter((d) => d.isDirectory())) {
+  const render = raiz ? `${raiz.split("/").slice(0, -1).join("/") || "."}/render.py` : null;
+  for (const serie of raiz ? ls(raiz).filter((d) => d.isDirectory()) : []) {
     for (const f of ls(`${raiz}/${serie.name}`).filter((d) => d.name.endsWith(".json"))) {
       const p = `${raiz}/${serie.name}/${f.name}`;
       const c = readJson(p) || {};
@@ -56,7 +55,29 @@ export function carruseles() {
       });
     }
   }
-  return out.sort((a, b) => (b.date || b.slug).localeCompare(a.date || a.slug));
+  // Piezas de carrusel de la familia actual (un JSON por pieza en una carpeta plana, renders en <mediaCarruseles>/<subcarpeta>/<slug>/).
+  if (rutas.piezasCarrusel) {
+    const raizP = rutas.piezasCarrusel;
+    const sub = path.basename(path.dirname(raizP)); // plantillas/carrusel/v1/piezas → v1
+    const renderP = `${path.dirname(raizP)}/render.py`;
+    for (const f of ls(raizP).filter((d) => d.name.endsWith(".json"))) {
+      const p = `${raizP}/${f.name}`;
+      const c = readJson(p) || {};
+      const slug = c.slug || f.name.replace(/\.json$/, "");
+      const dir = `${rutas.mediaCarruseles || `${rutas.media}/carruseles`}/${sub}/${slug}`;
+      const names = ls(dir).map((d) => d.name);
+      const slides = names.filter((n) => /^slide-\d+\.png$/.test(n)).sort().map((n) => `${dir}/${n}`);
+      const pdf = names.find((n) => n.endsWith(".pdf"));
+      const familia = c.familia || "v1";
+      out.push({
+        path: p, serie: `${sub}-${familia}`, series: `${sub} · ${familia}`, actual: true, slug, theme: familia,
+        date: (slug.match(/^\d{4}-\d{2}-\d{2}/) || [null])[0], tipos: [...new Set((c.slides || []).map((s) => s.tipo || s.type))],
+        n: (c.slides || []).length, slides, pdf: pdf ? `${dir}/${pdf}` : null, cmd: `python3 ${renderP} ${p}`,
+      });
+    }
+  }
+  // Las piezas actuales primero; dentro de cada grupo, la más reciente primero.
+  return out.sort((a, b) => (b.actual ? 1 : 0) - (a.actual ? 1 : 0) || (b.date || b.slug).localeCompare(a.date || a.slug));
 }
 
 export function marcas() {

@@ -105,6 +105,11 @@
               "type": "string",
               "minLength": 1
             },
+            "piezasCarrusel": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Carpeta plana con un JSON por pieza de carrusel (familia actual); los renders van en <mediaCarruseles>/<carpeta padre>/<slug>/"
+            },
             "marcas": {
               "type": "string",
               "minLength": 1
