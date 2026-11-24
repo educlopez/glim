@@ -28,19 +28,29 @@ export function plantillas(mediaGroups) {
     const key = CLAVE[p.id] || p.id.replace(/^(video-lab-|video-|carrusel-)/, "");
     const dir = String(p.ruta || "").split(" ")[0].replace(/\/$/, "");
     const readme = [`${dir}/README.md`, `${path.dirname(dir)}/README.md`].find((r) => exists(r)) || null;
-    const elegidos = [].concat(p.ejemplo_media || []).map((ruta) => all.find((m) => m.path === ruta)).filter(Boolean);
-    const porNombre = key.length > 3 ? all.filter((m) => m.path.includes(key) && !elegidos.includes(m)).sort((a, b) => (a.kind === b.kind ? b.mtime - a.mtime : a.kind === "video" ? -1 : 1)) : [];
-    return { ...p, dir, readme, existe: exists(dir), previews: [...elegidos, ...porNombre].slice(0, 6) };
+    // Una ruta que acaba en «/» es la carpeta de un carrusel: entran sus slides en orden (slide-01, slide-02…).
+    const elegidos = [].concat(p.ejemplo_media || []).flatMap((ruta) => (ruta.endsWith("/")
+      ? all.filter((m) => m.kind === "image" && m.path.startsWith(ruta) && !m.path.slice(ruta.length).includes("/")).sort((a, b) => a.path.localeCompare(b.path))
+      : [all.find((m) => m.path === ruta)])).filter(Boolean);
+    // Con `ejemplo_media`, solo sus variantes de formato (<ejemplo>-9x16.mp4…): los vídeos viejos que casan por nombre
+    // llevaban firma o el estilo anterior. Una plantilla retirada, desaconsejada o no usable no enseña nada (su sustituta sí).
+    const fuera = ["retirada", "desaconsejada", "no-usable"].includes(p.estado);
+    const base = elegidos.map((m) => m.path.replace(/\.[^./]+$/, ""));
+    const casa = (m) => (base.length ? base.some((b) => m.path.startsWith(`${b}-`)) : m.path.includes(key));
+    const porNombre = key.length > 3 && !fuera
+      ? all.filter((m) => casa(m) && !elegidos.includes(m) && !/-fotogramas\./.test(m.path)).sort((a, b) => (a.kind === b.kind ? b.mtime - a.mtime : a.kind === "video" ? -1 : 1))
+      : [];
+    const previews = fuera ? [] : [...elegidos, ...porNombre].slice(0, 6);
+    return { ...p, dir, readme, existe: exists(dir), previews };
   });
   return { meta: { version: idx.version, actualizado: idx.actualizado_madrid, cadencia: idx.cadencia, mezcla: idx.mezcla }, list };
 }
 
 export function carruseles() {
   const out = [];
-  if (!rutas.seriesCarrusel) return out;
   const raiz = rutas.seriesCarrusel;
-  const render = `${raiz.split("/").slice(0, -1).join("/") || "."}/render.py`;
-  for (const serie of ls(raiz).filter((d) => d.isDirectory())) {
+  const render = raiz ? `${raiz.split("/").slice(0, -1).join("/") || "."}/render.py` : null;
+  for (const serie of raiz ? ls(raiz).filter((d) => d.isDirectory()) : []) {
     for (const f of ls(`${raiz}/${serie.name}`).filter((d) => d.name.endsWith(".json"))) {
       const p = `${raiz}/${serie.name}/${f.name}`;
       const c = readJson(p) || {};
@@ -56,7 +66,29 @@ export function carruseles() {
       });
     }
   }
-  return out.sort((a, b) => (b.date || b.slug).localeCompare(a.date || a.slug));
+  // Piezas de carrusel de la familia actual (un JSON por pieza en una carpeta plana, renders en <mediaCarruseles>/<subcarpeta>/<slug>/).
+  if (rutas.piezasCarrusel) {
+    const raizP = rutas.piezasCarrusel;
+    const sub = path.basename(path.dirname(raizP)); // plantillas/carrusel/v1/piezas → v1
+    const renderP = `${path.dirname(raizP)}/render.py`;
+    for (const f of ls(raizP).filter((d) => d.name.endsWith(".json"))) {
+      const p = `${raizP}/${f.name}`;
+      const c = readJson(p) || {};
+      const slug = c.slug || f.name.replace(/\.json$/, "");
+      const dir = `${rutas.mediaCarruseles || `${rutas.media}/carruseles`}/${sub}/${slug}`;
+      const names = ls(dir).map((d) => d.name);
+      const slides = names.filter((n) => /^slide-\d+\.png$/.test(n)).sort().map((n) => `${dir}/${n}`);
+      const pdf = names.find((n) => n.endsWith(".pdf"));
+      const familia = c.familia || "v1";
+      out.push({
+        path: p, serie: `${sub}-${familia}`, series: `${sub} · ${familia}`, actual: true, slug, theme: familia,
+        date: (slug.match(/^\d{4}-\d{2}-\d{2}/) || [null])[0], tipos: [...new Set((c.slides || []).map((s) => s.tipo || s.type))],
+        n: (c.slides || []).length, slides, pdf: pdf ? `${dir}/${pdf}` : null, cmd: `python3 ${renderP} ${p}`,
+      });
+    }
+  }
+  // Las piezas actuales primero; dentro de cada grupo, la más reciente primero.
+  return out.sort((a, b) => (b.actual ? 1 : 0) - (a.actual ? 1 : 0) || (b.date || b.slug).localeCompare(a.date || a.slug));
 }
 
 export function marcas() {

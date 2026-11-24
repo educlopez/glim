@@ -32,6 +32,7 @@ export const Esquema = z.object({
     kitPublicacion: opcional,
     indiceRecursos: opcional,
     seriesCarrusel: opcional,
+    piezasCarrusel: opcional,
     mediaCarruseles: opcional,
     marcas: opcional,
     ogs: opcional,
