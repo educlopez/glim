@@ -7,7 +7,7 @@ test("la barra lateral enseña el cerebro y abre Encargos", async ({ page }) => 
   // Sin la hoja de novedades del primer arranque, que tapa la interfaz.
   await page.addInitScript(() => localStorage.setItem("panel:novedadesVista", "999.0.0"));
   await page.goto("/");
-  await expect(page.locator(".side .brand")).toContainText("Cerebro de prueba");
+  await expect(page.locator(".side .cerebronombre")).toContainText("Cerebro de prueba");
 
   await page.getByRole("navigation", { name: "Secciones" }).getByRole("link", { name: /Encargos/ }).click();
   await expect(page).toHaveURL(/#\/encargos/);
