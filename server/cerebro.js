@@ -94,7 +94,7 @@ export function resumen() {
     redes: cfg.redes, cadencia: cfg.cadencia, llavero: cfg.llavero,
     autor: { nombre: cfg.autor.nombre || cfg.persona, usuario: cfg.autor.usuario || null },
     modulos: {
-      registro: tiene("aprendizajes"), calendario: tiene("borradores"), plantillas: tiene("indiceRecursos"), carruseles: tiene("seriesCarrusel"),
+      registro: tiene("aprendizajes"), calendario: tiene("borradores"), plantillas: tiene("indiceRecursos"), carruseles: tiene("seriesCarrusel") || tiene("piezasCarrusel"),
       marcas: tiene("marcas"), ogs: tiene("ogs"), kit: !!rutas.kitPublicacion, referentes: tiene("referentes"), skills: tiene("skills"),
       buffer: !!cfg.integraciones.buffer, dub: !!cfg.integraciones.dub,
     },
