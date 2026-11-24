@@ -28,9 +28,20 @@ export function plantillas(mediaGroups) {
     const key = CLAVE[p.id] || p.id.replace(/^(video-lab-|video-|carrusel-)/, "");
     const dir = String(p.ruta || "").split(" ")[0].replace(/\/$/, "");
     const readme = [`${dir}/README.md`, `${path.dirname(dir)}/README.md`].find((r) => exists(r)) || null;
-    const elegidos = [].concat(p.ejemplo_media || []).map((ruta) => all.find((m) => m.path === ruta)).filter(Boolean);
-    const porNombre = key.length > 3 ? all.filter((m) => m.path.includes(key) && !elegidos.includes(m)).sort((a, b) => (a.kind === b.kind ? b.mtime - a.mtime : a.kind === "video" ? -1 : 1)) : [];
-    return { ...p, dir, readme, existe: exists(dir), previews: [...elegidos, ...porNombre].slice(0, 6) };
+    // Una ruta que acaba en «/» es la carpeta de un carrusel: entran sus slides en orden (slide-01, slide-02…).
+    const elegidos = [].concat(p.ejemplo_media || []).flatMap((ruta) => (ruta.endsWith("/")
+      ? all.filter((m) => m.kind === "image" && m.path.startsWith(ruta) && !m.path.slice(ruta.length).includes("/")).sort((a, b) => a.path.localeCompare(b.path))
+      : [all.find((m) => m.path === ruta)])).filter(Boolean);
+    // Con `ejemplo_media`, solo sus variantes de formato (<ejemplo>-9x16.mp4…): los vídeos viejos que casan por nombre
+    // llevaban firma o el estilo anterior. Una plantilla retirada, desaconsejada o no usable no enseña nada (su sustituta sí).
+    const fuera = ["retirada", "desaconsejada", "no-usable"].includes(p.estado);
+    const base = elegidos.map((m) => m.path.replace(/\.[^./]+$/, ""));
+    const casa = (m) => (base.length ? base.some((b) => m.path.startsWith(`${b}-`)) : m.path.includes(key));
+    const porNombre = key.length > 3 && !fuera
+      ? all.filter((m) => casa(m) && !elegidos.includes(m) && !/-fotogramas\./.test(m.path)).sort((a, b) => (a.kind === b.kind ? b.mtime - a.mtime : a.kind === "video" ? -1 : 1))
+      : [];
+    const previews = fuera ? [] : [...elegidos, ...porNombre].slice(0, 6);
+    return { ...p, dir, readme, existe: exists(dir), previews };
   });
   return { meta: { version: idx.version, actualizado: idx.actualizado_madrid, cadencia: idx.cadencia, mezcla: idx.mezcla }, list };
 }
