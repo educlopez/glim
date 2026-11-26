@@ -1,55 +1,87 @@
+<div align="center">
+
 # Glim
 
-Una app de Mac para trabajar con agentes de IA sobre tu repo de contenido. Le pides un cambio a un post, una plantilla o una referencia, y Claude Code, Codex, Cursor u OpenCode lo hacen en local, con el contexto del repo y tus reglas. Tú revisas, das el OK y Glim lo sube con una PR revisada.
+**AI agents on your content repo.** A Mac app where Claude Code, Codex, Cursor or OpenCode edit your drafts, templates and references locally, and every change ships as a reviewed pull request.
 
-Glim no guarda nada propio: abre un **cerebro**, un repo de git con un `glim.config.json`. Tus borradores, reglas y referencias siguen siendo archivos tuyos, versionados y legibles por cualquier agente.
+[Get started](#get-started) · [Features](#features) · [How it works](#how-it-works) · [Español](README.es.md)
 
-> Estado: uso diario de su autor, abierto para quien quiera probarlo. Solo macOS. La interfaz está en castellano.
+</div>
 
-## Por qué Glim
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/overview-dark.webp">
+  <img alt="Glim overview: posts by status, this week's calendar and what is waiting for your OK" src="docs/media/overview-light.webp">
+</picture>
 
-Un *glim* es un destello: poca luz, justo donde hace falta. Tu cerebro es un repo de archivos tuyos, estable, que no depende de ninguna app. Glim es la luz que lo recorre: agentes que trabajan sobre él, referencias que se van juntando, decisiones que se quedan registradas. No sustituye al repo ni lo esconde; lo ilumina, para que lo que aprendes se encuentre cuando lo necesitas.
+## Why Glim
 
-El icono es una hoja, hecho con Icon Composer de Apple: macOS genera sus versiones oscura, transparente y tintada.
+Your writing, rules and references already live best as plain files in a git repo: versioned, portable and readable by any agent. What is missing is a calm place to point an agent at them, watch what it does, and decide what goes out.
 
-## Qué hace
+Glim is that place. It opens a **brain** (any git repo with a `glim.config.json`), runs the agents you already have installed, and never stores anything of its own. Close Glim and your repo is still just your repo.
 
-- **Encargos a agentes.** «Pedir un cambio» sobre cualquier cosa del cerebro. El agente trabaja en segundo plano, en cola, y ves en directo qué lee, qué edita y qué ejecuta. «Otra vuelta» retoma la misma sesión. Un aviso del sistema cuando termina o falla.
-- **Varios agentes.** Claude Code, Codex, Cursor Agent, OpenCode, Gemini CLI o un comando propio. Glim detecta cuáles tienes instalados.
-- **Posts y calendario.** Borradores en Markdown por red, con vista previa, contador real de caracteres, avisos y calendario con huecos según tu cadencia. Arrastrar un post a otro día cambia su fecha.
-- **Referencias** (inspirado en [Pond](https://github.com/raphaelsalaja/pond)). Enlaces, capturas y vídeos con paleta, búsqueda por color, valoración, duplicados, lectores de X, Instagram, YouTube y más, y copias de páginas. Lienzos libres para juntar referencias y notas y mandarlas a un encargo.
-- **Publicar cambios.** Un botón: comprueba secretos y rutas privadas, la IA redacta el commit, abre una PR, la revisa contra tus reglas, espera al CI y la fusiona (con espera cancelable). Nada se sube sin que lo pulses.
-- **Buffer, solo lectura.** Lo programado y publicado en Buffer se refleja en los borradores. Glim nunca crea ni programa nada allí.
-- **Nativa.** Desenfoque del sistema, Dock con lo que espera revisión, barra de menús, atajo global, icono personalizable, sonidos, claro y oscuro.
+A *glim* is a small light: just enough, right where you need it.
 
-## Empezar
+## Features
 
-Requisitos: macOS, Node 20.19+, Python 3 con Pillow, `git` y al menos un agente instalado (por ejemplo `npm i -g @anthropic-ai/claude-code`). Opcional: `gh` (clonar y publicar), `ffmpeg` y `yt-dlp` (vídeos de referencias).
+- **Ask for a change.** Point at a post, a template or a reference and describe what you want. The agent works in the background, in a queue, and you see live what it reads, edits and runs. "Another pass" resumes the same session. You get a system notification when it finishes or fails.
+- **Bring your own agent.** Claude Code, Codex, Cursor Agent, OpenCode, Gemini CLI or a custom command. Glim detects which ones are installed.
+- **Posts and calendar.** Markdown drafts per network with preview, a real character counter, warnings and a calendar that shows the gaps in your cadence. Drag a post to another day to reschedule it.
+- **References.** Links, screenshots and videos with colour palettes, search by colour, ratings, duplicate detection, readers for X, Instagram, YouTube and more, and page snapshots. Free-form canvases to gather references and notes and hand them to an agent. Inspired by [Pond](https://github.com/raphaelsalaja/pond).
+- **Publish with review.** One button checks for secrets and private paths, drafts the commit message, opens a pull request, reviews it against your rules, waits for CI and merges, with a cancellable countdown. Nothing leaves your Mac until you press it.
+- **Buffer, read only.** What is scheduled or published in Buffer shows up on your drafts. Glim never creates or schedules anything there.
+- **Native.** System blur, a Dock badge for what needs review, menu bar, global shortcut, custom icon, sounds, light and dark.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/posts-dark.webp">
+  <img alt="Posts board with columns for idea, awaiting OK, scheduled and published" src="docs/media/posts-light.webp">
+</picture>
+
+## Get started
+
+**Requirements:** macOS, Node 20.19+, Python 3 with Pillow, `git`, and at least one agent CLI (for example `npm i -g @anthropic-ai/claude-code`). Optional: `gh` to clone and publish, `ffmpeg` and `yt-dlp` for video references.
 
 ```bash
 git clone https://github.com/educlopez/glim && cd glim
 npm ci
-npm run app:instalar      # compila y copia Glim.app a ~/Applications
+npm run app:instalar      # builds Glim.app and copies it to ~/Applications
 ```
 
-Al abrirla te pide un cerebro: una carpeta de este Mac, un repo de GitHub (`usuario/repo`, con tu sesión de `gh`) o uno nuevo que crea con lo mínimo. Para ver cómo es uno, mira [`ejemplos/cerebro-minimo`](ejemplos/cerebro-minimo) y la referencia de [`glim.config.json`](docs/cerebro.md).
+On first launch Glim asks for a brain: a folder on this Mac, a GitHub repo (`user/repo`, using your `gh` session) or a new one created with the minimum files. See [`ejemplos/cerebro-minimo`](ejemplos/cerebro-minimo) for a small example and [`docs/cerebro.md`](docs/cerebro.md) for every `glim.config.json` option.
 
-Instalada así, Glim sigue la rama `main` de este repo: avisa cuando hay versión nueva, se actualiza con un clic y te enseña las novedades.
+Installed this way, Glim follows the `main` branch of this repo: it tells you when a new version is out, updates in one click and shows what changed.
 
-### Desarrollo
+The interface comes in English and Spanish. It follows the brain's `idioma` setting, then your system language; you can also pick one in Settings.
+
+## How it works
+
+```text
+your brain (git repo)          Glim (local)                    your agents
+├── glim.config.json   ──▶     server on 127.0.0.1    ──▶     claude · codex · cursor
+├── AGENTS.md (rules)          queue of tasks                  opencode · gemini · custom
+├── drafts, media              live log of each run
+└── references, canvases       publish: checks → PR → review → CI → merge
+```
+
+- Everything runs on your Mac. The server listens only on `127.0.0.1` with a token per launch.
+- Service keys (Buffer, Dub) live in the macOS Keychain, never in the repo.
+- Paths you mark as private are never served or pushed.
+
+Details and how to report a vulnerability: [SECURITY.md](SECURITY.md). Architecture: [docs/arquitectura.md](docs/arquitectura.md).
+
+## Development
 
 ```bash
-GLIM_BRAIN=./ejemplos/cerebro-minimo npm run dev   # interfaz y API en http://127.0.0.1:4321
-npm run app                                        # Electron sobre el mismo código
-npm run check                                      # lint, tests y build
+GLIM_BRAIN=./ejemplos/cerebro-minimo npm run dev   # UI and API on http://127.0.0.1:4321
+npm run app                                        # Electron on the same code
+npm run check                                      # lint, tests and build
 ```
 
-Más en [CONTRIBUTING.md](CONTRIBUTING.md) y [docs/arquitectura.md](docs/arquitectura.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests are welcome.
 
-## Privacidad y seguridad
+## Status
 
-Todo corre en tu Mac. El servidor de Glim escucha solo en `127.0.0.1`, con un token por arranque. Las claves de servicios van al Llavero. Las rutas que marques como privadas no se sirven ni se suben nunca. Detalles y cómo avisar de un fallo: [SECURITY.md](SECURITY.md).
+Used daily by its author and open to anyone who wants to try it. macOS only.
 
-## Licencia
+## License
 
-[MIT](LICENSE). Geist Mono va incluida bajo la SIL Open Font License 1.1.
+[MIT](LICENSE). Geist Mono is bundled under the SIL Open Font License 1.1.
